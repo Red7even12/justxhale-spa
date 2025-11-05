@@ -1,0 +1,100 @@
+
+URL:
+http://localhost:5180/admin/subscribers/create
+Logged in as Super Admin with full rights. 
+
+
+Bug/Description:
+
+Error when saving new subscriber
+
+	
+Data response
+
+
+
+Network:
+exception
+: 
+"Symfony\\Component\\ErrorHandler\\Error\\FatalError"
+file
+: 
+"C:\\Users\\loure\\vizabiliti_estate\\backend-api\\app\\Http\\Requests\\Api\\V1\\StoreSubscriberRequest.php"
+line
+: 
+8
+message
+: 
+"Cannot redeclare class App\\Http\\Requests\\StoreSubscriberRequest (previously declared in C:\\Users\\loure\\vizabiliti_estate\\backend-api\\app\\Http\\Requests\\Api\\V1\\StoreSubscriberRequest.php:8)"
+trace
+: 
+[]
+
+
+
+Console:
+
+client:733 [vite] connecting...
+client:827 [vite] connected.
+Create.vue:43  POST http://localhost:5180/api/v1/subscribers 500 (Internal Server Error)
+dispatchXhrRequest @ axios.js?v=34aa1e54:1696
+xhr @ axios.js?v=34aa1e54:1573
+dispatchRequest @ axios.js?v=34aa1e54:2107
+Promise.then
+_request @ axios.js?v=34aa1e54:2310
+request @ axios.js?v=34aa1e54:2219
+httpMethod @ axios.js?v=34aa1e54:2356
+wrap @ axios.js?v=34aa1e54:8
+handleCreateSubscriber @ Create.vue:43
+callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
+callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
+emit @ chunk-LG6AQRJS.js?v=34aa1e54:8589
+(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:10300
+handleSubmit @ SubscriberForm.vue:179
+(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:12326
+callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
+callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
+invoker @ chunk-LG6AQRJS.js?v=34aa1e54:11335
+Create.vue:43  POST http://localhost:5180/api/v1/subscribers 500 (Internal Server Error)
+dispatchXhrRequest @ axios.js?v=34aa1e54:1696
+xhr @ axios.js?v=34aa1e54:1573
+dispatchRequest @ axios.js?v=34aa1e54:2107
+Promise.then
+_request @ axios.js?v=34aa1e54:2310
+request @ axios.js?v=34aa1e54:2219
+httpMethod @ axios.js?v=34aa1e54:2356
+wrap @ axios.js?v=34aa1e54:8
+handleCreateSubscriber @ Create.vue:43
+callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
+callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
+emit @ chunk-LG6AQRJS.js?v=34aa1e54:8589
+(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:10300
+handleSubmit @ SubscriberForm.vue:179
+(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:12326
+callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
+callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
+invoker @ chunk-LG6AQRJS.js?v=34aa1e54:11335
+
+
+
+
+
+
+
+Laravel log:
+
+
+
+
+
+Vite error:
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+exception
+: 
+"Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException"
+file
+: 
+"C:\\Users\\loure\\vizabiliti_estate\\backend-api\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\AbstractRouteCollection.php"
+line
+: 
+45
+message
+: 
+"The route api/v1/admin/core-users/019a3b78-8330-72e9-93ea-17e82f8879b4/force-reset-password could not be found."

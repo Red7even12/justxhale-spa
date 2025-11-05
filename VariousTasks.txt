@@ -1,0 +1,54 @@
+You are an expert Vue.js 3 developer specializing in refactoring and maintaining clean code. Your task is to perform a system-wide refactoring of a Vue.js Single-Page Application to align its data access patterns with a new API convention.
+Context:
+The Laravel API backend for this project has been updated with a global middleware (CamelCaseResponseMiddleware). This middleware automatically intercepts all outgoing JSON responses and converts their keys from snake_case (Laravel's default) to camelCase (JavaScript's convention).
+As a result, the entire Vue.js frontend is now out of sync. It expects snake_case keys in many places, which are no longer being sent by the API. You need to scan the entire frontend codebase and update all property accessors to use camelCase.
+Instructions:
+Analyze all .vue components and .js files within the frontend-spa/src directory. Pay special attention to components in src/views, stores in src/stores, and services in src/services.
+Identify all instances where the code accesses properties on objects that originate from an API response.
+Convert all snake_case property accessors to camelCase.
+Examples of Required Changes:
+Template Property Access:
+From: {{ plan.pricing_tiers }}
+To: {{ plan.pricingTiers }}
+Script Property Access:
+From: const rate = tier.rate_per_estate;
+To: const rate = tier.ratePerEstate;
+Object Destructuring:
+From: const { pricing_plan_id, is_default } = response.data;
+To: const { pricingPlanId, isDefault } = response.data;
+API Payloads (if applicable): While the response is handled, ensure any objects being sent to the API in POST or PUT requests also use camelCase if they are derived from API data. Laravel will handle the conversion back to snake_case on the backend.
+Important Constraints:
+Do not change the values of any data.
+Do not change filenames.
+Focus only on the property keys being accessed on the frontend.
+Backend files (migrations, models, controllers) are out of scope for this task.
+Output Format:
+For each file that requires modification, please provide the complete, updated code for the file. Use a clear heading to indicate the file path.
+Example Output:
+code
+Code
+--- File: src/views/admin/PricingPlanManager.vue ---
+
+<template>
+  <!-- ... full updated template code ... -->
+  <li v-for="tier in plan.pricingTiers" :key="tier.id">
+    {{ tier.minEstates }} - {{ tier.maxEstates || '&#8734;' }} estates @ R{{ tier.ratePerEstate }} each
+  </li>
+  <!-- ... etc. ... -->
+</template>
+
+<script setup>
+// ... full updated script code ...
+</script>
+code
+Code
+--- File: src/stores/billingStore.js ---
+
+// ... full updated store code ...
+Files to Review:
+Please start by reviewing the following key files that we know are affected, and then proceed to scan the rest of the src/ directory:
+frontend-spa/src/views/admin/PricingPlanManager.vue
+frontend-spa/src/views/admin/subscribers/Index.vue
+frontend-spa/src/views/admin/subscribers/Edit.vue
+frontend-spa/src/views/admin/subscribers/SubscriberForm.vue
+frontend-spa/src/stores/billingStore.js
