@@ -8,10 +8,6 @@ const apiClient = axios.create({
   // Use the environment variable for the full base URL
   baseURL: import.meta.env.VITE_API_BASE_URL,
   
-  // This is required for Sanctum's cookie-based SPA authentication to work.
-  withCredentials: true,
-  // --------------------
-
   headers: {
     'Accept': 'application/json',
   }
