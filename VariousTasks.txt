@@ -1,116 +1,182 @@
-GNU nano 6.2                                              .env
-APP_NAME=Laravel
-APP_ENV=production
-APP_KEY=base64:h/P93noLkkhXRnaGUSHSQZtV3ZfGO+TXb4hjP6hkCxA=
-FRONTEND_URL=https://app.vizabiliti.co.za
-APP_DEBUG=false
-APP_URL=https://api.vizabiliti.co.za
-APP_PREV_KEYS=
-CORS_ALLOWED_ORIGINS=https://app.vizabiliti.co.za,https://staging.vizabiliti.co.za
-
-APP_LOCALE=en
-APP_FALLBACK_LOCALE=en
-APP_FAKER_LOCALE=en_US
-
-APP_MAINTENANCE_DRIVER=file
-# APP_MAINTENANCE_STORE=database
-
-PHP_CLI_SERVER_WORKERS=4
-
-BCRYPT_ROUNDS=12
-
-LOG_CHANNEL=stack
-LOG_STACK=single
-LOG_DEPRECATIONS_CHANNEL=null
-LOG_LEVEL=debug
-
-DB_CONNECTION=pgsql
-DB_HOST=db
-DB_PORT=5432
-DB_DATABASE=vizabiliti_db
-DB_USERNAME=vizabiliti_user
-DB_PASSWORD="Z3330Td+m[|kW6CskI"
-
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-SESSION_ENCRYPT=false
-SESSION_PATH=/
-SESSION_DOMAIN=null
-
-BROADCAST_CONNECTION=log
-FILESYSTEM_DISK=local
-QUEUE_CONNECTION=database
-
-CACHE_STORE=file
-# CACHE_PREFIX=
-
-MEMCACHED_HOST=127.0.0.1
-
-REDIS_CLIENT=phpredis
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-MAIL_MAILER=log
-MAIL_SCHEME=null
-MAIL_HOST=127.0.0.1
-MAIL_PORT=2525
-MAIL_USERNAME=null
-MAIL_PASSWORD=null
-MAIL_FROM_ADDRESS="hello@example.com"
-MAIL_FROM_NAME="${APP_NAME}"
-
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=
-
-
-
-Server docker-compose.yml
-
-  GNU nano 6.2                                       
-    volumes:
-      - ./backend:/var/www/html
-      - /var/www/html/vendor
-    networks:
-      - vizabiliti_network
-      - npm_network
-    depends_on:
-      - db
-
-  # Service 2: The Vue.js Frontend (SPA)
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
-    container_name: viz-frontend
-    restart: unless-stopped
-    networks:
-      - npm_network
-
-  # Service 3: The PostgreSQL Database
-  db:
-    image: 'postgres:17'
-    ports:
-      - "127.0.0.1:5433:5432"
-    container_name: viz-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: vizabiliti_db
-      POSTGRES_USER: vizabiliti_user
-      POSTGRES_PASSWORD: Z3330Td+m[|kW6CskI
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - vizabiliti_network
-
-volumes:
-  pgdata:
-
-networks:
-  vizabiliti_network:
-    driver: bridge
-  npm_network:
-    external: true
+EstateEditor.vue:109 Refreshing lock...
+EstateEditor.vue:109 Refreshing lock...
+estateService.js:40  PUT http://localhost:8010/api/v1/estates/10/lock 404 (Not Found)
+dispatchXhrRequest @ axios.js?v=0193868c:1696
+xhr @ axios.js?v=0193868c:1573
+dispatchRequest @ axios.js?v=0193868c:2107
+Promise.then
+_request @ axios.js?v=0193868c:2310
+request @ axios.js?v=0193868c:2219
+httpMethod @ axios.js?v=0193868c:2356
+wrap @ axios.js?v=0193868c:8
+refreshLock @ estateService.js:40
+(anonymous) @ EstateEditor.vue:110
+setInterval
+acquireLock @ EstateEditor.vue:108
+await in acquireLock
+(anonymous) @ EstateEditor.vue:182
+await in (anonymous)
+(anonymous) @ chunk-3B4AHPPG.js?v=0193868c:4998
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+hook.__weh.hook.__weh @ chunk-3B4AHPPG.js?v=0193868c:4978
+flushPostFlushCbs @ chunk-3B4AHPPG.js?v=0193868c:2481
+flushJobs @ chunk-3B4AHPPG.js?v=0193868c:2523
+Promise.then
+queueFlush @ chunk-3B4AHPPG.js?v=0193868c:2418
+queuePostFlushCb @ chunk-3B4AHPPG.js?v=0193868c:2432
+queueEffectWithSuspense @ chunk-3B4AHPPG.js?v=0193868c:9523
+baseWatchOptions.scheduler @ chunk-3B4AHPPG.js?v=0193868c:8402
+effect2.scheduler @ chunk-3B4AHPPG.js?v=0193868c:2042
+trigger @ chunk-3B4AHPPG.js?v=0193868c:533
+endBatch @ chunk-3B4AHPPG.js?v=0193868c:591
+notify @ chunk-3B4AHPPG.js?v=0193868c:853
+trigger @ chunk-3B4AHPPG.js?v=0193868c:827
+set value @ chunk-3B4AHPPG.js?v=0193868c:1706
+finalizeNavigation @ vue-router.js?v=0193868c:2058
+(anonymous) @ vue-router.js?v=0193868c:1996
+Promise.then
+pushWithRedirect @ vue-router.js?v=0193868c:1983
+push @ vue-router.js?v=0193868c:1934
+goToEstate @ RemindersDashboard.vue:253
+onClick @ RemindersDashboard.vue:69
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+invoker @ chunk-3B4AHPPG.js?v=0193868c:11335
+axios.js?v=0193868c:1257 Uncaught (in promise) AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+settle @ axios.js?v=0193868c:1257
+onloadend @ axios.js?v=0193868c:1606
+XMLHttpRequest.send
+dispatchXhrRequest @ axios.js?v=0193868c:1696
+xhr @ axios.js?v=0193868c:1573
+dispatchRequest @ axios.js?v=0193868c:2107
+Promise.then
+_request @ axios.js?v=0193868c:2310
+request @ axios.js?v=0193868c:2219
+httpMethod @ axios.js?v=0193868c:2356
+wrap @ axios.js?v=0193868c:8
+refreshLock @ estateService.js:40
+(anonymous) @ EstateEditor.vue:110
+setInterval
+acquireLock @ EstateEditor.vue:108
+await in acquireLock
+(anonymous) @ EstateEditor.vue:182
+await in (anonymous)
+(anonymous) @ chunk-3B4AHPPG.js?v=0193868c:4998
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+hook.__weh.hook.__weh @ chunk-3B4AHPPG.js?v=0193868c:4978
+flushPostFlushCbs @ chunk-3B4AHPPG.js?v=0193868c:2481
+flushJobs @ chunk-3B4AHPPG.js?v=0193868c:2523
+Promise.then
+queueFlush @ chunk-3B4AHPPG.js?v=0193868c:2418
+queuePostFlushCb @ chunk-3B4AHPPG.js?v=0193868c:2432
+queueEffectWithSuspense @ chunk-3B4AHPPG.js?v=0193868c:9523
+baseWatchOptions.scheduler @ chunk-3B4AHPPG.js?v=0193868c:8402
+effect2.scheduler @ chunk-3B4AHPPG.js?v=0193868c:2042
+trigger @ chunk-3B4AHPPG.js?v=0193868c:533
+endBatch @ chunk-3B4AHPPG.js?v=0193868c:591
+notify @ chunk-3B4AHPPG.js?v=0193868c:853
+trigger @ chunk-3B4AHPPG.js?v=0193868c:827
+set value @ chunk-3B4AHPPG.js?v=0193868c:1706
+finalizeNavigation @ vue-router.js?v=0193868c:2058
+(anonymous) @ vue-router.js?v=0193868c:1996
+Promise.then
+pushWithRedirect @ vue-router.js?v=0193868c:1983
+push @ vue-router.js?v=0193868c:1934
+goToEstate @ RemindersDashboard.vue:253
+onClick @ RemindersDashboard.vue:69
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+invoker @ chunk-3B4AHPPG.js?v=0193868c:11335
+EstateEditor.vue:109 Refreshing lock...
+EstateEditor.vue:109 Refreshing lock...
+estateService.js:40  PUT http://localhost:8010/api/v1/estates/10/lock 404 (Not Found)
+dispatchXhrRequest @ axios.js?v=0193868c:1696
+xhr @ axios.js?v=0193868c:1573
+dispatchRequest @ axios.js?v=0193868c:2107
+Promise.then
+_request @ axios.js?v=0193868c:2310
+request @ axios.js?v=0193868c:2219
+httpMethod @ axios.js?v=0193868c:2356
+wrap @ axios.js?v=0193868c:8
+refreshLock @ estateService.js:40
+(anonymous) @ EstateEditor.vue:110
+setInterval
+acquireLock @ EstateEditor.vue:108
+await in acquireLock
+(anonymous) @ EstateEditor.vue:182
+await in (anonymous)
+(anonymous) @ chunk-3B4AHPPG.js?v=0193868c:4998
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+hook.__weh.hook.__weh @ chunk-3B4AHPPG.js?v=0193868c:4978
+flushPostFlushCbs @ chunk-3B4AHPPG.js?v=0193868c:2481
+flushJobs @ chunk-3B4AHPPG.js?v=0193868c:2523
+Promise.then
+queueFlush @ chunk-3B4AHPPG.js?v=0193868c:2418
+queuePostFlushCb @ chunk-3B4AHPPG.js?v=0193868c:2432
+queueEffectWithSuspense @ chunk-3B4AHPPG.js?v=0193868c:9523
+baseWatchOptions.scheduler @ chunk-3B4AHPPG.js?v=0193868c:8402
+effect2.scheduler @ chunk-3B4AHPPG.js?v=0193868c:2042
+trigger @ chunk-3B4AHPPG.js?v=0193868c:533
+endBatch @ chunk-3B4AHPPG.js?v=0193868c:591
+notify @ chunk-3B4AHPPG.js?v=0193868c:853
+trigger @ chunk-3B4AHPPG.js?v=0193868c:827
+set value @ chunk-3B4AHPPG.js?v=0193868c:1706
+finalizeNavigation @ vue-router.js?v=0193868c:2058
+(anonymous) @ vue-router.js?v=0193868c:1996
+Promise.then
+pushWithRedirect @ vue-router.js?v=0193868c:1983
+push @ vue-router.js?v=0193868c:1934
+goToEstate @ RemindersDashboard.vue:253
+onClick @ RemindersDashboard.vue:69
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+invoker @ chunk-3B4AHPPG.js?v=0193868c:11335
+axios.js?v=0193868c:1257 Uncaught (in promise) AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+settle @ axios.js?v=0193868c:1257
+onloadend @ axios.js?v=0193868c:1606
+XMLHttpRequest.send
+dispatchXhrRequest @ axios.js?v=0193868c:1696
+xhr @ axios.js?v=0193868c:1573
+dispatchRequest @ axios.js?v=0193868c:2107
+Promise.then
+_request @ axios.js?v=0193868c:2310
+request @ axios.js?v=0193868c:2219
+httpMethod @ axios.js?v=0193868c:2356
+wrap @ axios.js?v=0193868c:8
+refreshLock @ estateService.js:40
+(anonymous) @ EstateEditor.vue:110
+setInterval
+acquireLock @ EstateEditor.vue:108
+await in acquireLock
+(anonymous) @ EstateEditor.vue:182
+await in (anonymous)
+(anonymous) @ chunk-3B4AHPPG.js?v=0193868c:4998
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+hook.__weh.hook.__weh @ chunk-3B4AHPPG.js?v=0193868c:4978
+flushPostFlushCbs @ chunk-3B4AHPPG.js?v=0193868c:2481
+flushJobs @ chunk-3B4AHPPG.js?v=0193868c:2523
+Promise.then
+queueFlush @ chunk-3B4AHPPG.js?v=0193868c:2418
+queuePostFlushCb @ chunk-3B4AHPPG.js?v=0193868c:2432
+queueEffectWithSuspense @ chunk-3B4AHPPG.js?v=0193868c:9523
+baseWatchOptions.scheduler @ chunk-3B4AHPPG.js?v=0193868c:8402
+effect2.scheduler @ chunk-3B4AHPPG.js?v=0193868c:2042
+trigger @ chunk-3B4AHPPG.js?v=0193868c:533
+endBatch @ chunk-3B4AHPPG.js?v=0193868c:591
+notify @ chunk-3B4AHPPG.js?v=0193868c:853
+trigger @ chunk-3B4AHPPG.js?v=0193868c:827
+set value @ chunk-3B4AHPPG.js?v=0193868c:1706
+finalizeNavigation @ vue-router.js?v=0193868c:2058
+(anonymous) @ vue-router.js?v=0193868c:1996
+Promise.then
+pushWithRedirect @ vue-router.js?v=0193868c:1983
+push @ vue-router.js?v=0193868c:1934
+goToEstate @ RemindersDashboard.vue:253
+onClick @ RemindersDashboard.vue:69
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+invoker @ chunk-3B4AHPPG.js?v=0193868c:11335

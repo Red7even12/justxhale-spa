@@ -1,12 +1,11 @@
 
 URL:
-https://app.vizabiliti.co.za/
+http://localhost:5180/estates/create 
 Logged in as Subscriber Admin with full rights. 
 
 
 Bug/Description:
-
-After logging in
+When creating a new estate on on estateform.vue the system gives an error
 
 	
 Data response
@@ -19,204 +18,13 @@ Network:
 
 Console:
 
-app.vizabiliti.co.za/:1 Access to XMLHttpRequest at 'https://api.vizabiliti.co.za/config/default-to-date' from origin 'https://app.vizabiliti.co.za' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
-index-CZMRN25K.js:35 Could not fetch default date. Ue {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
-(anonymous) @ index-CZMRN25K.js:35
-await in (anonymous)
-(anonymous) @ index-CZMRN25K.js:14
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
-Zm @ index-CZMRN25K.js:14
-Xm @ index-CZMRN25K.js:14
-Promise.then
-Ym @ index-CZMRN25K.js:14
-t2 @ index-CZMRN25K.js:14
-J2 @ index-CZMRN25K.js:14
-Eh.d.scheduler @ index-CZMRN25K.js:14
-Xw.m.scheduler @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-Yu @ index-CZMRN25K.js:10
-notify @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-set value @ index-CZMRN25K.js:10
-K @ index-CZMRN25K.js:26
-(anonymous) @ index-CZMRN25K.js:26
-Promise.then
-te @ index-CZMRN25K.js:26
-N @ index-CZMRN25K.js:26
-login @ index-CZMRN25K.js:35
-await in login
-re @ index-CZMRN25K.js:30
-o @ index-CZMRN25K.js:35
-It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-s @ index-CZMRN25K.js:18
-index-CZMRN25K.js:32  GET https://api.vizabiliti.co.za/config/default-to-date net::ERR_FAILED
-(anonymous) @ index-CZMRN25K.js:32
-xhr @ index-CZMRN25K.js:32
-hm @ index-CZMRN25K.js:34
-Promise.then
-_request @ index-CZMRN25K.js:35
-request @ index-CZMRN25K.js:34
-vr.<computed> @ index-CZMRN25K.js:35
-(anonymous) @ index-CZMRN25K.js:30
-getDefaultToDate @ index-CZMRN25K.js:35
-(anonymous) @ index-CZMRN25K.js:35
-(anonymous) @ index-CZMRN25K.js:14
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
-Zm @ index-CZMRN25K.js:14
-Xm @ index-CZMRN25K.js:14
-Promise.then
-Ym @ index-CZMRN25K.js:14
-t2 @ index-CZMRN25K.js:14
-J2 @ index-CZMRN25K.js:14
-Eh.d.scheduler @ index-CZMRN25K.js:14
-Xw.m.scheduler @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-Yu @ index-CZMRN25K.js:10
-notify @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-set value @ index-CZMRN25K.js:10
-K @ index-CZMRN25K.js:26
-(anonymous) @ index-CZMRN25K.js:26
-Promise.then
-te @ index-CZMRN25K.js:26
-N @ index-CZMRN25K.js:26
-login @ index-CZMRN25K.js:35
-await in login
-re @ index-CZMRN25K.js:30
-o @ index-CZMRN25K.js:35
-It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-s @ index-CZMRN25K.js:18
-app.vizabiliti.co.za/:1 Access to XMLHttpRequest at 'https://api.vizabiliti.co.za/reminders?to_date=2025-11-08&sort_by=due_date&sort_dir=asc&page=1&per_page=15' from origin 'https://app.vizabiliti.co.za' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
-index-CZMRN25K.js:35 Ue {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
-m @ index-CZMRN25K.js:35
-await in m
-(anonymous) @ index-CZMRN25K.js:35
-S @ index-CZMRN25K.js:35
-F @ index-CZMRN25K.js:35
-A @ index-CZMRN25K.js:35
-setTimeout
-b @ index-CZMRN25K.js:35
-O @ index-CZMRN25K.js:35
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-Eh.d.call @ index-CZMRN25K.js:14
-U @ index-CZMRN25K.js:10
-jo @ index-CZMRN25K.js:14
-Xm @ index-CZMRN25K.js:14
-Promise.then
-Ym @ index-CZMRN25K.js:14
-sc @ index-CZMRN25K.js:14
-Eh.d.scheduler @ index-CZMRN25K.js:14
-Xw.m.scheduler @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-Yu @ index-CZMRN25K.js:10
-xs @ index-CZMRN25K.js:10
-set @ index-CZMRN25K.js:10
-(anonymous) @ index-CZMRN25K.js:35
-await in (anonymous)
-(anonymous) @ index-CZMRN25K.js:14
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
-Zm @ index-CZMRN25K.js:14
-Xm @ index-CZMRN25K.js:14
-Promise.then
-Ym @ index-CZMRN25K.js:14
-t2 @ index-CZMRN25K.js:14
-J2 @ index-CZMRN25K.js:14
-Eh.d.scheduler @ index-CZMRN25K.js:14
-Xw.m.scheduler @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-Yu @ index-CZMRN25K.js:10
-notify @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-set value @ index-CZMRN25K.js:10
-K @ index-CZMRN25K.js:26
-(anonymous) @ index-CZMRN25K.js:26
-Promise.then
-te @ index-CZMRN25K.js:26
-N @ index-CZMRN25K.js:26
-login @ index-CZMRN25K.js:35
-await in login
-re @ index-CZMRN25K.js:30
-o @ index-CZMRN25K.js:35
-It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-s @ index-CZMRN25K.js:18
-index-CZMRN25K.js:32  GET https://api.vizabiliti.co.za/reminders?to_date=2025-11-08&sort_by=due_date&sort_dir=asc&page=1&per_page=15 net::ERR_FAILED
-(anonymous) @ index-CZMRN25K.js:32
-xhr @ index-CZMRN25K.js:32
-hm @ index-CZMRN25K.js:34
-Promise.then
-_request @ index-CZMRN25K.js:35
-request @ index-CZMRN25K.js:34
-vr.<computed> @ index-CZMRN25K.js:35
-(anonymous) @ index-CZMRN25K.js:30
-getReminders @ index-CZMRN25K.js:35
-m @ index-CZMRN25K.js:35
-(anonymous) @ index-CZMRN25K.js:35
-S @ index-CZMRN25K.js:35
-F @ index-CZMRN25K.js:35
-A @ index-CZMRN25K.js:35
-setTimeout
-b @ index-CZMRN25K.js:35
-O @ index-CZMRN25K.js:35
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-Eh.d.call @ index-CZMRN25K.js:14
-U @ index-CZMRN25K.js:10
-jo @ index-CZMRN25K.js:14
-Xm @ index-CZMRN25K.js:14
-Promise.then
-Ym @ index-CZMRN25K.js:14
-sc @ index-CZMRN25K.js:14
-Eh.d.scheduler @ index-CZMRN25K.js:14
-Xw.m.scheduler @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-Yu @ index-CZMRN25K.js:10
-xs @ index-CZMRN25K.js:10
-set @ index-CZMRN25K.js:10
-(anonymous) @ index-CZMRN25K.js:35
-await in (anonymous)
-(anonymous) @ index-CZMRN25K.js:14
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
-Zm @ index-CZMRN25K.js:14
-Xm @ index-CZMRN25K.js:14
-Promise.then
-Ym @ index-CZMRN25K.js:14
-t2 @ index-CZMRN25K.js:14
-J2 @ index-CZMRN25K.js:14
-Eh.d.scheduler @ index-CZMRN25K.js:14
-Xw.m.scheduler @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-Yu @ index-CZMRN25K.js:10
-notify @ index-CZMRN25K.js:10
-trigger @ index-CZMRN25K.js:10
-set value @ index-CZMRN25K.js:10
-K @ index-CZMRN25K.js:26
-(anonymous) @ index-CZMRN25K.js:26
-Promise.then
-te @ index-CZMRN25K.js:26
-N @ index-CZMRN25K.js:26
-login @ index-CZMRN25K.js:35
-await in login
-re @ index-CZMRN25K.js:30
-o @ index-CZMRN25K.js:35
-It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
-jo @ index-CZMRN25K.js:14
-jn @ index-CZMRN25K.js:14
-s @ index-CZMRN25K.js:18
+EstateForm.vue:290 Failed to save estate: TypeError: Cannot read properties of undefined (reading 'id')
+    at handleSubmit (EstateForm.vue:279:46)
+handleSubmit @ EstateForm.vue:290
+await in handleSubmit
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
+invoker @ chunk-3B4AHPPG.js?v=0193868c:11335
 
 
 
