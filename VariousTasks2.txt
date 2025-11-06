@@ -1,12 +1,31 @@
-exception
-: 
-"Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException"
-file
-: 
-"C:\\Users\\loure\\vizabiliti_estate\\backend-api\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\AbstractRouteCollection.php"
-line
-: 
-45
-message
-: 
-"The route api/v1/admin/core-users/019a3b78-8330-72e9-93ea-17e82f8879b4/force-reset-password could not be found."
+I. Core Server Architecture
+Hosting: A single "Linux Epyc VPS 3" from Domains.co.za.
+Operating System: Ubuntu 22.04 LTS, hardened with a non-root gtw_admin user and UFW firewall.
+Containerization: The entire server operates on a container-based model using Docker and Docker Compose.
+Traffic Management: A single Nginx Proxy Manager container acts as the master reverse proxy. It handles all incoming HTTP (80) and HTTPS (443) traffic, terminates SSL, and forwards requests to the appropriate application container.
+Multi-Tenancy Model: Each major project (like "Vizabiliti Estates") is defined in its own docker-compose.yml file within a dedicated directory (e.g., ~/docker/vizabiliti). All application containers that need to be accessed from the web are connected to a shared Docker network named npm_network, making them visible to the Nginx Proxy Manager.
+II. Component Versions
+Core Infrastructure
+Operating System: Ubuntu 22.04 LTS
+Container Engine: Docker Engine (latest version from official Docker repository)
+Container Orchestration: Docker Compose (latest version from official Docker repository)
+Reverse Proxy
+Application: Nginx Proxy Manager
+Docker Image: jc21/nginx-proxy-manager:latest
+"Vizabiliti Estates" Application Stack
+Backend (Laravel API)
+Framework: Laravel Framework 12.37.0
+Language (in container): PHP 8.3
+Web Server (in container): Nginx
+Source Code Management: Git, cloned from a private GitHub repository.
+Frontend (Vue SPA)
+Framework: Vue 3 / Vite
+Vite Version (in package.json): ^5.0.0
+Build Environment (in container): Node.js 20
+Web Server (in container): Nginx (stable-alpine)
+Source Code Management: Git, cloned from a private GitHub repository.
+Database
+System: PostgreSQL
+Version (in container): 17
+Docker Image: postgres:17
+This summary represents the current state of your production environment.

@@ -1,12 +1,12 @@
 
 URL:
-http://localhost:5180/admin/subscribers/create
-Logged in as Super Admin with full rights. 
+https://app.vizabiliti.co.za/
+Logged in as Subscriber Admin with full rights. 
 
 
 Bug/Description:
 
-Error when saving new subscriber
+After logging in
 
 	
 Data response
@@ -14,66 +14,209 @@ Data response
 
 
 Network:
-exception
-: 
-"Symfony\\Component\\ErrorHandler\\Error\\FatalError"
-file
-: 
-"C:\\Users\\loure\\vizabiliti_estate\\backend-api\\app\\Http\\Requests\\Api\\V1\\StoreSubscriberRequest.php"
-line
-: 
-8
-message
-: 
-"Cannot redeclare class App\\Http\\Requests\\StoreSubscriberRequest (previously declared in C:\\Users\\loure\\vizabiliti_estate\\backend-api\\app\\Http\\Requests\\Api\\V1\\StoreSubscriberRequest.php:8)"
-trace
-: 
-[]
 
 
 
 Console:
 
-client:733 [vite] connecting...
-client:827 [vite] connected.
-Create.vue:43  POST http://localhost:5180/api/v1/subscribers 500 (Internal Server Error)
-dispatchXhrRequest @ axios.js?v=34aa1e54:1696
-xhr @ axios.js?v=34aa1e54:1573
-dispatchRequest @ axios.js?v=34aa1e54:2107
+app.vizabiliti.co.za/:1 Access to XMLHttpRequest at 'https://api.vizabiliti.co.za/config/default-to-date' from origin 'https://app.vizabiliti.co.za' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+index-CZMRN25K.js:35 Could not fetch default date. Ue {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+(anonymous) @ index-CZMRN25K.js:35
+await in (anonymous)
+(anonymous) @ index-CZMRN25K.js:14
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
+Zm @ index-CZMRN25K.js:14
+Xm @ index-CZMRN25K.js:14
 Promise.then
-_request @ axios.js?v=34aa1e54:2310
-request @ axios.js?v=34aa1e54:2219
-httpMethod @ axios.js?v=34aa1e54:2356
-wrap @ axios.js?v=34aa1e54:8
-handleCreateSubscriber @ Create.vue:43
-callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
-callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
-emit @ chunk-LG6AQRJS.js?v=34aa1e54:8589
-(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:10300
-handleSubmit @ SubscriberForm.vue:179
-(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:12326
-callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
-callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
-invoker @ chunk-LG6AQRJS.js?v=34aa1e54:11335
-Create.vue:43  POST http://localhost:5180/api/v1/subscribers 500 (Internal Server Error)
-dispatchXhrRequest @ axios.js?v=34aa1e54:1696
-xhr @ axios.js?v=34aa1e54:1573
-dispatchRequest @ axios.js?v=34aa1e54:2107
+Ym @ index-CZMRN25K.js:14
+t2 @ index-CZMRN25K.js:14
+J2 @ index-CZMRN25K.js:14
+Eh.d.scheduler @ index-CZMRN25K.js:14
+Xw.m.scheduler @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+Yu @ index-CZMRN25K.js:10
+notify @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+set value @ index-CZMRN25K.js:10
+K @ index-CZMRN25K.js:26
+(anonymous) @ index-CZMRN25K.js:26
 Promise.then
-_request @ axios.js?v=34aa1e54:2310
-request @ axios.js?v=34aa1e54:2219
-httpMethod @ axios.js?v=34aa1e54:2356
-wrap @ axios.js?v=34aa1e54:8
-handleCreateSubscriber @ Create.vue:43
-callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
-callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
-emit @ chunk-LG6AQRJS.js?v=34aa1e54:8589
-(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:10300
-handleSubmit @ SubscriberForm.vue:179
-(anonymous) @ chunk-LG6AQRJS.js?v=34aa1e54:12326
-callWithErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2296
-callWithAsyncErrorHandling @ chunk-LG6AQRJS.js?v=34aa1e54:2303
-invoker @ chunk-LG6AQRJS.js?v=34aa1e54:11335
+te @ index-CZMRN25K.js:26
+N @ index-CZMRN25K.js:26
+login @ index-CZMRN25K.js:35
+await in login
+re @ index-CZMRN25K.js:30
+o @ index-CZMRN25K.js:35
+It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+s @ index-CZMRN25K.js:18
+index-CZMRN25K.js:32  GET https://api.vizabiliti.co.za/config/default-to-date net::ERR_FAILED
+(anonymous) @ index-CZMRN25K.js:32
+xhr @ index-CZMRN25K.js:32
+hm @ index-CZMRN25K.js:34
+Promise.then
+_request @ index-CZMRN25K.js:35
+request @ index-CZMRN25K.js:34
+vr.<computed> @ index-CZMRN25K.js:35
+(anonymous) @ index-CZMRN25K.js:30
+getDefaultToDate @ index-CZMRN25K.js:35
+(anonymous) @ index-CZMRN25K.js:35
+(anonymous) @ index-CZMRN25K.js:14
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
+Zm @ index-CZMRN25K.js:14
+Xm @ index-CZMRN25K.js:14
+Promise.then
+Ym @ index-CZMRN25K.js:14
+t2 @ index-CZMRN25K.js:14
+J2 @ index-CZMRN25K.js:14
+Eh.d.scheduler @ index-CZMRN25K.js:14
+Xw.m.scheduler @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+Yu @ index-CZMRN25K.js:10
+notify @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+set value @ index-CZMRN25K.js:10
+K @ index-CZMRN25K.js:26
+(anonymous) @ index-CZMRN25K.js:26
+Promise.then
+te @ index-CZMRN25K.js:26
+N @ index-CZMRN25K.js:26
+login @ index-CZMRN25K.js:35
+await in login
+re @ index-CZMRN25K.js:30
+o @ index-CZMRN25K.js:35
+It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+s @ index-CZMRN25K.js:18
+app.vizabiliti.co.za/:1 Access to XMLHttpRequest at 'https://api.vizabiliti.co.za/reminders?to_date=2025-11-08&sort_by=due_date&sort_dir=asc&page=1&per_page=15' from origin 'https://app.vizabiliti.co.za' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+index-CZMRN25K.js:35 Ue {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+m @ index-CZMRN25K.js:35
+await in m
+(anonymous) @ index-CZMRN25K.js:35
+S @ index-CZMRN25K.js:35
+F @ index-CZMRN25K.js:35
+A @ index-CZMRN25K.js:35
+setTimeout
+b @ index-CZMRN25K.js:35
+O @ index-CZMRN25K.js:35
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+Eh.d.call @ index-CZMRN25K.js:14
+U @ index-CZMRN25K.js:10
+jo @ index-CZMRN25K.js:14
+Xm @ index-CZMRN25K.js:14
+Promise.then
+Ym @ index-CZMRN25K.js:14
+sc @ index-CZMRN25K.js:14
+Eh.d.scheduler @ index-CZMRN25K.js:14
+Xw.m.scheduler @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+Yu @ index-CZMRN25K.js:10
+xs @ index-CZMRN25K.js:10
+set @ index-CZMRN25K.js:10
+(anonymous) @ index-CZMRN25K.js:35
+await in (anonymous)
+(anonymous) @ index-CZMRN25K.js:14
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
+Zm @ index-CZMRN25K.js:14
+Xm @ index-CZMRN25K.js:14
+Promise.then
+Ym @ index-CZMRN25K.js:14
+t2 @ index-CZMRN25K.js:14
+J2 @ index-CZMRN25K.js:14
+Eh.d.scheduler @ index-CZMRN25K.js:14
+Xw.m.scheduler @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+Yu @ index-CZMRN25K.js:10
+notify @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+set value @ index-CZMRN25K.js:10
+K @ index-CZMRN25K.js:26
+(anonymous) @ index-CZMRN25K.js:26
+Promise.then
+te @ index-CZMRN25K.js:26
+N @ index-CZMRN25K.js:26
+login @ index-CZMRN25K.js:35
+await in login
+re @ index-CZMRN25K.js:30
+o @ index-CZMRN25K.js:35
+It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+s @ index-CZMRN25K.js:18
+index-CZMRN25K.js:32  GET https://api.vizabiliti.co.za/reminders?to_date=2025-11-08&sort_by=due_date&sort_dir=asc&page=1&per_page=15 net::ERR_FAILED
+(anonymous) @ index-CZMRN25K.js:32
+xhr @ index-CZMRN25K.js:32
+hm @ index-CZMRN25K.js:34
+Promise.then
+_request @ index-CZMRN25K.js:35
+request @ index-CZMRN25K.js:34
+vr.<computed> @ index-CZMRN25K.js:35
+(anonymous) @ index-CZMRN25K.js:30
+getReminders @ index-CZMRN25K.js:35
+m @ index-CZMRN25K.js:35
+(anonymous) @ index-CZMRN25K.js:35
+S @ index-CZMRN25K.js:35
+F @ index-CZMRN25K.js:35
+A @ index-CZMRN25K.js:35
+setTimeout
+b @ index-CZMRN25K.js:35
+O @ index-CZMRN25K.js:35
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+Eh.d.call @ index-CZMRN25K.js:14
+U @ index-CZMRN25K.js:10
+jo @ index-CZMRN25K.js:14
+Xm @ index-CZMRN25K.js:14
+Promise.then
+Ym @ index-CZMRN25K.js:14
+sc @ index-CZMRN25K.js:14
+Eh.d.scheduler @ index-CZMRN25K.js:14
+Xw.m.scheduler @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+Yu @ index-CZMRN25K.js:10
+xs @ index-CZMRN25K.js:10
+set @ index-CZMRN25K.js:10
+(anonymous) @ index-CZMRN25K.js:35
+await in (anonymous)
+(anonymous) @ index-CZMRN25K.js:14
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+Al.t.__weh.t.__weh @ index-CZMRN25K.js:14
+Zm @ index-CZMRN25K.js:14
+Xm @ index-CZMRN25K.js:14
+Promise.then
+Ym @ index-CZMRN25K.js:14
+t2 @ index-CZMRN25K.js:14
+J2 @ index-CZMRN25K.js:14
+Eh.d.scheduler @ index-CZMRN25K.js:14
+Xw.m.scheduler @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+Yu @ index-CZMRN25K.js:10
+notify @ index-CZMRN25K.js:10
+trigger @ index-CZMRN25K.js:10
+set value @ index-CZMRN25K.js:10
+K @ index-CZMRN25K.js:26
+(anonymous) @ index-CZMRN25K.js:26
+Promise.then
+te @ index-CZMRN25K.js:26
+N @ index-CZMRN25K.js:26
+login @ index-CZMRN25K.js:35
+await in login
+re @ index-CZMRN25K.js:30
+o @ index-CZMRN25K.js:35
+It.s.<computed>.s.<computed> @ index-CZMRN25K.js:18
+jo @ index-CZMRN25K.js:14
+jn @ index-CZMRN25K.js:14
+s @ index-CZMRN25K.js:18
 
 
 

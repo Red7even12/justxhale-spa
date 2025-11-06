@@ -21,7 +21,6 @@ export const useAuthStore = defineStore('auth', {
     },
   },
   actions: {
-    // --- ADD THIS ENTIRE ACTION ---
     /**
      * Handles the successful response from any login-like process.
      * This is the missing function that will fix the error.
@@ -56,7 +55,7 @@ export const useAuthStore = defineStore('auth', {
 
     async login(credentials) {
       try {
-        const response = await api.post('/api/v1/login', credentials);
+        const response = await api.post('/login', credentials);
         
         // The /login response structure might be different. Let's assume it has accessToken.
         // We can reuse a part of the handleLoginSuccess logic here.
@@ -77,7 +76,7 @@ export const useAuthStore = defineStore('auth', {
     async fetchAndSetUser(token) {
       if (!token) return;
       try {
-        const response = await api.get('api/v1/user'); // No need for custom headers if the default is set
+        const response = await api.get('/user'); // No need for custom headers if the default is set
         
         // The /user endpoint gives user, roles, and permissions at the top level.
         this.token = token;
