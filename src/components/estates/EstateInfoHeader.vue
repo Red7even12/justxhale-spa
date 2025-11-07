@@ -106,12 +106,12 @@
           <div class="border rounded-lg p-4">
             <dl class="space-y-4">
               <div>
-                <dt class="font-semibold text-gray-600">POA Executor</dt>
+                <dt class="font-semibold text-gray-600">Agent(Executor)</dt>
                 <dd class="mt-1 text-gray-900 font-medium">{{ quickViewData.poaExecutorPersonName || 'N/A' }}</dd>
                 <dd class="text-sm text-gray-700">ID: {{ quickViewData.poaExecutorPersonIdNumber || 'N/A' }}</dd>
               </div>
               <div>
-                <dt class="font-semibold text-gray-600">POA Executor Tax Number</dt>
+                <dt class="font-semibold text-gray-600">Agent Tax Number</dt>
                 <dd class="mt-1 text-gray-900">{{ quickViewData.poaExecutorPersonTaxNumber || 'N/A' }}</dd>
               </div>
             </dl>

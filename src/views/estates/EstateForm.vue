@@ -1,5 +1,5 @@
-<!-- frontend-spa\src\views\estates\EstateForm.vue (CORRECTED TEMPLATE) -->
 <template>
+  <!-- frontend-spa\src\views\estates\EstateForm.vue -->
   <div class="max-w-4xl mx-auto">
     <div class="bg-white p-8 rounded-lg shadow-md">
       <h1 class="text-2xl font-bold text-[#242E2C] mb-6">
@@ -53,11 +53,6 @@
                 <label for="deTaxNumberPost" class="form-label">Deceased Tax Number (Post)</label>
                 <input id="deTaxNumberPost" v-model="form.deTaxNumberPost" type="text" class="form-input" />
             </div>
-
-            <div class="col-span-1">
-                <label for="spoaDate" class="form-label">SPOA Date</label>
-                <input id="spoaDate" v-model="form.spoaDate" type="date" class="form-input" />
-            </div>
         </div>
 
         <div class="mt-8">
@@ -102,8 +97,6 @@
                   <input id="attorneyReference" v-model="form.attorneyReference" type="text" class="form-input" />
                 </div>
               </div>
-              
-              <div class="mt-8 pt-6 border-t">
                 <div class="mt-8 pt-6 border-t">
                   <h4 class="text-md font-semibold text-gray-700 mb-4">Agent (Executor)</h4>
                   <div class="space-y-4">
@@ -120,7 +113,6 @@
                     </div>
                   </div>
                 </div>
-               </div> 
             </div>
           </div>
         </div>
@@ -273,9 +265,9 @@ const handleSubmit = async () => {
       // Send the corrected payload
       response = await estateService.updateEstate(props.id, snakeCasePayload);
       router.push({ name: 'estates.edit', params: { id: props.id } });
-    } else {
-      // Send the corrected payload
-      response = await estateService.updateEstate(props.id, snakeCasePayload);
+    } else {  
+      // Send the corrected payload for a new Estate record
+      response = await estateService.createEstate(snakeCasePayload); 
       const newEstateId = response.data.data.id;
       router.push({ name: 'estates.edit', params: { id: newEstateId } });
     }
