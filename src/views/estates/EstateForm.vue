@@ -275,7 +275,7 @@ const handleSubmit = async () => {
       router.push({ name: 'estates.edit', params: { id: props.id } });
     } else {
       // Send the corrected payload
-      response = await estateService.createEstate(snakeCasePayload);
+      response = await estateService.updateEstate(props.id, snakeCasePayload);
       const newEstateId = response.data.data.id;
       router.push({ name: 'estates.edit', params: { id: newEstateId } });
     }
@@ -294,40 +294,38 @@ const handleSubmit = async () => {
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
+  // We still need the company and team lists for the dropdowns
   await Promise.all([fetchCompanyList(), fetchTeamList()]);
 
   if (isEditMode.value) {
     try {
+      // The getEstate call now returns everything we need!
       const response = await estateService.getEstate(props.id);
-      const estateData = response.data.data;
-      
+      const estateData = response.data.data; // The backend now provides a 'data' wrapper
+
+      // --- SIMPLIFIED DATA ASSIGNMENT ---
+      // Assign the main form fields
       Object.assign(form, estateData);
-      
+
+      // Format dates for the input fields
       form.dateOfDeath = formatDateForInput(estateData.dateOfDeath);
       form.dateOfInstruction = formatDateForInput(estateData.dateOfInstruction);
       form.spoaDate = formatDateForInput(estateData.spoaDate);
       
-      const lookupPromises = [];
-      if (form.executorContactPersonId) lookupPromises.push(contactPersonService.getContact(form.executorContactPersonId));
-      else lookupPromises.push(Promise.resolve(null));
-
-      if (form.attorneyContactPersonId) lookupPromises.push(contactPersonService.getContact(form.attorneyContactPersonId));
-      else lookupPromises.push(Promise.resolve(null));
-
-      if (form.attorneyPoaPersonId) lookupPromises.push(contactPersonService.getContact(form.attorneyPoaPersonId));
-      else lookupPromises.push(Promise.resolve(null));
-
-      const [executorRes, attorneyRes, agentRes] = await Promise.all(lookupPromises);
-
-      if (executorRes) executorContactPersonName.value = executorRes.data.name;
-      if (attorneyRes) attorneyContactPersonName.value = attorneyRes.data.name;
-      if (agentRes) agentExecutorName.value = agentRes.data.name;
+      // The related contact names are now included in the response from the backend
+      // because we eager loaded them in the controller's 'show' method.
+      executorContactPersonName.value = estateData.executor_contact_person?.name || 'N/A';
+      attorneyContactPersonName.value = estateData.attorney_contact_person?.name || 'N/A';
+      agentExecutorName.value = estateData.attorney_poa_person?.name || 'N/A';
 
     } catch (error) {
-      console.error("Failed to fetch estate data and contacts:", error);
+      console.error("Failed to fetch estate data:", error);
+      // Optional: Redirect or show an error message if the estate can't be loaded
+      // router.push({ name: 'estates.index' }); 
     }
   }
   
+  // This part remains the same
   uiStore.setHeaderActions([
     { label: isEditMode.value ? 'Save Changes' : 'Create & View Estate', onClick: handleSubmit },
     { label: 'Cancel', onClick: () => router.back() }

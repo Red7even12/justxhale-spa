@@ -110,13 +110,14 @@ const submitNote = async () => {
   isLoading.value = true;
   error.value = null;
 
-  const payload = {
-    noteableType: props.noteableType,
-    noteableId: props.noteableId,
-    content: newNoteContent.value,
-    caseNumber: newCaseNumber.value || null, 
-    dueDate: reminderDate.value || null, 
-  };
+// To this object with snake_case keys:
+const payload = {
+  noteable_type: props.noteableType,
+  noteable_id: props.noteableId,
+  content: newNoteContent.value,
+  case_number: newCaseNumber.value || null, 
+  due_date: reminderDate.value || null, 
+};
 
   try {
     const response = await noteService.createNote(payload);

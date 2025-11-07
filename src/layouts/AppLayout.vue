@@ -186,6 +186,16 @@
     <main class="flex-1 p-6">
       <router-view />
     </main>
+
+    <!-- Global Confirmation/Alert Modal -->
+    <ConfirmationModal
+      :show="showModal"
+      :title="modalTitle"
+      :message="modalMessage"
+      :mode="modalMode"
+      @confirm="onConfirm"
+      @cancel="onCancel"
+    />
   </div>
 </template>
 
@@ -195,6 +205,8 @@ import { useAuthStore } from '../store/auth';
 import { useUiStore } from '../store/ui';
 import { useRouter } from 'vue-router';
 import Logo from '../components/common/Logo.vue';
+import ConfirmationModal from '../components/modals/ConfirmationModal.vue'; // Import the modal
+import { useAlerts } from '../composables/useAlerts'; // Import the composable
 
 const isSaaSMenuOpen = ref(false); 
 const isSystemMenuOpen = ref(false); 
@@ -218,6 +230,9 @@ const executeSearch = () => {
   });
   searchTerm.value = '';
 };
+
+// Use the alerts composable
+const { showModal, modalTitle, modalMessage, modalMode, onConfirm, onCancel } = useAlerts();
 </script>
 
 <style scoped>

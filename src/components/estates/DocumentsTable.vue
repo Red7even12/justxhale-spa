@@ -127,6 +127,7 @@ import DocumentLogModal from '@/components/estates/DocumentLogModal.vue';
 import estateService from '@/services/estateService';
 import adminService from '@/services/adminService'; // Import adminService
 import apiClient from '@/services/api'; // Import apiClient directly
+import { useAlerts } from '@/composables/useAlerts'; // Import the composable
 
 const props = defineProps({ estateId: { type: [String, Number], required: true } });
 defineEmits(['open-notes']); 
@@ -140,6 +141,8 @@ const dirtyRequirementIds = reactive(new Set());
 
 // New reactive stores for dynamic data
 const sourcedData = ref({});
+
+const { showAlert } = useAlerts(); // Initialize the composable
 
 const fetchSourcedData = async () => {
     const sourcesToFetch = new Set(
@@ -209,16 +212,16 @@ const saveAllChanges = async () => {
     
     payload.push({
       id: id,
-      actionFieldValue: valueToSend,
+      action_field_value: valueToSend,
     });
   });
 
   try {
     await estateService.batchUpdateDocumentRequirements(props.estateId, payload);
-    alert('Changes saved successfully!');
+    showAlert('Success', 'Changes saved successfully!');
     await fetchRequirements(); // Refetch all data
   } catch (err) {
-    alert('Failed to save changes.');
+    showAlert('Error', 'Failed to save changes.');
     console.error(err);
   }
 };

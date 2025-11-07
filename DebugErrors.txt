@@ -1,14 +1,21 @@
 
 URL:
-http://localhost:5180/estates/create 
+https://app.vizabiliti.co.za/estates/create
 Logged in as Subscriber Admin with full rights. 
 
 
 Bug/Description:
-When creating a new estate on on estateform.vue the system gives an error
+When creating a new estate on on estateform.vue the LIVE system gives an error.  This is not happening on Localhost where it has been repaired earlier
+
+What happens is the new record is saved in the database but the form receives error feedback. 
+
+For a possible explanation of the bug please see @frontend-spa\VariousTasks.txt
+
+
+
 
 	
-Data response
+Data response:
 
 
 
@@ -18,13 +25,13 @@ Network:
 
 Console:
 
-EstateForm.vue:290 Failed to save estate: TypeError: Cannot read properties of undefined (reading 'id')
-    at handleSubmit (EstateForm.vue:279:46)
-handleSubmit @ EstateForm.vue:290
-await in handleSubmit
-callWithErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2296
-callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=0193868c:2303
-invoker @ chunk-3B4AHPPG.js?v=0193868c:11335
+index-Tc65jqTy.js:37 Failed to save estate: TypeError: Cannot read properties of undefined (reading 'id')
+    at X (index-Tc65jqTy.js:37:24751)
+X @ index-Tc65jqTy.js:37
+await in X
+jo @ index-Tc65jqTy.js:14
+jn @ index-Tc65jqTy.js:14
+s @ index-Tc65jqTy.js:18
 
 
 

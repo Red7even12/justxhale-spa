@@ -88,7 +88,7 @@
                   <!-- ADD THIS NOTES BUTTON/ICON -->
                   <button
                     @click="$emit('open-notes', { 
-                    type: 'estateWorkflowProcess', 
+                    type: 'estate_workflow_process', 
                     id: process.id, 
                     name: process.workflowStep.label || process.workflowStep.name.replace(/_/g, ' ') 
                   })"
@@ -111,6 +111,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import estateService from '@/services/estateService'; 
 import WorkflowInput from './WorkflowInput.vue';
+import { useAlerts } from '@/composables/useAlerts'; // Import the composable
 
 const props = defineProps({ estateId: { type: [String, Number], required: true } });
 const emit = defineEmits(['open-notes']);
@@ -120,29 +121,44 @@ const loading = ref(true);
 const error = ref(null);
 const processData = reactive({});
 
-// --- ALL FUNCTIONS ARE NOW PRESENT AND CORRECT (UNCHANGED) ---
+const { showAlert } = useAlerts(); // Initialize the composable
+
+// --- Utility Function for Debouncing ---
+let debounceTimer;
+const debounce = (func, delay) => {
+  return function(...args) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => func.apply(this, args), delay);
+  };
+};
+
+// --- API & LOGIC FUNCTIONS ---
 
 const fetchProcesses = async () => {
-  loading.value = true;
+  // This function doesn't need to set loading to true if it's just a refresh
   error.value = null;
   try {
     const response = await estateService.getWorkflowProcesses(props.estateId);
     processes.value = response.data;
   } catch (err) {
-    error.value = 'Could not load workflow status.';
+    error.value = 'Could not refresh workflow status.';
     console.error(err);
   } finally {
-    loading.value = false;
+    // Only stop global loading on the initial fetch
+    if (loading.value) {
+      loading.value = false;
+    }
   }
 };
 
 const activate = async (processToActivate) => {
+  // ... (unchanged)
   try {
     loading.value = true;
     await estateService.activateWorkflowProcess(props.estateId, processToActivate.id);
     await fetchProcesses();
   } catch (err) { 
-    alert('Failed to activate process.'); 
+    showAlert('Activation Failed', 'Failed to activate process.'); 
     console.error(err);
   } finally {
     loading.value = false;
@@ -150,11 +166,13 @@ const activate = async (processToActivate) => {
 };
 
 const saveProcessData = async (process, isShortcut = false) => {
+  // --- PRIMARY BUG FIX IS HERE ---
+  // The property access is now correctly camelCase.
+  const fieldName = process.workflowStep.completionTriggerField; 
 
-  const fieldName = process.workflowStep.completion_trigger_field;
   if (!fieldName) {
     console.error('No completionTriggerField configured for this step.');
-    alert('Error: This step is not configured correctly (missing completionTriggerField).');
+    showAlert('Configuration Error', 'This step is not configured correctly (missing completionTriggerField).');
     return;
   }
   
@@ -167,32 +185,37 @@ const saveProcessData = async (process, isShortcut = false) => {
 
   if (value === undefined || value === null || value === '') {
     console.warn('Aborting save because value is empty or undefined.');
-    alert('Please provide a value before saving.');
     return;
   }
   
   try {
-    loading.value = true;
     await estateService.completeWorkflowProcess(process.id, value);
     await fetchProcesses();
   } catch (err) { 
     console.error('Failed to save data via API:', err);
-    alert('Failed to save data. Check the console for more details.'); 
-  } finally {
-    loading.value = false;
+    showAlert('Save Failed', 'Failed to save data. Check the console for more details.'); 
   }
+  // No finally block needed if we remove the loading state for background saves
 };
 
+// --- Create a debounced version of the save function ---
+const handleDebouncedSave = debounce((process) => {
+  // The 'isShortcut' parameter is always false when coming from WorkflowInput
+  saveProcessData(process, false);
+}, 750); // 750ms delay is usually a good starting point
 
 
+// The getStatusClass function can be removed if not used in the template.
+// If it's used elsewhere, keep it.
+/*
 const getStatusClass = (status) => {
-    const classMap = {
-        'pending': 'bg-gray-100 text-gray-800',
-        'active': 'bg-blue-100 text-blue-800',
-        'completed': 'bg-green-100 text-green-800',
-    };
-    return classMap[status] || 'bg-gray-100';
+    // ...
 };
+*/
 
-onMounted(fetchProcesses);
+// Fetch data when the component is first mounted
+onMounted(async () => {
+  loading.value = true;
+  await fetchProcesses();
+});
 </script>
