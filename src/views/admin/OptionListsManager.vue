@@ -50,10 +50,12 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="option in optionsForSelectedSource" :key="option.id">
-                <td class="px-4 py-3 font-medium">{{ option.option_value }}</td>
+                <!-- FIX: camelCase optionValue -->
+                <td class="px-4 py-3 font-medium">{{ option.optionValue }}</td>
                 <td class="px-4 py-3">
-                  <span :class="['px-2 py-0.5 text-xs rounded-full', option.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700']">
-                    {{ option.is_active ? 'Active' : 'Inactive' }}
+                  <!-- FIX: camelCase isActive -->
+                  <span :class="['px-2 py-0.5 text-xs rounded-full', option.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700']">
+                    {{ option.isActive ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
                 <td class="px-4 py-3 text-right space-x-3">
@@ -76,14 +78,17 @@
         <div class="space-y-4">
           <div>
             <label for="source_name" class="block text-sm font-medium">Source Name</label>
-            <input id="source_name" type="text" v-model="editableOption.source_name" class="form-input w-full" :disabled="!isCreatingNewSource">
+            <!-- FIX: camelCase sourceName -->
+            <input id="source_name" type="text" v-model="editableOption.sourceName" class="form-input w-full" :disabled="!isCreatingNewSource">
           </div>
           <div>
             <label for="option_value" class="block text-sm font-medium">Option Value</label>
-            <input id="option_value" type="text" v-model="editableOption.option_value" class="form-input w-full" required>
+            <!-- FIX: camelCase optionValue -->
+            <input id="option_value" type="text" v-model="editableOption.optionValue" class="form-input w-full" required>
           </div>
           <div class="flex items-center">
-            <input id="is_active" type="checkbox" v-model="editableOption.is_active" class="form-checkbox">
+            <!-- FIX: camelCase isActive -->
+            <input id="is_active" type="checkbox" v-model="editableOption.isActive" class="form-checkbox">
             <label for="is_active" class="ml-2">Active</label>
           </div>
         </div>
@@ -99,6 +104,9 @@
 <script setup>
 import { ref, onMounted, computed, reactive } from 'vue';
 import adminService from '@/services/adminService';
+import { useAlerts } from '@/composables/useAlerts'; // Added Alert System
+
+const { showAlert, showConfirm } = useAlerts();
 
 const sources = ref([]);
 const optionsForSelectedSource = ref([]);
@@ -108,11 +116,13 @@ const error = ref(null);
 
 const isModalOpen = ref(false);
 const isCreatingNewSource = ref(false);
+
+// FIX: Initialized with camelCase keys
 const editableOption = reactive({
   id: null,
-  source_name: '',
-  option_value: '',
-  is_active: true,
+  sourceName: '',
+  optionValue: '',
+  isActive: true,
 });
 
 const modalTitle = computed(() => editableOption.id ? 'Edit Option' : 'Add Option');
@@ -146,11 +156,12 @@ const closeModal = () => {
 
 const handleAddNewSource = () => {
   isCreatingNewSource.value = true;
+  // FIX: Assign camelCase keys
   Object.assign(editableOption, {
     id: null,
-    source_name: '',
-    option_value: '',
-    is_active: true,
+    sourceName: '',
+    optionValue: '',
+    isActive: true,
   });
   isModalOpen.value = true;
 };
@@ -158,46 +169,68 @@ const handleAddNewSource = () => {
 const handleAddNewOption = () => {
   if (!selectedSource.value) return;
   isCreatingNewSource.value = false;
+  // FIX: Assign camelCase keys
   Object.assign(editableOption, {
     id: null,
-    source_name: selectedSource.value,
-    option_value: '',
-    is_active: true,
+    sourceName: selectedSource.value,
+    optionValue: '',
+    isActive: true,
   });
   isModalOpen.value = true;
 };
 
 const handleEditOption = (option) => {
   isCreatingNewSource.value = false;
+  // Since 'option' comes from API, it is already camelCase.
+  // Object.assign works perfectly here.
   Object.assign(editableOption, option);
   isModalOpen.value = true;
 };
 
 const saveOption = async () => {
   try {
+    // FIX: Convert to snake_case payload for the Backend
+    const payload = {
+        source_name: editableOption.sourceName,
+        option_value: editableOption.optionValue,
+        is_active: editableOption.isActive
+    };
+
     if (editableOption.id) { // Update
-      await adminService.updateSourcedOption(editableOption.id, editableOption);
+      await adminService.updateSourcedOption(editableOption.id, payload);
     } else { // Create
-      await adminService.createSourcedOption(editableOption);
+      await adminService.createSourcedOption(payload);
     }
+    
     closeModal();
-    if (!sources.value.includes(editableOption.source_name)) {
+    showAlert('Success', 'Option saved successfully.');
+
+    // If we created a new source, refresh the list
+    if (!sources.value.includes(editableOption.sourceName)) {
       await fetchSources();
     }
-    await selectSource(editableOption.source_name);
+    await selectSource(editableOption.sourceName);
+
   } catch (err) {
-    alert('Failed to save option.');
     console.error(err);
+    showAlert('Error', 'Failed to save option.');
   }
 };
 
 const handleDeleteOption = async (option) => {
-  if (confirm(`Are you sure you want to delete the option "${option.option_value}"?`)) {
+  // Use custom confirm modal
+  const confirmed = await showConfirm(
+    'Delete Option', 
+    `Are you sure you want to delete the option "${option.optionValue}"?`
+  );
+
+  if (confirmed) {
     try {
       await adminService.deleteSourcedOption(option.id);
-      await selectSource(option.source_name);
+      await selectSource(option.sourceName);
+      showAlert('Success', 'Option deleted.');
     } catch (err) {
-      alert('Failed to delete option.');
+      showAlert('Error', 'Failed to delete option.');
     }
   }
 };

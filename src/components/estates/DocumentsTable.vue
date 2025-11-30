@@ -28,7 +28,6 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <!-- The v-if="submissionData[req.id]" has been removed from here -->
           <tr v-for="req in requirements" :key="req.id">
             
             <td class="px-3 py-1 whitespace-nowrap">
@@ -45,7 +44,6 @@
             </td>
 
             <td class="px-3 py-1 whitespace-nowrap text-sm text-gray-500">
-              <!-- This v-if block now also checks that the data model is ready -->
               <div v-if="req.currentStatus !== 'not_applicable' && submissionData[req.id]">
                 
                 <div v-if="req.documentType.actionFieldType === 'expiry_date' || req.documentType.actionFieldType === 'date'">
@@ -68,6 +66,7 @@
                   >
                 </div>
 
+                <!-- FIX: Ensure 'recordsource' is used to match previous forms -->
                 <div v-else-if="req.documentType.actionFieldType === 'sourced_dropdown'">
                   <select
                     v-model="submissionData[req.id].value"
@@ -75,7 +74,8 @@
                     class="form-select rounded-md border-gray-300 shadow-sm focus:border-brand-blue-300 focus:ring focus:ring-brand-blue-200 focus:ring-opacity-50 w-full py-1 text-sm"
                   >
                     <option value="">-- Select an option --</option>
-                    <option v-for="item in sourcedData[req.documentType.recordSource]" :key="item.id" :value="item.optionValue">
+                    <!-- FIX: Key lookup in sourcedData using [req.documentType.recordsource] -->
+                    <option v-for="item in sourcedData[req.documentType.recordsource]" :key="item.id" :value="item.optionValue">
                       {{ item.optionValue }}
                     </option>
                   </select>
@@ -120,14 +120,13 @@
   />
 </template>
 
-
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import DocumentLogModal from '@/components/estates/DocumentLogModal.vue';
 import estateService from '@/services/estateService';
-import adminService from '@/services/adminService'; // Import adminService
-import apiClient from '@/services/api'; // Import apiClient directly
-import { useAlerts } from '@/composables/useAlerts'; // Import the composable
+import adminService from '@/services/adminService'; 
+import apiClient from '@/services/api'; 
+import { useAlerts } from '@/composables/useAlerts'; 
 
 const props = defineProps({ estateId: { type: [String, Number], required: true } });
 defineEmits(['open-notes']); 
@@ -142,23 +141,24 @@ const dirtyRequirementIds = reactive(new Set());
 // New reactive stores for dynamic data
 const sourcedData = ref({});
 
-const { showAlert } = useAlerts(); // Initialize the composable
+const { showAlert } = useAlerts(); 
 
 const fetchSourcedData = async () => {
+    // FIX: Map using 'recordsource' (all lowercase) to match API
     const sourcesToFetch = new Set(
         requirements.value
-            .map(req => req.documentType.recordSource)
-            .filter(Boolean) // Filter out null/empty recordsources
+            .map(req => req.documentType.recordsource)
+            .filter(Boolean) 
     );
 
     for (const source of sourcesToFetch) {
-        if (!sourcedData.value[source]) { // Fetch only if not already fetched
+        if (!sourcedData.value[source]) { 
             try {
                 const response = await adminService.getOptionsForSource(source);
                 sourcedData.value[source] = response.data;
             } catch (err) {
                 console.error(`Failed to fetch data for source: ${source}`, err);
-                error.value = `Failed to load dropdown data for ${source}.`; // Inform user
+                error.value = `Failed to load dropdown data for ${source}.`; 
             }
         }
     }
@@ -219,7 +219,7 @@ const saveAllChanges = async () => {
   try {
     await estateService.batchUpdateDocumentRequirements(props.estateId, payload);
     showAlert('Success', 'Changes saved successfully!');
-    await fetchRequirements(); // Refetch all data
+    await fetchRequirements(); 
   } catch (err) {
     showAlert('Error', 'Failed to save changes.');
     console.error(err);

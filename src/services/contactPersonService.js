@@ -1,4 +1,4 @@
-//frontend-spa\src\services\contactPersonService.js
+// frontend-spa\src\services\contactPersonService.js
 
 import apiClient from './api.js';
 
@@ -21,10 +21,11 @@ export default {
   // Reactivate /api/v1/contacts/{contactId}
   reactivateContact(contactId) {
     return apiClient.post(`/contacts/${contactId}/restore`);
- },
+  },
 
-  getContact(id) {
-    // Aligned to use '/contacts/' and is relative to the apiClient baseURL
+  // CORRECTED: Renamed 'getContact' to 'getContactPerson' for consistency.
+  getContactPerson(id) {
+    // The endpoint `/contacts/{id}` is correct according to your previous logic.
     return apiClient.get(`/contacts/${id}`);
   }
 };

@@ -8,7 +8,25 @@
 
       <form @submit.prevent="handleSubmit">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            <!-- All v-models are now camelCase -->
+            <!-- Team Allocation -->
+            <div class="col-span-1">
+                <label for="currentTeamId" class="form-label">Assigned Team</label>
+                <select 
+                  id="currentTeamId" 
+                  v-model="form.currentTeamId" 
+                  class="form-select" 
+                  :disabled="!canAllocateTeam"
+                  :title="canAllocateTeam ? '' : 'You do not have permission to allocate teams.'"
+                  required
+                >
+                  <option disabled value="">Please select a team</option>
+                  <option v-for="team in teamList" :key="team.id" :value="team.id">
+                    {{ team.name }}
+                  </option>
+                </select>
+            </div>
+            <div class="col-span-1"></div>
+
             <div class="col-span-1">
                 <label for="estateName" class="form-label">Estate Name</label>
                 <input id="estateName" v-model="form.estateName" type="text" class="form-input" required />
@@ -45,13 +63,13 @@
             </div>
 
             <div class="col-span-1">
-                <label for="deTaxNumberPre" class="form-label">Deceased Tax Number (Pre)</label>
-                <input id="deTaxNumberPre" v-model="form.deTaxNumberPre" type="text" class="form-input" />
+                <label for="deceasedTaxNumberPre" class="form-label">Deceased Estate Tax No (Pre)</label>
+                <input id="deceasedTaxNumberPre" v-model="form.deTaxNumberPre" type="text" class="form-input" />
             </div>
 
             <div class="col-span-1">
-                <label for="deTaxNumberPost" class="form-label">Deceased Tax Number (Post)</label>
-                <input id="deTaxNumberPost" v-model="form.deTaxNumberPost" type="text" class="form-input" />
+                <label for="deceasedTaxNumberPost" class="form-label">Deceased Estate Tax No (Post)</label>
+                <input id="deceasedTaxNumberPost" v-model="form.deTaxNumberPost" type="text" class="form-input" />
             </div>
         </div>
 
@@ -60,15 +78,23 @@
             <div class="col-span-1">
               <h3 class="text-lg font-semibold text-gray-800 mb-4">Executor</h3>
               <div class="space-y-4">
+                <!--
                 <div>
                   <label for="executor_company_id" class="form-label">Executor Company</label>
                   <input :value="executorCompanyName" type="text" class="form-input bg-gray-100" readonly />
                 </div>
+                -->
                 <div>
                   <label for="executor_contact_person_display" class="form-label">Executor Contact</label>
                   <div class="flex items-center">
                     <input id="executor_contact_person_display" :value="executorContactPersonName" type="text" class="form-input flex-grow bg-gray-100" readonly />
-                    <button @click.prevent="openContactEditor('executor')" type="button" class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap">Edit</button>
+                    <button 
+                      @click.prevent="openExecutorModal()" 
+                      type="button" 
+                      class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap"
+                    >
+                      {{ executorContactPersonName && executorContactPersonName !== 'N/A' ? 'Edit Executor' : 'Add New Executor' }}
+                    </button>
                   </div>
                 </div>
                 <div>
@@ -103,9 +129,7 @@
                     <div>
                       <label for="agent_executor_display" class="form-label">Agent (Executor)</label>
                       <div class="flex items-center">
-                        <!-- THE FIX: Use the correct variable 'agentExecutorName' -->
                         <input id="agent_executor_display" :value="agentExecutorName" type="text" class="form-input flex-grow bg-gray-100" readonly />
-                        <!-- THE FIX: Use the correct role 'agent_executor' -->
                         <button @click.prevent="openContactEditor('agent_executor')" type="button" class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap">
                           Edit
                         </button>
@@ -132,6 +156,14 @@
       <ContactPersonSelector v-if="contactEditorRole" :role="contactEditorRole" @contact-selected="handleContactSelected" @cancel="isContactEditorOpen = false" />
     </div>
   </Modal>
+    <!-- NEW EXECUTOR MODAL -->
+  <AddExecutorModal 
+    v-if="isExecutorModalOpen" 
+    :team-id="form.currentTeamId" 
+    :executor="currentExecutorContact"
+    @close="isExecutorModalOpen = false"
+    @executor-saved="handleExecutorSaved"
+  />
 </template>
     
 <script setup>
@@ -145,63 +177,69 @@ import Modal from '@/components/common/Modal.vue';
 import CompanyForm from '@/views/clients/CompanyForm.vue';
 import ContactPersonSelector from '@/components/common/ContactPersonSelector.vue';
 import contactPersonService from '@/services/contactPersonService';
+import { useAuthStore } from '@/store/auth';
+import AddExecutorModal from '@/components/modals/AddExecutorModal.vue';
 
 const router = useRouter();
 const uiStore = useUiStore();
+const authStore = useAuthStore();
 const props = defineProps({ id: { type: String, required: false } });
 const isEditMode = computed(() => !!props.id);
+const isExecutorModalOpen = ref(false);
 
-// --- Utilities ---
 const formatDateForInput = (dateString) => {
   if (!dateString) return null;
   return dateString.substring(0, 10);
 };
 
-// --- Form State ---
 const form = reactive({
-  estateName: '', surname: '', names: '', deceasedIdNumber: '', dateOfDeath: null, dateOfInstruction: null,
-  taxConsFileReference: '', deTaxNumberPre: '', deTaxNumberPost: '', spoaDate: null,
-  currentTeamId: '', executorReference: '', executorCompanyId: null,
-  executorContactPersonId: null, attorneyCompanyId: null, attorneyContactPersonId: null,
-  attorneyReference: '', attorneyPoaPersonId: null,
+  estateName: '',
+  surname: '',
+  names: '',
+  deceasedIdNumber: '',
+  dateOfDeath: null,
+  dateOfInstruction: null,
+  taxConsFileReference: '',
+  deTaxNumberPre: '', // Changed from deceasedTaxNumberPre
+  deTaxNumberPost: '', // Changed from deceasedTaxNumberPost
+  spoaDate: null,
+  currentTeamId: '',
+  executorReference: '',
+  executorCompanyId: null,
+  executorContactPersonId: null,
+  attorneyCompanyId: null,
+  attorneyContactPersonId: null,
+  attorneyReference: '',
+  attorneyPoaPersonId: null,
 });
 
-// --- Component State ---
 const companyList = ref([]);
 const teamList = ref([]);
 const executorContactPersonName = ref('N/A');
 const attorneyContactPersonName = ref('N/A');
-const agentExecutorName = ref('N/A'); 
+const agentExecutorName = ref('N/A');
 const isCompanyModalOpen = ref(false);
 const selectedCompanyForEditing = ref(null);
 const isContactEditorOpen = ref(false);
 const contactEditorRole = ref(null);
+const currentExecutorContact = ref(null); // New ref for current executor data
 
-// --- Computed Properties ---
+const canAllocateTeam = computed(() => {
+  if (!authStore.user || !authStore.user.roles) {
+    return false;
+  }
+  const allowedRoleIds = [1, 3];
+  return authStore.user.roles.some(role => allowedRoleIds.includes(role.id));
+});
+
 const contactSelectorTitle = computed(() => {
-  if (contactEditorRole.value === 'executor') return 'Select Executor Contact';
   if (contactEditorRole.value === 'attorney') return 'Select Attorney Contact';
-  if (contactEditorRole.value === 'agent_executor') return 'Select Agent (Executor)'; 
+  if (contactEditorRole.value === 'agent_executor') return 'Select Agent (Executor)';
   return 'Select Contact';
 });
 
-const executorCompanyName = computed(() => {
-  const company = companyList.value.find(c => c.id === form.executorCompanyId);
-  return company ? company.name : 'N/A';
-});
-
-const attorneyCompanyName = computed(() => {
-  const company = companyList.value.find(c => c.id === form.attorneyCompanyId);
-  return company ? company.name : 'N/A';
-});
-
-// --- START: ADD MISSING MODAL FUNCTIONS ---
-const openCompanyModal = () => {
-  selectedCompanyForEditing.value = form.clientCompanyId
-    ? companyList.value.find(c => c.id === form.clientCompanyId) || null
-    : null;
-  isCompanyModalOpen.value = true;
-};
+const executorCompanyName = computed(() => companyList.value.find(c => c.id === form.executorCompanyId)?.name || 'N/A');
+const attorneyCompanyName = computed(() => companyList.value.find(c => c.id === form.attorneyCompanyId)?.name || 'N/A');
 
 const closeCompanyModal = () => { isCompanyModalOpen.value = false; };
 
@@ -209,34 +247,44 @@ const handleCompanySaved = async () => {
   await fetchCompanyList();
   closeCompanyModal();
 };
-// --- END: ADD MISSING MODAL FUNCTIONS ---
 
+const openExecutorModal = async () => { // Made async to fetch current executor if needed
+  // Set currentExecutorContact if an executor is linked, otherwise it will be null for 'add new'
+  currentExecutorContact.value = null; // Reset first
+  if (form.executorContactPersonId) {
+    try {
+      const response = await contactPersonService.getContactPerson(form.executorContactPersonId);
+      currentExecutorContact.value = response.data;
+    } catch (error) {
+      console.error("Failed to fetch current executor for editing:", error);
+    }
+  }
+  isExecutorModalOpen.value = true;
+};
+
+
+// openContactEditor now only handles 'attorney' and 'agent_executor' roles
 const openContactEditor = (role) => {
   contactEditorRole.value = role;
   isContactEditorOpen.value = true;
 };
 
 const handleContactSelected = (data) => {
-  if (data.role === 'executor') {
-    form.executorCompanyId = data.companyId;
-    form.executorContactPersonId = data.contactId;
-    executorContactPersonName.value = data.contactName;
-  } else if (data.role === 'attorney') {
+  if (data.role === 'attorney') {
     form.attorneyCompanyId = data.companyId;
     form.attorneyContactPersonId = data.contactId;
     attorneyContactPersonName.value = data.contactName;
-  } else if (data.role === 'agent_executor') { // Use the corrected role name
+  } else if (data.role === 'agent_executor') {
     form.attorneyPoaPersonId = data.contactId;
     agentExecutorName.value = data.contactName;
   }
   isContactEditorOpen.value = false;
 };
 
-// --- Data Fetching ---
 const fetchTeamList = async () => {
   try {
     const response = await teamService.getTeams();
-    teamList.value = response.data;
+    teamList.value = response.data.data;
   } catch (error) { console.error("Failed to fetch teams:", error); }
 };
 
@@ -247,77 +295,112 @@ const fetchCompanyList = async () => {
   } catch (error) { console.error("Failed to fetch companies:", error); }
 };
 
-// --- Form Submission ---
+const convertToSnakeCase = (obj) => {
+  if (Array.isArray(obj)) return obj.map(v => convertToSnakeCase(v));
+  if (obj !== null && typeof obj === 'object' && !(obj instanceof File)) {
+    return Object.keys(obj).reduce((acc, key) => {
+      const snakeKey = key.replace(/([A-Z]|\d+)/g, '_$1').replace(/^_/, '').toLowerCase();
+      acc[snakeKey] = convertToSnakeCase(obj[key]);
+      return acc;
+    }, {});
+  }
+  return obj;
+};
+
 const handleSubmit = async () => {
   try {
-    // --- START: CONVERT PAYLOAD TO SNAKE_CASE ---
-    const snakeCasePayload = {};
-    for (const key in form) {
-      // This regex converts a camelCaseKey to a snake_case_key
-      const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-      snakeCasePayload[snakeKey] = form[key];
-    }
-    // --- END: CONVERT PAYLOAD TO SNAKE_CASE ---
-
+    const payload = convertToSnakeCase(form);
     let response;
-    
     if (isEditMode.value) {
-      // Send the corrected payload
-      response = await estateService.updateEstate(props.id, snakeCasePayload);
+      response = await estateService.updateEstate(props.id, payload);
       router.push({ name: 'estates.edit', params: { id: props.id } });
-    } else {  
-      // Send the corrected payload for a new Estate record
-      response = await estateService.createEstate(snakeCasePayload); 
+    } else {
+      response = await estateService.createEstate(payload);
       const newEstateId = response.data.data.id;
       router.push({ name: 'estates.edit', params: { id: newEstateId } });
     }
   } catch (error) {
-    // This will now show you the specific validation errors from Laravel
     const errorMessages = error.response?.data?.errors;
     let alertMessage = "An error occurred while saving the estate.";
     if (errorMessages) {
-        // Grab the first error message to show the user
-        alertMessage = Object.values(errorMessages)[0][0];
+      alertMessage = Object.values(errorMessages)[0][0];
     }
     console.error("Failed to save estate:", error);
     alert(alertMessage);
   }
 };
 
-// --- Lifecycle Hooks ---
+const fetchContactPersonName = async (id) => {
+  if (!id) return 'N/A';
+  try {
+    const response = await contactPersonService.getContactPerson(id);
+    return response.data.name;
+  } catch (error) {
+    console.error(`Failed to fetch contact person name for ID ${id}:`, error);
+    return 'N/A';
+  }
+};
+
+const handleExecutorSaved = async (savedContact) => { // Renamed from handleExecutorAdded
+  // 1. Update the Form ID references
+  // The 'Individual Executors' company (ID 12) is hardcoded on the backend.
+  // The backend storeExecutor method sets the company_id for the newly created executor.
+  // We need to ensure form.executorCompanyId is updated correctly here.
+  form.executorCompanyId = savedContact.company_id || 12;
+  form.executorContactPersonId = savedContact.id;
+
+  // 2. Update the visual text inputs
+  executorContactPersonName.value = savedContact.name;
+
+  // 3. Update the currentExecutorContact ref with the saved data
+  currentExecutorContact.value = savedContact;
+
+  // 4. Re-fetch company list if the executor's company was newly added or changed
+  const companyExists = companyList.value.some(c => c.id === savedContact.company_id);
+  if (!companyExists) {
+    await fetchCompanyList(); // Refresh list to ensure new company (if any) is present
+  }
+  isExecutorModalOpen.value = false;
+};
+
 onMounted(async () => {
-  // We still need the company and team lists for the dropdowns
   await Promise.all([fetchCompanyList(), fetchTeamList()]);
 
   if (isEditMode.value) {
     try {
-      // The getEstate call now returns everything we need!
       const response = await estateService.getEstate(props.id);
-      const estateData = response.data.data; // The backend now provides a 'data' wrapper
+      const estateData = response.data.data;
 
-      // --- SIMPLIFIED DATA ASSIGNMENT ---
-      // Assign the main form fields
-      Object.assign(form, estateData);
+      for (const key in form) {
+        if (Object.prototype.hasOwnProperty.call(estateData, key)) {
+          form[key] = estateData[key];
+        }
+      }
 
-      // Format dates for the input fields
       form.dateOfDeath = formatDateForInput(estateData.dateOfDeath);
       form.dateOfInstruction = formatDateForInput(estateData.dateOfInstruction);
       form.spoaDate = formatDateForInput(estateData.spoaDate);
-      
-      // The related contact names are now included in the response from the backend
-      // because we eager loaded them in the controller's 'show' method.
-      executorContactPersonName.value = estateData.executor_contact_person?.name || 'N/A';
-      attorneyContactPersonName.value = estateData.attorney_contact_person?.name || 'N/A';
-      agentExecutorName.value = estateData.attorney_poa_person?.name || 'N/A';
+
+      executorContactPersonName.value = await fetchContactPersonName(form.executorContactPersonId);
+      attorneyContactPersonName.value = await fetchContactPersonName(form.attorneyContactPersonId);
+      agentExecutorName.value = await fetchContactPersonName(form.attorneyPoaPersonId);
+
+      // Fetch the full executor contact object if one is linked for editing
+      if (form.executorContactPersonId) {
+        try {
+          const executorResponse = await contactPersonService.getContactPerson(form.executorContactPersonId);
+          currentExecutorContact.value = executorResponse.data;
+        } catch (execError) {
+          console.error("Failed to fetch current executor details:", execError);
+          currentExecutorContact.value = null; // Ensure it's null on error
+        }
+      }
 
     } catch (error) {
       console.error("Failed to fetch estate data:", error);
-      // Optional: Redirect or show an error message if the estate can't be loaded
-      // router.push({ name: 'estates.index' }); 
     }
   }
-  
-  // This part remains the same
+
   uiStore.setHeaderActions([
     { label: isEditMode.value ? 'Save Changes' : 'Create & View Estate', onClick: handleSubmit },
     { label: 'Cancel', onClick: () => router.back() }

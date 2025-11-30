@@ -42,8 +42,6 @@ export default {
     return apiClient.put(`/admin/core-users/${userId}`, userData);
   },
 
-  // --- THESE WERE THE MISSING FUNCTIONS ---
-
   /**
    * Triggers a password reset for a subscriber user.
    * @param {string} userId
@@ -58,5 +56,15 @@ export default {
    */
   forceCoreUserPasswordReset(userId) {
     return apiClient.post(`/admin/core-users/${userId}/force-reset-password`);
-  }
+  },
+
+  /**
+   * Fetches a user's email address using a valid invitation/reset token.
+   * @param {string} token The plain-text token from the URL.
+   * @returns {Promise} Axios promise containing the user's email.
+   */
+  getEmailFromToken(token) {
+        // This will call the new route we created: GET /api/v1/user-email-from-token/{token}
+        return apiClient.get(`/user-email-from-token/${token}`);
+    },
 };

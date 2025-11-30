@@ -70,7 +70,7 @@
           class="btn-primary" 
           :disabled="!selectedContactId"
         >
-          Select Contact
+          Save to Estate
         </button>
       </div>
     </div>

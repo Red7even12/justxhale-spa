@@ -27,7 +27,7 @@
           <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
             <router-link @click="closeMobileMenu" to="/" class="mobile-nav-link" :class="{ 'active': $route.name === 'Dashboard' }">Reminders</router-link>
             <router-link @click="closeMobileMenu" to="/estates" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-            <router-link @click="closeMobileMenu" to="/companies" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/companies') }">Clients</router-link>
+            <router-link @click="closeMobileMenu" to="/companies" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/companies') }">Companies</router-link>
           </template>
           
           <!-- == SUBSCRIBER ADMIN MENU == -->
@@ -58,6 +58,7 @@
                 <router-link @click="closeMobileMenu" to="/admin/document-management" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/document-management') }">Document Setup</router-link>                  
                 <router-link @click="closeMobileMenu" to="/admin/workflow-management" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/workflow-management') }">Workflow Management</router-link>
                 <router-link @click="closeMobileMenu" to="/admin/option-lists" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/option-lists') }">Option Lists</router-link>
+                <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
             </div>
           </div>
         </nav>
@@ -81,7 +82,7 @@
             <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
               <router-link to="/" class="nav-link" :class="{ 'active': $route.name === 'Dashboard' }">Reminders</router-link>
               <router-link to="/estates" class="nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-              <router-link to="/companies" class="nav-link" :class="{ 'active': $route.path.startsWith('/companies') }">Clients</router-link>
+              <router-link to="/companies" class="nav-link" :class="{ 'active': $route.path.startsWith('/companies') }">Companies</router-link>
             </template>
 
             <!-- This is a spacer. The border creates a visual separation for admin menus. -->
@@ -129,6 +130,7 @@
                     <router-link to="/admin/document-management" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Setup</router-link>                  
                     <router-link to="/admin/workflow-management" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Workflow Management</router-link>
                     <router-link to="/admin/option-lists" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Option Lists</router-link>
+                    <router-link to="/admin/non-working-days" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>
                   </div>
                 </div>
               </div>

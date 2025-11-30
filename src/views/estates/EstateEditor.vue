@@ -19,11 +19,11 @@
           @view-case-numbers="navigateToCaseNumbers"
         />
 
-        <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white shadow-sm rounded-lg p-6">
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-10 gap-6">
+          <div class="bg-white shadow-sm rounded-lg p-6 lg:col-span-6">
             <DocumentsTable :estate-id="parseInt(props.id)" @open-notes="handleOpenNotesModal" />
           </div>
-          <div class="bg-white shadow-sm rounded-lg p-6">
+          <div class="bg-white shadow-sm rounded-lg p-6 lg:col-span-4">
             <SarsWorkflowPanel :estate-id="parseInt(props.id)" @open-notes="handleOpenNotesModal" />
           </div>
         </div>

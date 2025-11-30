@@ -10,7 +10,7 @@
         <!-- Reminder Details Display -->
         <div class="mb-6 space-y-2 text-sm">
           <p><strong>Estate:</strong> {{ reminder.estate.name }}</p>
-          <p><strong>Origin:</strong> {{ reminder.origin.label }}</p>
+          <p><strong>Task:</strong> {{ reminder.origin.label }}</p>
           <p><strong>Current Due Date:</strong> {{ reminder.dueDate }}</p>
           <p>
             <strong>Status:</strong> 

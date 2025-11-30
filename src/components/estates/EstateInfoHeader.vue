@@ -52,11 +52,11 @@
         <!-- Case Details Info -->
         <dl class="space-y-4">
           <div>
-            <dt class="font-semibold text-gray-600">Deceased Tax Number (Pre)</dt>
+            <dt class="font-semibold text-gray-600">Deceased Estate Tax Number (Pre)</dt>
             <dd class="mt-1 text-gray-900">{{ quickViewData.deTaxNumberPre || 'N/A' }}</dd>
           </div>
           <div>
-            <dt class="font-semibold text-gray-600">Deceased Tax Number (Post)</dt>
+            <dt class="font-semibold text-gray-600">Deceased Estate Tax Number (Post)</dt>
             <dd class="mt-1 text-gray-900">{{ quickViewData.deTaxNumberPost || 'N/A' }}</dd>
           </div>
         </dl>
@@ -91,9 +91,9 @@
                 <dd class="mt-1 text-gray-900 font-medium">{{ quickViewData.attorneyCompanyName || 'N/A' }}</dd>
                 <dd class="text-gray-700">{{ quickViewData.attorneyPersonName }}</dd>
               </div>
-               <div>
-                <dt class="font-semibold text-gray-600">Attorney Tax Number</dt>
-                <dd class="mt-1 text-gray-900">{{ quickViewData.attorneyPersonTaxNumber || 'N/A' }}</dd>
+              <div>
+                <dt class="font-semibold text-gray-600">Attorney VAT Number</dt>
+                <dd class="mt-1 text-gray-900">{{ quickViewData.attorneyCompanyVatNumber || 'N/A' }}</dd>
               </div>
               <div>
                 <dt class="font-semibold text-gray-600">Attorney Reference</dt>

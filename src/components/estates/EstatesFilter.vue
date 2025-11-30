@@ -15,11 +15,11 @@
         <input id="filter_deceased_id_number" v-model="localFilters.deceasedIdNumber" type="text" class="form-input" />
       </div>
       <div>
-        <label for="filter_de_tax_number_pre" class="form-label">Deceased Tax Number (Pre)</label>
+        <label for="filter_de_tax_number_pre" class="form-label">Deceased Estate Tax No (Pre)</label>
         <input id="filter_de_tax_number_pre" v-model="localFilters.deTaxNumberPre" type="text" class="form-input" />
       </div>
       <div>
-        <label for="filter_de_tax_number_post" class="form-label">Deceased Tax Number (Post)</label>
+        <label for="filter_de_tax_number_post" class="form-label">Deceased Estate Tax No (Post)</label>
         <input id="filter_de_tax_number_post" v-model="localFilters.deTaxNumberPost" type="text" class="form-input" />
       </div>
       <div>

@@ -24,6 +24,30 @@
           <option value="all">All</option>
         </select>
       </div>
+      <!-- Team Filter -->
+      <div v-if="teamList.length > 0">
+        <label for="team-filter" class="block text-sm font-medium text-gray-700">Team</label>
+        <select
+          v-model="filters.team_id"
+          id="team-filter"
+          class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+        >
+          <option :value="null">All Teams</option>
+          <option v-for="team in teamList" :key="team.id" :value="team.id">
+            {{ team.name }}
+          </option>
+        </select>
+      </div>
+      <!-- Shared Within Subscriber Filter -->
+      <div class="flex items-end pb-1">
+        <input
+          type="checkbox"
+          id="is-shared-within-subscriber"
+          v-model="filters.is_shared_within_subscriber"
+          class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+        />
+        <label for="is-shared-within-subscriber" class="ml-2 text-sm font-medium text-gray-700">Shared within Subscriber</label>
+      </div>
     </div>
 
     <!-- Loading/Error States -->
@@ -100,6 +124,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUiStore } from '@/store/ui';
 import companyService from '@/services/companyService';
+import teamService from '@/services/teamService'; // Import teamService
 import { useAuthStore } from '@/store/auth';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import { debounce } from 'lodash';
@@ -111,6 +136,7 @@ const navigateToCreate = () => {
   router.push({ name: 'companies.create' });
 };
 const companies = ref([]);
+const teamList = ref([]); // New ref for teams
 const isLoading = ref(true);
 const error = ref(null);
 const isModalVisible = ref(false);
@@ -119,6 +145,8 @@ const companyToDeactivate = ref(null);
 const filters = ref({
   search: '',
   status: 'active',
+  team_id: null, // New filter
+  is_shared_within_subscriber: false, // New filter
 });
 
 const fetchCompanies = async () => {
@@ -131,6 +159,16 @@ const fetchCompanies = async () => {
     error.value = 'Failed to load companies.';
   } finally {
     isLoading.value = false;
+  }
+};
+
+// New function to fetch teams
+const fetchTeams = async () => {
+  try {
+    const response = await teamService.getTeams();
+    teamList.value = response.data;
+  } catch (err) {
+    console.error("Failed to load teams:", err);
   }
 };
 
@@ -176,8 +214,18 @@ watch(() => filters.value.status, (newValue, oldValue) => {
     fetchCompanies();
 });
 
+// New watchers for team_id and is_shared_within_subscriber
+watch(() => filters.value.team_id, (newValue, oldValue) => {
+    fetchCompanies();
+});
+
+watch(() => filters.value.is_shared_within_subscriber, (newValue, oldValue) => {
+    fetchCompanies();
+});
+
 onMounted(() => {
   fetchCompanies();
+  fetchTeams(); // Fetch teams on mount
   if (authStore.hasPermission('create companies')) {
     uiStore.setHeaderActions([
       {

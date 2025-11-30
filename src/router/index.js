@@ -93,7 +93,7 @@ const routes = [
         path: 'companies',
         name: 'companies.index',
         component: CompanyIndex,
-        meta: { permission: 'view companies', displayName: 'Clients' },
+        meta: { permission: 'view companies', displayName: 'Companies' },
       },
       {
         path: 'companies/create',
@@ -152,6 +152,12 @@ const routes = [
         name: 'admin.option-lists',
         component: () => import('@/views/admin/OptionListsManager.vue'),
         meta: { requiresAuth: true, isAdmin: true, displayName: 'Option Lists' }
+      },
+      {
+        path: '/admin/non-working-days',
+        name: 'admin.non-working-days',
+        component: () => import('@/views/admin/NonWorkingDays.vue'),
+        meta: { requiresAuth: true, isAdmin: true, displayName: 'Non-Working Days' }
       },    
       {
         path: 'estates/:id/timeline',

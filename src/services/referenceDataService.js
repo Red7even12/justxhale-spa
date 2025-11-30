@@ -1,17 +1,13 @@
-import apiClient from './api.js';// Assuming you have a central axios instance
+import apiClient from './api';
 
-const referenceDataService = {
-  getProvinces() {
-    return apiClient.get('/reference-data/provinces');
-  },
-
+export default {
   getCountries() {
-    return apiClient.get('/reference-data/countries');  
+    return apiClient.get('/reference-data/countries');
   },
-
   getCompanyTypes() {
     return apiClient.get('/reference-data/company-types');
   },
+  getProvinces() {
+    return apiClient.get('/reference-data/provinces');
+  },
 };
-
-export default referenceDataService;

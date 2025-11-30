@@ -59,17 +59,8 @@
                   {{ process.workflowStep.actionLabelActive }} 
                 </button>
                 <div v-else-if="process.workflowStep.dataType">
-                  <button
-                    v-if="process.workflowStep.actionLabelPending"
-                    @click="saveProcessData(process, true)"
-                    class="btn-primary btn-xs"
-                  >
-                    {{ process.workflowStep.actionLabelPending }}
-                  </button>
                   <WorkflowInput
-                    v-else
                     :data-type="process.workflowStep.dataType"
-                    :process-id="process.id"
                     v-model="processData[process.id]"
                     @save="saveProcessData(process, false)"
                   />

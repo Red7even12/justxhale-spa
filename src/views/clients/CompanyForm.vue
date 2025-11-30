@@ -39,6 +39,10 @@
             <input type="text" id="company-switchboard-number" v-model="form.switchboardNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
           </div>
           <div>
+            <label for="vat-number" class="block text-sm font-medium text-gray-700">VAT Number</label>
+            <input type="text" id="vat-number" v-model="form.vatNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          </div>
+          <div>
             <label for="company-website" class="block text-sm font-medium text-gray-700">Website</label>
             <input type="url" id="company-website" v-model="form.website" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
           </div>
@@ -153,6 +157,7 @@ const form = reactive({
   streetAddress2: '',
   city: '',
   switchboardNumber: '',
+  vatNumber: '',
   website: '',
   companyTypeId: null,
   isInactive: false,
