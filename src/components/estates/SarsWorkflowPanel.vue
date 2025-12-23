@@ -61,6 +61,7 @@
                 <div v-else-if="process.workflowStep.dataType">
                   <WorkflowInput
                     :data-type="process.workflowStep.dataType"
+                    :process-id="process.id"
                     v-model="processData[process.id]"
                     @save="saveProcessData(process, false)"
                   />

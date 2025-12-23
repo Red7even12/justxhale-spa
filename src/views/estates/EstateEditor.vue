@@ -51,9 +51,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive } from 'vue'; 
+import { ref, onMounted, onBeforeUnmount, reactive } from 'vue'; // changed onUnmounted to onBeforeUnmount
 import { useRouter, useRoute } from 'vue-router';
 import estateService from '@/services/estateService';
+import apiClient from '@/services/api'; // Import API Client directly for the locks
 import EstateInfoHeader from '@/components/estates/EstateInfoHeader.vue';
 import DocumentsTable from '@/components/estates/DocumentsTable.vue';
 import SarsWorkflowPanel from '@/components/estates/SarsWorkflowPanel.vue';
@@ -83,7 +84,6 @@ const lockState = reactive({
     lockedBy: '',
     heartbeatInterval: null,
 });
-// ------------------------------------
 
 const fetchEstateDetails = async () => {
   loading.value = true;
@@ -102,13 +102,22 @@ const fetchEstateDetails = async () => {
 // --- Lock Management Functions ---
 const acquireLock = async () => {
     try {
-        await estateService.lockEstate(props.id);
-        console.log('Lock acquired successfully.');
+        // 1. Initial Lock Request
+        await apiClient.post(`/estates/${props.id}/lock`);
+        console.log('Lock acquired/refreshed successfully.');
         
-        lockState.heartbeatInterval = setInterval(() => {
-            console.log('Refreshing lock...');
-            estateService.refreshLock(props.id);
-        }, 180000); // 3 minutes
+        // 2. Clear any existing interval to prevent duplicates
+        if (lockState.heartbeatInterval) clearInterval(lockState.heartbeatInterval);
+
+        // 3. Set Heartbeat to 60 seconds (Half of the 2-minute backend TTL)
+        lockState.heartbeatInterval = setInterval(async () => {
+            try {
+                console.log('Sending lock heartbeat...');
+                await apiClient.put(`/estates/${props.id}/lock`);
+            } catch (innerErr) {
+                console.warn('Lost lock heartbeat connection.');
+            }
+        }, 60000); 
 
     } catch (err) {
         if (err.response && err.response.status === 409) {
@@ -117,23 +126,27 @@ const acquireLock = async () => {
             lockState.lockedBy = err.response.data.user;
         } else {
             console.error('An unexpected error occurred while trying to lock the estate:', err);
-            // Optionally set a friendly error message to the user
         }
     }
 };
 
 const releaseLock = async () => {
+    // 1. Stop the heartbeat immediately
     if (lockState.heartbeatInterval) {
         clearInterval(lockState.heartbeatInterval);
         lockState.heartbeatInterval = null;
     }
 
+    // 2. If we own the lock, tell the server to delete it
     if (!lockState.isLockedByOther) {
         try {
             console.log('Releasing lock...');
-            estateService.unlockEstate(props.id);
+            // We use Beacon API logic here by using a standard request 
+            // inside onBeforeUnmount which usually completes before the page unloads
+            await apiClient.delete(`/estates/${props.id}/lock`);
         } catch (err) {
-            console.error('Failed to release lock, but navigating away anyway.', err);
+            // Ignore errors on release (e.g. if network is already lost)
+            console.warn('Lock release signal failed (harmless if navigating away).');
         }
     }
 };
@@ -157,7 +170,11 @@ const handleOpenNotesModal = (payload) => {
   notesContext.noteableId = payload.id;
 
   if (payload.type === 'estate') {
-    notesContext.initialNotes = estate.value.notes || [];
+    // FIX: Use camelCase 'timelineNotes' to match the actual API response
+    const rawTimeline = estate.value.timelineNotes;
+    
+    // Handle potential array vs object wrapper (just in case)
+    notesContext.initialNotes = (rawTimeline && rawTimeline.data) ? rawTimeline.data : (rawTimeline || []);
   } else if (payload.type === 'estate_workflow_process' && estate.value.workflowProcesses) {
     const process = estate.value.workflowProcesses.find(p => p.id === payload.id);
     notesContext.initialNotes = process ? process.notes : [];
@@ -174,15 +191,11 @@ const handleNoteAdded = () => {
 };
 
 onMounted(async () => {
-  // First, get the estate data
   await fetchEstateDetails();
-
-  // Once data is loaded, if successful, attempt to acquire the lock
   if (estate.value) {
     await acquireLock();
   }
 
-  // Logic to open notes from a URL query
   const { open_notes_for_type, open_notes_for_id, open_notes_for_name } = route.query;
   if (open_notes_for_type && open_notes_for_id) {
     handleOpenNotesModal({
@@ -193,9 +206,8 @@ onMounted(async () => {
   }
 });
 
-// The onUnmounted hook to release the lock when the user leaves the page. This is critical.
-onUnmounted(() => {
+// Changed from onUnmounted to onBeforeUnmount for better reliability
+onBeforeUnmount(() => {
     releaseLock();
 });
-
 </script>

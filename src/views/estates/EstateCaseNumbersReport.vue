@@ -1,7 +1,10 @@
 <template>
   <div class="p-6 bg-white shadow-sm rounded-lg">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-bold text-gray-900">Case Numbers Report for Estate {{ id }}</h2>
+      <!-- UPDATED: Shows Name instead of ID -->
+      <h2 class="text-xl font-bold text-gray-900">
+        Case Numbers Report for <span class="text-brand-blue-600">{{ estateName || 'Loading...' }}</span>
+      </h2>
       <button @click="exportToCsv" class="btn-primary">Export to CSV</button>
     </div>
 
@@ -16,14 +19,16 @@
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Case Number</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Note Excerpt</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin Person</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="(item, index) in caseNumberData" :key="index">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.source }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.case_number }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.caseNumber }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.date }}</td>
-              <td class="px-6 py-4 text-sm text-gray-500">{{ item.note_excerpt }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ item.noteExcerpt }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ item.adminPerson }}</td>
             </tr>
           </tbody>
         </table>
@@ -52,17 +57,36 @@ const props = defineProps({
 const router = useRouter();
 
 const caseNumberData = ref(null);
+const estateName = ref(''); // State for the name
 const loading = ref(false);
 const error = ref(null);
+
+// New function to get the name
+const fetchEstateName = async (estateId) => {
+    try {
+        const response = await estateService.getEstate(estateId);
+        // Middleware converts estate_name to estateName
+        estateName.value = response.data.data.estateName; 
+    } catch (err) {
+        console.error("Could not fetch estate details for header", err);
+        estateName.value = `Estate #${estateId}`; // Fallback
+    }
+};
 
 const fetchCaseNumbers = async (estateId) => {
   if (!estateId) return;
 
   loading.value = true;
   error.value = null;
+  
+  // Fetch both concurrently
   try {
-    const response = await estateService.getCaseNumbers(estateId);
-    caseNumberData.value = response.data;
+    const [caseResponse] = await Promise.all([
+        estateService.getCaseNumbers(estateId),
+        fetchEstateName(estateId) // Fire and forget the name fetch
+    ]);
+    
+    caseNumberData.value = caseResponse.data;
   } catch (err) {
     console.error('Failed to fetch case numbers:', err);
     error.value = 'Failed to load case numbers.';
@@ -81,19 +105,19 @@ const exportToCsv = () => {
     return;
   }
 
-  const headers = ['Source', 'Case Number', 'Date', 'Note Excerpt'];
+  const headers = ['Source', 'Case Number', 'Date', 'Admin Person', 'Note Excerpt'];
 
   const rows = caseNumberData.value.map(item => {
     const source = item.source ?? '';
-    const caseNumber = item.case_number ?? '';
+    const caseNumber = item.caseNumber ?? '';
     const date = item.date ?? '';
-    const note = item.note_excerpt ? String(item.note_excerpt) : '';
-    // Escape double quotes by doubling them for CSV
+    const admin = item.adminPerson ?? '';
+    const note = item.noteExcerpt ? String(item.noteExcerpt) : '';
+    
     const escapedNote = note.replace(/"/g, '""');
-    return [source, caseNumber, date, escapedNote];
+    return [source, caseNumber, date, admin, escapedNote];
   });
 
-  // Build CSV content with proper quoting
   const csvContent = [
     headers.join(','),
     ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
@@ -103,7 +127,7 @@ const exportToCsv = () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `estate_${props.id}_case_numbers.csv`;
+  a.download = `estate_${estateName.value || props.id}_case_numbers.csv`; // Use name in filename too
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

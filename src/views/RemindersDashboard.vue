@@ -6,7 +6,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="filter-group">
           <label for="search" class="block text-sm font-medium text-gray-700">Search Estate/Step</label>
-          <input id="search" type="text" v-model="filters.search" placeholder="e.g., Focke123 or Await IT3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          <input id="search" type="text" v-model="filters.search" placeholder="e.g., Williams H or Coded as Estate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
         </div>
         <div class="filter-group">
           <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -45,14 +45,18 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="reminder in reminders.data" :key="reminder.id" :class="getRowClass(reminder)" class="hover:bg-gray-50">
+            <tr v-for="reminder in reminders.data" :key="reminder.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ formatDate(reminder.dueDate) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <span class="font-medium text-gray-900">{{ reminder.estate.name }}</span>
                 <!-- <span class="ml-1 text-gray-500" v-if="reminder.estate.executor_ref">({{ reminder.estate.executor_ref }})</span> -->
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reminder.origin ? reminder.origin.label : 'General' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reminder.status.name }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <span :class="getStatusClass(reminder)">
+                  {{ reminder.status.name }}
+                </span>
+              </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   
                   <!-- START: MODIFIED CODE BLOCK -->
@@ -216,20 +220,27 @@ watch(filters, debounce(() => {
   }
 }, 300), { deep: true });
 
-const getRowClass = (reminder) => {
-  if (reminder.status.name === 'Completed') {
-    return 'bg-green-50';
+const getStatusClass = (reminder) => {
+  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
+
+  if (reminder.status.name === 'Completed' || reminder.status.name === 'Cancelled') {
+    return `${baseClasses} bg-gray-100 text-gray-800`;
   }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(reminder.due_date);
+  const dueDate = new Date(reminder.dueDate);
+  dueDate.setHours(0, 0, 0, 0);
+
   if (dueDate < today) {
-    return 'bg-red-50';
+    return `${baseClasses} bg-red-100 text-red-800`;
   }
+
   if (dueDate.getTime() === today.getTime()) {
-    return 'bg-yellow-50';
+    return `${baseClasses} bg-green-100 text-green-800`;
   }
-  return '';
+  
+  return 'text-gray-600'; // Default for future reminders
 };
 
 const handleSort = (field) => {

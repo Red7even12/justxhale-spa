@@ -226,8 +226,7 @@ onMounted(async () => {
 });
 
 const saveExecutor = async () => {
-  // Validate that a team is selected before saving (only for new creation)
-  if (!isEditMode.value && !props.teamId) { // Only validate teamId if not in edit mode
+  if (!props.teamId) {
     error.value = "Please select an 'Assigned Team' on the main form before adding an executor.";
     return;
   }
@@ -237,7 +236,9 @@ const saveExecutor = async () => {
 
   try {
     const payload = {
-      name: `${form.firstName} ${form.lastName}`.trim(), // Combine firstName and lastName into a single name field
+      name: `${form.firstName} ${form.lastName}`.trim(),
+      first_name: form.firstName,
+      last_name: form.lastName,
       email: form.email,
       cell_number: form.cellNumber,
       country_dialing_code: form.countryDialingCode,

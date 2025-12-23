@@ -47,7 +47,7 @@
       <p class="text-xs text-gray-500 mt-1">A reminder will be created when you save the note.</p>
     </div>
 
-    <!-- List of existing notes -->
+    <!-- List of existing notes Old 
     <div class="space-y-4">
       <p v-if="notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
       
@@ -60,7 +60,37 @@
           by <strong>{{ note.user?.firstName || 'Unknown User' }}</strong> - {{ note.createdAtHuman }}
         </div>
       </div>
+    </div>  -->
+    <!-- List of existing notes -->
+    <div class="space-y-4">
+      <p v-if="notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
+      
+      <div v-for="note in notes" :key="note.id" class="bg-gray-50 p-4 rounded-lg border relative">
+        <!-- Content -->
+        <p class="text-gray-800 whitespace-pre-wrap mb-2">{{ note.content }}</p>
+        
+        <!-- Case Number (Data Style) -->
+        <div v-if="note.caseNumber" class="mb-2 text-sm text-brand-blue-600 bg-brand-blue-50 inline-block px-2 py-1 rounded">
+          <strong>CN:</strong> {{ note.caseNumber }}
+        </div>
+
+        <!-- Footer Row: Origin (Left) | User Info (Right) -->
+        <div class="flex justify-between items-center mt-3 pt-2 border-t border-gray-200">
+            <!-- Left: Origin Context -->
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <span v-if="note.origin" class="bg-gray-200 px-2 py-1 rounded text-gray-600">
+                    {{ note.origin }}
+                </span>
+            </div>
+
+            <!-- Right: User & Date -->
+            <div class="text-xs text-gray-500">
+                by <strong>{{ note.user?.name || note.user?.firstName || 'Unknown' }}</strong> - {{ note.createdAtHuman || note.created_at }}
+            </div>
+        </div>
+      </div>
     </div>
+
   </div>
 </template>
 

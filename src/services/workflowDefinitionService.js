@@ -17,7 +17,7 @@ const workflowDefinitionService = {
     return apiClient.delete(`/admin/workflow-definitions/${id}`);
   },
   exportSteps(definitionId) {
-    return apiClient.get(`/admin/workflow-definitions/${definitionId}/export-steps`, {
+    return apiClient.get(`/workflow-definitions/${definitionId}/export-steps`, {
       responseType: 'blob', // This is crucial to handle the file download
     });
   },
@@ -27,7 +27,7 @@ const workflowDefinitionService = {
 
       // When sending FormData, the browser automatically sets the correct
     // 'Content-Type': 'multipart/form-data' header.
-    return apiClient.post(`/admin/workflow-definitions/${definitionId}/import-steps`, formData);
+    return apiClient.post(`/workflow-definitions/${definitionId}/import-steps`, formData);
   }, 
 };
 

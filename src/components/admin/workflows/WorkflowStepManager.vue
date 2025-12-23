@@ -55,6 +55,9 @@
 
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reminders</th>
 
+            <!-- ADDED: Reminder Subject Column -->
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reminder Subject</th>
+
             <!-- ADDED: Trigger Field Column -->
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Triggered By ID</th>
             
@@ -68,6 +71,10 @@
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">
               {{ step.reminderMaxCycles || 0 }} cycles @ {{ step.reminderIntervalDays || 0 }} days
             </td>
+            
+            <!-- ADDED: Reminder Subject Data Cell -->
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{{ step.reminderSubject || 'N/A' }}</td>
+
             <!-- ADDED: Trigger Field Data Cell -->
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600 font-mono">{{ step.startsAfterStepId || 'N/A' }}</td>
 
