@@ -109,11 +109,45 @@
       </div>
     </div>
 
-    <!-- Pagination Controls -->
-    <div class="mt-4 flex items-center justify-between" v-if="reminders.meta && reminders.meta.last_page > 1">
-        <button @click="changePage(reminders.meta.current_page - 1)" :disabled="!reminders.links.prev" class="btn-secondary !py-1.5 !px-3 !text-sm !normal-case" :class="{'opacity-50 cursor-not-allowed': !reminders.links.prev}">Prev</button>
-        <span class="text-sm text-gray-700">Page {{ reminders.meta.current_page }} of {{ reminders.meta.last_page }}</span>
-        <button @click="changePage(reminders.meta.current_page + 1)" :disabled="!reminders.links.next" class="btn-secondary !py-1.5 !px-3 !text-sm !normal-case" :class="{'opacity-50 cursor-not-allowed': !reminders.links.next}">Next</button>
+ <!-- Pagination & Display Controls -->
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200" v-if="reminders.meta">
+        
+        <!-- Left: Rows Per Page -->
+        <div class="flex items-center text-sm text-gray-700">
+            <span class="mr-2">Show</span>
+            <select v-model="filters.per_page" class="form-select rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 py-1 text-sm">
+                <option :value="10">10</option>
+                <option :value="15">15</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+            </select>
+            <span class="ml-2">rows</span>
+        </div>
+
+        <!-- Right: Pagination Buttons -->
+        <div class="flex items-center space-x-2" v-if="reminders.meta.last_page > 1">
+            <button 
+                @click="changePage(filters.page - 1)" 
+                :disabled="!reminders.links.prev" 
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+            </button>
+            
+            <span class="text-sm text-gray-700 font-medium">
+                Page {{ reminders.meta.current_page }} of {{ reminders.meta.last_page }}
+            </span>
+            
+            <button 
+                @click="changePage(filters.page + 1)" 
+                :disabled="!reminders.links.next" 
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+            </button>
+        </div>
+        <div v-else class="text-sm text-gray-500">
+            Returned: {{ reminders.meta.total }} Results
+        </div>
     </div>
   </div>
 
@@ -170,7 +204,7 @@ const filters = reactive({
   sort_by: 'due_date',
   sort_dir: 'asc', 
   page: 1,
-  per_page: 15
+  per_page: 15 // Default value
 });
 
 const isNotesModalOpen = ref(false);
@@ -213,12 +247,23 @@ onMounted(async () => {
   }
 });
 
-watch(filters, debounce(() => {
-  if (filters.page !== 1) {
-  } else {
+// This handles all data fetching automatically.
+// 1. If Search/Status/Dates/PerPage change -> Reset to Page 1
+// 2. If Page/Sort changes -> Just fetch
+watch(filters, (newValues, oldValues) => {
+    // Check if the "Page" changed specifically. If not, it means a filter changed.
+    // If a filter changed (search, per_page, etc), we must reset to Page 1.
+    if (newValues.page === oldValues.page) {
+        filters.page = 1;
+    }
+    
+    // Debounce the fetch to prevent double-calls on rapid typing
+    debounceFetch();
+}, { deep: true });
+
+const debounceFetch = debounce(() => {
     fetchReminders();
-  }
-}, 300), { deep: true });
+}, 300);
 
 const getStatusClass = (reminder) => {
   const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
@@ -250,13 +295,13 @@ const handleSort = (field) => {
     filters.sort_by = field;
     filters.sort_dir = 'asc';
   }
-  fetchReminders();
+  // No need to call fetchReminders(), the watcher detects the change.
 };
 
 const changePage = (newPage) => {
     if (newPage > 0 && newPage <= reminders.value.meta.last_page) {
         filters.page = newPage;
-        fetchReminders();
+        // No need to call fetchReminders(), the watcher detects the change.
     }
 }
 
