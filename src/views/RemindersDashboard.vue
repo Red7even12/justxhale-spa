@@ -109,8 +109,9 @@
       </div>
     </div>
 
- <!-- Pagination & Display Controls -->
-    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200" v-if="reminders.meta">
+    <!-- Pagination & Display Controls -->
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200" 
+         v-if="reminders.meta">
         
         <!-- Left: Rows Per Page -->
         <div class="flex items-center text-sm text-gray-700">
@@ -122,29 +123,31 @@
                 <option :value="50">50</option>
                 <option :value="100">100</option>
             </select>
-            <span class="ml-2">rows</span>
+            <span class="ml-2">entries</span>
         </div>
 
         <!-- Right: Pagination Buttons -->
-        <div class="flex items-center space-x-2" v-if="reminders.meta.last_page > 1">
+        <div class="flex items-center space-x-2" v-if="reminders.meta.lastPage > 1">
             <button 
                 @click="changePage(filters.page - 1)" 
-                :disabled="!reminders.links.prev" 
+                :disabled="filters.page <= 1" 
                 class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Previous
             </button>
             
             <span class="text-sm text-gray-700 font-medium">
-                Page {{ reminders.meta.current_page }} of {{ reminders.meta.last_page }}
+                Page {{ reminders.meta.currentPage }} of {{ reminders.meta.lastPage }}
             </span>
             
             <button 
                 @click="changePage(filters.page + 1)" 
-                :disabled="!reminders.links.next" 
+                :disabled="filters.page >= reminders.meta.lastPage" 
                 class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Next
             </button>
         </div>
+        
+        <!-- Fallback text if only 1 page exists -->
         <div v-else class="text-sm text-gray-500">
             Returned: {{ reminders.meta.total }} Results
         </div>
@@ -248,17 +251,28 @@ onMounted(async () => {
 });
 
 // This handles all data fetching automatically.
-// 1. If Search/Status/Dates/PerPage change -> Reset to Page 1
-// 2. If Page/Sort changes -> Just fetch
 watch(filters, (newValues, oldValues) => {
-    // Check if the "Page" changed specifically. If not, it means a filter changed.
-    // If a filter changed (search, per_page, etc), we must reset to Page 1.
-    if (newValues.page === oldValues.page) {
-        filters.page = 1;
+    // If any filter other than the page or sort order has changed, reset to page 1.
+    const hasFilterChanged = 
+        newValues.search !== oldValues.search ||
+        newValues.status !== oldValues.status ||
+        newValues.from_date !== oldValues.from_date ||
+        newValues.to_date !== oldValues.to_date ||
+        newValues.per_page !== oldValues.per_page;
+
+    if (hasFilterChanged) {
+        // Avoid an infinite loop if we are already on page 1.
+        // If we change the page to 1, the watcher will be re-triggered and will then fetch the data.
+        if (filters.page !== 1) {
+            filters.page = 1;
+        } else {
+            // If already on page 1, the page number doesn't change, so we must trigger the fetch manually.
+            debounceFetch();
+        }
+    } else {
+        // If only page or sort order changed, just fetch the new data.
+        debounceFetch();
     }
-    
-    // Debounce the fetch to prevent double-calls on rapid typing
-    debounceFetch();
 }, { deep: true });
 
 const debounceFetch = debounce(() => {
@@ -299,9 +313,9 @@ const handleSort = (field) => {
 };
 
 const changePage = (newPage) => {
-    if (newPage > 0 && newPage <= reminders.value.meta.last_page) {
+    // Use camelCase as the API response seems to be converted by a middleware.
+    if (reminders.value.meta && newPage > 0 && newPage <= reminders.value.meta.lastPage) {
         filters.page = newPage;
-        // No need to call fetchReminders(), the watcher detects the change.
     }
 }
 
