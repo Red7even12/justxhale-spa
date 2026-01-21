@@ -3,7 +3,7 @@
   <div class="max-w-4xl mx-auto">
     <div class="bg-white p-8 rounded-lg shadow-md">
       <h1 class="text-2xl font-bold text-[#242E2C] mb-6">
-        {{ isEditMode ? 'Edit Estate Details' : 'Create New Estate' }}
+        {{ isEditMode ? 'Edit Estate' : 'Create New Estate' }}
       </h1>
 
       <form @submit.prevent="handleSubmit">
@@ -58,11 +58,6 @@
             </div>
 
             <div class="col-span-1">
-                <label for="taxConsFileReference" class="form-label">Tax Practitioner File Ref</label>
-                <input id="taxConsFileReference" v-model="form.taxConsFileReference" type="text" class="form-input" />
-            </div>
-
-            <div class="col-span-1">
                 <label for="deceasedTaxNumberPre" class="form-label">Deceased Estate Tax No (Pre)</label>
                 <input id="deceasedTaxNumberPre" v-model="form.deTaxNumberPre" type="text" class="form-input" />
             </div>
@@ -71,21 +66,8 @@
                 <label for="deceasedTaxNumberPost" class="form-label">Deceased Estate Tax No (Post)</label>
                 <input id="deceasedTaxNumberPost" v-model="form.deTaxNumberPost" type="text" class="form-input" />
             </div>
-        </div>
-
-        <div class="mt-8">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-            <div class="col-span-1">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">Executor</h3>
-              <div class="space-y-4">
-                <!--
                 <div>
-                  <label for="executor_company_id" class="form-label">Executor Company</label>
-                  <input :value="executorCompanyName" type="text" class="form-input bg-gray-100" readonly />
-                </div>
-                -->
-                <div>
-                  <label for="executor_contact_person_display" class="form-label">Executor Contact</label>
+                  <label for="executor_contact_person_display" class="form-label">Executor (Family Member)</label>
                   <div class="flex items-center">
                     <input id="executor_contact_person_display" :value="executorContactPersonName" type="text" class="form-input flex-grow bg-gray-100" readonly />
                     <button 
@@ -93,53 +75,111 @@
                       type="button" 
                       class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap"
                     >
-                      {{ executorContactPersonName && executorContactPersonName !== 'N/A' ? 'Edit Executor' : 'Add New Executor' }}
+                      {{ executorContactPersonName && executorContactPersonName !== 'N/A' ? 'Edit Executor' : 'Add Executor' }}
+                    </button>
+                  </div>
+                </div>            
+            <div class="col-span-1">
+                <label for="taxConsFileReference" class="form-label">Tax Practitioner File Ref No</label>
+                <input id="taxConsFileReference" v-model="form.taxConsFileReference" type="text" class="form-input" />
+            </div>
+        </div>
+
+<div class="mt-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+            
+            <!-- LEFT COLUMN: Attorney -->
+            <div class="col-span-1">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Attorney</h3>
+              <div class="space-y-4">
+                
+                <!-- Attorney Company (Button moved here) -->
+                <div>
+                  <label for="attorney_company_id" class="form-label">Attorney Company</label>
+                  <div class="flex items-center">
+                    <input 
+                      :value="attorneyCompanyName" 
+                      type="text" 
+                      class="form-input flex-grow bg-gray-100" 
+                      readonly 
+                    />
+                    <button 
+                      @click.prevent="openContactEditor('attorney')" 
+                      type="button" 
+                      class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap"
+                    >
+                      Add/Edit
                     </button>
                   </div>
                 </div>
+
+                <!-- Attorney Contact (Button removed) -->
                 <div>
-                  <label for="executorReference" class="form-label">Executor Reference</label>
-                  <input id="executorReference" v-model="form.executorReference" type="text" class="form-input" />
+                  <label for="attorney_contact_person_display" class="form-label">Attorney Contact</label>
+                  <input 
+                    id="attorney_contact_person_display" 
+                    :value="attorneyContactPersonName" 
+                    type="text" 
+                    class="form-input w-full bg-gray-100" 
+                    readonly 
+                  />
+                </div>
+
+                <!-- Attorney Reference -->
+                <div>
+                  <label for="attorneyReference" class="form-label">Attorney File Ref No</label>
+                  <input 
+                    id="attorneyReference" 
+                    v-model="form.attorneyReference" 
+                    type="text" 
+                    class="form-input" 
+                  />
                 </div>
               </div>
             </div>
 
+            <!-- RIGHT COLUMN: Agent -->
             <div class="col-span-1">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">Attorney</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Agent (Executor)</h3>
               <div class="space-y-4">
+                
+                <!-- Agent (Executor) -->
                 <div>
-                  <label for="attorney_company_id" class="form-label">Attorney Company</label>
-                  <input :value="attorneyCompanyName" type="text" class="form-input bg-gray-100" readonly />
-                </div>
-                <div>
-                  <label for="attorney_contact_person_display" class="form-label">Attorney Contact</label>
+                  <label for="agent_executor_display" class="form-label">Agent (Executor)</label>
                   <div class="flex items-center">
-                    <input id="attorney_contact_person_display" :value="attorneyContactPersonName" type="text" class="form-input flex-grow bg-gray-100" readonly />
-                    <button @click.prevent="openContactEditor('attorney')" type="button" class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap">Edit</button>
+                    <input 
+                      id="agent_executor_display" 
+                      :value="agentExecutorName" 
+                      type="text" 
+                      class="form-input flex-grow bg-gray-100" 
+                      readonly 
+                    />
+                    <button 
+                      @click.prevent="openContactEditor('agent_executor')" 
+                      type="button" 
+                      class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap"
+                    >
+                      Add/Edit
+                    </button>
                   </div>
                 </div>
+
+                <!-- Agent Reference -->
                 <div>
-                  <label for="attorneyReference" class="form-label">Attorney Reference</label>
-                  <input id="attorneyReference" v-model="form.attorneyReference" type="text" class="form-input" />
-                </div>
+                  <label for="executorReference" class="form-label">Agent File Ref No</label>
+                  <input 
+                    id="executorReference" 
+                    v-model="form.executorReference" 
+                    type="text" 
+                    class="form-input" 
+                  />
+                </div>              
               </div>
-                <div class="mt-8 pt-6 border-t">
-                  <h4 class="text-md font-semibold text-gray-700 mb-4">Agent (Executor)</h4>
-                  <div class="space-y-4">
-                    <div>
-                      <label for="agent_executor_display" class="form-label">Agent (Executor)</label>
-                      <div class="flex items-center">
-                        <input id="agent_executor_display" :value="agentExecutorName" type="text" class="form-input flex-grow bg-gray-100" readonly />
-                        <button @click.prevent="openContactEditor('agent_executor')" type="button" class="ml-2 btn-secondary px-3 py-2 text-sm whitespace-nowrap">
-                          Edit
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
             </div>
+
           </div>
         </div>
+
       </form>
     </div>
   </div>
@@ -346,7 +386,7 @@ const handleExecutorSaved = async (savedContact) => { // Renamed from handleExec
   // The 'Individual Executors' company (ID 12) is hardcoded on the backend.
   // The backend storeExecutor method sets the company_id for the newly created executor.
   // We need to ensure form.executorCompanyId is updated correctly here.
-  form.executorCompanyId = savedContact.company_id || 12;
+  form.executorCompanyId = savedContact.company_id || 1;
   form.executorContactPersonId = savedContact.id;
 
   // 2. Update the visual text inputs

@@ -84,7 +84,7 @@ const routes = [
           name: 'estates.form.edit',
           component: EstateForm,
           props: true,
-          meta: { displayName: 'Edit Estate Data' }
+          meta: { displayName: 'Estate Details' }
       },
       // --- END: ESTATE ROUTES ---
 
@@ -99,14 +99,14 @@ const routes = [
         path: 'companies/create',
         name: 'companies.create',
         component: CompanyForm,
-        meta: { permission: 'create companies', displayName: 'Create Client' },
+        meta: { permission: 'create companies', displayName: 'Create Company' },
       },
       {
         path: 'companies/:id/edit',
         name: 'companies.edit',
         component: CompanyForm,
         props: true, 
-        meta: { permission: 'edit companies', displayName: 'Edit Client' },
+        meta: { permission: 'edit companies', displayName: 'Edit Company' },
       },
       // --- END: COMPANY/CONTACT ROUTES ---
 

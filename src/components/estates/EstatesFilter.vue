@@ -30,6 +30,10 @@
         <label for="filter_date_of_death" class="form-label">Date of Death</label>
         <input id="filter_date_of_death" v-model="localFilters.dateOfDeath" type="date" class="form-input" />
       </div>
+      <div>
+        <label for="filter_attorney" class="form-label">Attorney Company</label>
+        <input id="filter_attorney" v-model="localFilters.attorney" type="text" class="form-input" placeholder="Search Attorney..." />
+      </div>
     </div>
     <div class="mt-4 flex justify-end space-x-2">
       <button @click="applyFilters" class="btn-primary">Apply Filters</button>
@@ -73,6 +77,7 @@ const clearFilters = () => {
     deTaxNumberPost: '',
     loeLoa: '',
     dateOfDeath: '',
+    attorney: '',
   };
   localFilters.value = cleared;
   emit('update:modelValue', cleared);

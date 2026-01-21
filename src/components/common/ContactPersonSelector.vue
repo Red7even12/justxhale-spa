@@ -1,22 +1,20 @@
 <template>
-    <!-- frontend-spa/src/components/common/ContactPersonSelector.vue  -->
+  <!-- frontend-spa/src/components/common/ContactPersonSelector.vue -->
   <div>
- 
     <div class="space-y-4">
+      
       <!-- Company Dropdown -->
-
+      <div>
         <div class="flex items-center justify-between mb-1">
           <label for="company-select" class="form-label">Company</label>
-                 <button 
+          <button 
             @click="fetchCompanies" 
             :disabled="isFetchingCompanies"
             type="button"
             class="text-sm font-medium text-brand-blue-600 hover:text-brand-blue-800 focus:outline-none disabled:text-gray-400 disabled:cursor-not-allowed"
           >
-            <!-- Use a ternary operator to change the text during the loading state -->
             {{ isFetchingCompanies ? 'Refreshing...' : 'Refresh List' }}
           </button>
-          <!-- === END: REPLACEMENT CODE === -->
         </div>
         <select id="company-select" v-model="selectedCompanyId" class="form-select">
           <option :value="null" disabled>-- Select a company --</option>
@@ -40,30 +38,34 @@
       </div>
     </div>
 
-    <div class="mt-6 flex justify-between items-center pt-4 border-t">
-      <!-- Left side: The new Edit shortcut -->
-      <div>
-        <!-- "Create New Company" button -->
+    <!-- Bottom Actions Area -->
+    <div class="mt-6 pt-4 border-t">
+      
+     <!-- 1. Full Width Management Buttons -->
+      <div class="space-y-3 mb-6">
         <router-link
-          :to="{ name: 'companies.create' }"
+          :to="{ name: 'companies.create', query: { popup: 'true' } }" 
           target="_blank"
-          class="btn-secondary text-sm"
+          class="btn-secondary w-full block text-center"
         >
-          Create New Company
+          Create New Company (Will open in new Tab)
         </router-link>
+
         <router-link
           v-if="selectedCompanyId"
-          :to="{ name: 'companies.edit', params: { id: selectedCompanyId } }"
+          :to="{ name: 'companies.edit', params: { id: selectedCompanyId }, query: { popup: 'true' } }"
           target="_blank"
-          class="btn-secondary text-sm"
+          class="btn-secondary w-full block text-center"
         >
-          Edit Selected Company
+          Edit Company & Add/Edit Contact Person (Will open in new Tab)
         </router-link>
       </div>
 
-      <!-- Right side: Existing action buttons -->
-      <div class="flex space-x-3">
-        <button type="button" @click="$emit('cancel')" class="btn-secondary">Cancel</button>
+      <!-- 2. Right Aligned Action Buttons -->
+      <div class="flex justify-end space-x-3">
+        <button type="button" @click="$emit('cancel')" class="btn-secondary">
+          Cancel
+        </button>
         <button 
           type="button" 
           @click="handleSelect" 
@@ -74,6 +76,8 @@
         </button>
       </div>
     </div>
+
+  </div>
 </template>
 
 <script setup>

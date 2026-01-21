@@ -51,14 +51,14 @@
     </div>
 
     <!-- Loading/Error States -->
-    <div v-if="isLoading">Loading companies...</div>
-    <div v-if="error">{{ error }}</div>
-    <div v-if="!isLoading && companies.length === 0" class="text-center text-gray-500 py-4">
+    <div v-if="isLoading" class="text-center py-4">Loading companies...</div>
+    <div v-if="error" class="text-center py-4 text-red-600">{{ error }}</div>
+    <div v-if="!isLoading && companies.data && companies.data.length === 0" class="text-center text-gray-500 py-4">
       No companies found for the selected filters.
     </div>
 
     <!-- Company Table -->
-    <table v-if="companies.length" class="min-w-full bg-white">
+    <table v-if="companies.data && companies.data.length" class="min-w-full bg-white">
         <thead>
             <tr>
                 <th class="py-2 px-4">Name</th>
@@ -69,7 +69,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr v-for="company in companies" :key="company.id">
+            <tr v-for="company in companies.data" :key="company.id">
                 <td class="py-2 px-4">{{ company.name }}</td>
                 <td class="py-2 px-4">{{ company.email }}</td>
                 <td class="py-2 px-4">{{ company.team?.name || 'N/A' }}</td>
@@ -108,6 +108,50 @@
         </tbody>
     </table>
 
+    <!-- Pagination & Display Controls -->
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200" 
+         v-if="companies.meta">
+        
+        <!-- Left: Rows Per Page -->
+        <div class="flex items-center text-sm text-gray-700">
+            <span class="mr-2">Show</span>
+            <select v-model="filters.per_page" class="form-select rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 py-1 text-sm">
+                <option :value="10">10</option>
+                <option :value="15">15</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+            </select>
+            <span class="ml-2">entries</span>
+        </div>
+
+        <!-- Right: Pagination Buttons -->
+        <div class="flex items-center space-x-2" v-if="companies.meta.lastPage > 1">
+            <button 
+                @click="changePage(filters.page - 1)" 
+                :disabled="filters.page <= 1" 
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+            </button>
+            
+            <span class="text-sm text-gray-700 font-medium">
+                Page {{ companies.meta.currentPage }} of {{ companies.meta.lastPage }}
+            </span>
+            
+            <button 
+                @click="changePage(filters.page + 1)" 
+                :disabled="filters.page >= companies.meta.lastPage" 
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+            </button>
+        </div>
+        
+        <!-- Fallback text if only 1 page exists -->
+        <div v-else class="text-sm text-gray-500">
+            Returned: {{ companies.meta.total }} Results
+        </div>
+    </div>
+
     <ConfirmationModal
       :show="isModalVisible"
       title="Confirm Deactivation"
@@ -120,11 +164,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUiStore } from '@/store/ui';
 import companyService from '@/services/companyService';
-import teamService from '@/services/teamService'; // Import teamService
+import teamService from '@/services/teamService';
 import { useAuthStore } from '@/store/auth';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import { debounce } from 'lodash';
@@ -135,26 +179,33 @@ const router = useRouter();
 const navigateToCreate = () => {
   router.push({ name: 'companies.create' });
 };
-const companies = ref([]);
-const teamList = ref([]); // New ref for teams
+const companies = ref({});
+const teamList = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 const isModalVisible = ref(false);
 const companyToDeactivate = ref(null);
 
-const filters = ref({
+const filters = reactive({
   search: '',
   status: 'active',
-  team_id: null, // New filter
-  is_shared_within_subscriber: false, // New filter
+  team_id: null,
+  is_shared_within_subscriber: false,
+  page: 1,
+  per_page: 15,
 });
 
 const fetchCompanies = async () => {
   try {
     isLoading.value = true;
-    const response = await companyService.getCompanies(filters.value);
-    // As per your project spec, the middleware converts snake_case to camelCase
-    companies.value = response.data.data; 
+    const queryParams = { ...filters };
+    for (const key in queryParams) {
+        if (queryParams[key] === '' || queryParams[key] === null) {
+            delete queryParams[key];
+        }
+    }
+    const response = await companyService.getCompanies(queryParams);
+    companies.value = response.data; 
   } catch (err) {
     error.value = 'Failed to load companies.';
   } finally {
@@ -162,7 +213,6 @@ const fetchCompanies = async () => {
   }
 };
 
-// New function to fetch teams
 const fetchTeams = async () => {
   try {
     const response = await teamService.getTeams();
@@ -204,24 +254,35 @@ const cancelDeactivation = () => {
   companyToDeactivate.value = null;
 };
 
-// Use a watcher to react to filter changes
-// Debounce the search input to avoid excessive API calls
-watch(() => filters.value.search, debounce((newValue, oldValue) => {
-    fetchCompanies();
-}, 300)); // 300ms delay
+const changePage = (newPage) => {
+    if (companies.value.meta && newPage > 0 && newPage <= companies.value.meta.lastPage) {
+        filters.page = newPage;
+    }
+}
 
-watch(() => filters.value.status, (newValue, oldValue) => {
+const debounceFetch = debounce(() => {
     fetchCompanies();
-});
+}, 300);
 
-// New watchers for team_id and is_shared_within_subscriber
-watch(() => filters.value.team_id, (newValue, oldValue) => {
-    fetchCompanies();
-});
+watch(filters, (newValues, oldValues) => {
+    const hasFilterChanged = 
+        newValues.search !== oldValues.search ||
+        newValues.status !== oldValues.status ||
+        newValues.team_id !== oldValues.team_id ||
+        newValues.is_shared_within_subscriber !== oldValues.is_shared_within_subscriber ||
+        newValues.per_page !== oldValues.per_page;
 
-watch(() => filters.value.is_shared_within_subscriber, (newValue, oldValue) => {
-    fetchCompanies();
-});
+    if (hasFilterChanged) {
+        if (filters.page !== 1) {
+            filters.page = 1;
+        } else {
+            debounceFetch();
+        }
+    } else {
+        debounceFetch();
+    }
+}, { deep: true });
+
 
 onMounted(() => {
   fetchCompanies();

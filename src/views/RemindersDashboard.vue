@@ -5,7 +5,7 @@
     <div class="bg-white shadow-md rounded-lg p-4 mb-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="filter-group">
-          <label for="search" class="block text-sm font-medium text-gray-700">Search Estate/Step</label>
+          <label for="search" class="block text-sm font-medium text-gray-700">Search Estate/Task</label>
           <input id="search" type="text" v-model="filters.search" placeholder="e.g., Williams H or Coded as Estate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
         </div>
         <div class="filter-group">
@@ -76,18 +76,19 @@
                           Estate
                       </button>
                       
-                      <!-- Step Button (disabled if locked OR for invalid origin) -->
+                      <!-- Step Button (disabled if locked OR for invalid origin) 
                       <button @click="goToWorkflowStep(reminder.estate.id, reminder.origin.id)" 
                               :disabled="!reminder.origin || reminder.origin.type !== 'sars_workflow' || !!(reminder.estate && reminder.estate.lock)" 
                               class="text-brand-blue-600 hover:text-brand-blue-900 disabled:text-gray-400 disabled:cursor-not-allowed">
                           Step
                       </button>
+                      -->
                       
                       <!-- Manage Button (disabled if locked) -->
                       <button @click="openReminderModal(reminder.id)"
                               :disabled="!!(reminder.estate && reminder.estate.lock)"
                               class="text-brand-blue-600 hover:text-brand-blue-900 disabled:text-gray-400 disabled:cursor-not-allowed">
-                          Manage
+                          Reminder
                       </button>
                       
                       <!-- Note Button (remains enabled) -->
