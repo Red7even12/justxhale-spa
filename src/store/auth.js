@@ -55,7 +55,11 @@ export const useAuthStore = defineStore('auth', {
 
     async login(credentials) {
       try {
-        const response = await api.post('/login', credentials);
+        const loginData = {
+          ...credentials,
+          email: credentials.email.toLowerCase()
+        };
+        const response = await api.post('/login', loginData);
         
         // The /login response structure might be different. Let's assume it has accessToken.
         // We can reuse a part of the handleLoginSuccess logic here.
