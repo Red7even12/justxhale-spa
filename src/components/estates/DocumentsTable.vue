@@ -40,7 +40,7 @@
             </td>
 
             <td class="px-3 py-1 whitespace-nowrap">
-              <span :class="getStatusInfo(req.currentStatus).textClass" class="text-sm font-semibold uppercase tracking-wider">{{ req.currentStatus.replace('_', ' ') }}</span>
+              <span :class="[getStatusInfo(req.currentStatus).class, getStatusInfo(req.currentStatus).textClass]" class="px-2 py-1 rounded text-sm font-semibold uppercase tracking-wider">{{ req.currentStatus.replace('_', ' ') }}</span>
             </td>
 
             <td class="px-3 py-1 whitespace-nowrap text-sm text-gray-500">
@@ -235,8 +235,8 @@ const openLogModal = (reqId, docTypeLabel) => {
 const getStatusInfo = (status) => {
     const map = {
         pending: { class: 'bg-gray-400', textClass: 'text-gray-600' },
-        received: { class: 'bg-green-500', textClass: 'text-green-700' },
-        valid: { class: 'bg-green-500', textClass: 'text-green-700' },
+        received: { class: 'bg-green-500', textClass: 'text-white' },
+        valid: { class: 'bg-green-500', textClass: 'text-white' },
         stale: { class: 'bg-yellow-500', textClass: 'text-yellow-700' },
         not_applicable: { class: 'bg-blue-400', textClass: 'text-blue-600' },
     };

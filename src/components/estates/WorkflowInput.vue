@@ -14,9 +14,7 @@
         :placeholder="dataType === 'text' ? 'Enter value...' : ''"
       />
       <button type="submit" class="btn-secondary btn-xs px-2 py-1.5 flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-          <path d="M7 4V2H13V4H17C17.5523 4 18 4.44772 18 5V15C18 15.5523 17.5523 16 17 16H3C2.44772 16 2 15.5523 2 15V5C2 4.44772 2.44772 4 3 4H7ZM7 11.5C7 10.6716 7.67157 10 8.5 10H11.5C12.3284 10 13 10.6716 13 11.5V13.5C13 14.3284 12.3284 15 11.5 15H8.5C7.67157 15 7 14.3284 7 13.5V11.5Z" clip-rule="evenodd" />
-        </svg>
+        <span>Save</span>
       </button>
     </form>
 

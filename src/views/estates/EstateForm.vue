@@ -67,7 +67,7 @@
                 <input id="deceasedTaxNumberPost" v-model="form.deTaxNumberPost" type="text" class="form-input" />
             </div>
                 <div>
-                  <label for="executor_contact_person_display" class="form-label">Executor (Family Member)</label>
+                  <label for="executor_contact_person_display" class="form-label">Executor</label>
                   <div class="flex items-center">
                     <input id="executor_contact_person_display" :value="executorContactPersonName" type="text" class="form-input flex-grow bg-gray-100" readonly />
                     <button 
@@ -140,12 +140,12 @@
 
             <!-- RIGHT COLUMN: Agent -->
             <div class="col-span-1">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">Agent (Executor)</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Agent</h3>
               <div class="space-y-4">
                 
                 <!-- Agent (Executor) -->
                 <div>
-                  <label for="agent_executor_display" class="form-label">Agent (Executor)</label>
+                  <label for="agent_executor_display" class="form-label">Agent</label>
                   <div class="flex items-center">
                     <input 
                       id="agent_executor_display" 

@@ -60,6 +60,7 @@
 
             <!-- ADDED: Trigger Field Column -->
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Triggered By ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
             
             <!-- REMOVED: Actions Column -->
           </tr>
@@ -77,10 +78,18 @@
 
             <!-- ADDED: Trigger Field Data Cell -->
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600 font-mono">{{ step.startsAfterStepId || 'N/A' }}</td>
+            
+            <!-- ADDED: Is Active Data Cell -->
+            <td class="px-4 py-2 whitespace-nowrap text-sm">
+              <span :class="step.isActive ? 'text-green-600' : 'text-red-600'">
+                {{ step.isActive ? 'Yes' : 'No' }}
+              </span>
+            </td>
 
             <!-- REMOVED: Actions Data Cell -->
           </tr>
         </tbody>
+
       </table>
     </div>
 
