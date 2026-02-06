@@ -61,11 +61,17 @@
           </div>
         </div>
         <div class="mt-6">
+          <!-- Error Message Display -->
+          <div v-if="loginError" class="mb-4 text-lg text-red-600 text-center">
+            {{ loginError }}
+          </div>
+
           <button 
             type="submit" 
+            :disabled="isLoggingIn"
             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[var(--c-primary-action)] hover:bg-[var(--c-primary-action-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--c-primary-action)]"
           >
-            Login
+            {{ isLoggingIn ? 'Logging in...' : 'Login' }}
           </button>
         </div>
       </form>
@@ -85,6 +91,11 @@ const credentials = ref({
   password: '',
 });
 
+// --- NEW: Error and Loading State ---
+const isLoggingIn = ref(false);
+const loginError = ref(null);
+// --- END NEW: Error and Loading State ---
+
 // --- NEW: LOGIC FOR PASSWORD VISIBILITY ---
 const isPasswordVisible = ref(false);
 
@@ -98,6 +109,17 @@ const togglePasswordVisibility = () => {
 // --- END OF NEW LOGIC ---
 
 const handleLogin = async () => {
-  await authStore.login(credentials.value);
+  isLoggingIn.value = true;
+  loginError.value = null; // Clear previous errors
+
+  try {
+    await authStore.login(credentials.value);
+  } catch (error) {
+    // Check for specific error messages from the backend or default
+    loginError.value = error.response?.data?.message || 'Invalid email or password.';
+    console.error('Login attempt failed:', error);
+  } finally {
+    isLoggingIn.value = false;
+  }
 };
 </script>

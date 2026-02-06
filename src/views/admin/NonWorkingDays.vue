@@ -85,7 +85,7 @@
                             <div class="grid grid-cols-1 gap-6">
                                 <div>
                                     <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
-                                    <select v-model="newDay.country_id" id="country" name="country" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <select v-model="newDay.countryId" id="country" name="country" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                         <option value="" disabled>Select a country</option>
                                         <option v-for="country in countries" :key="country.id" :value="country.id">{{ country.name }}</option>
                                     </select>
@@ -123,7 +123,7 @@
                             <div class="grid grid-cols-1 gap-6">
                                 <div>
                                     <label for="edit-country" class="block text-sm font-medium text-gray-700">Country</label>
-                                    <select v-model="editingDay.country_id" id="edit-country" name="edit-country" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <select v-model="editingDay.countryId" id="edit-country" name="edit-country" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                         <option v-for="country in countries" :key="country.id" :value="country.id">{{ country.name }}</option>
                                     </select>
                                 </div>
@@ -157,7 +157,7 @@ const showAddModal = ref(false);
 const showEditModal = ref(false);
 const nonWorkingDays = ref([]);
 const countries = ref([]);
-const newDay = ref({ country_id: '', date: '', description: '' });
+const newDay = ref({ countryId: '', date: '', description: '' });
 const editingDay = ref(null);
 const file = ref(null);
 const filterCountry = ref('');
@@ -182,14 +182,20 @@ const fetchCountries = async () => {
     try {
         const response = await referenceDataService.getCountries();
         countries.value = response.data;
+
+        // Set "South Africa" as default if found
+        const southAfrica = countries.value.find(country => country.name === 'South Africa');
+        if (southAfrica) {
+            filterCountry.value = southAfrica.id;
+        }
     } catch (error) {
         console.error('Error fetching countries:', error);
     }
 };
 
-onMounted(() => {
-    fetchNonWorkingDays();
-    fetchCountries();
+onMounted(async () => {
+    await fetchCountries(); // Fetch countries and set default filterCountry
+    fetchNonWorkingDays();  // Then fetch non-working days with the potentially updated filter
 });
 
 const handleFileUpload = (event) => {
@@ -215,7 +221,7 @@ const addNonWorkingDay = async () => {
     try {
         await nonWorkingDayService.addNonWorkingDay(newDay.value);
         showAddModal.value = false;
-        newDay.value = { country_id: '', date: '', description: '' }; // Reset form
+        newDay.value = { countryId: '', date: '', description: '' }; // Reset form
         fetchNonWorkingDays(); // Refresh the list
     } catch (error) {
         console.error('Error adding non-working day:', error);
@@ -225,7 +231,7 @@ const addNonWorkingDay = async () => {
 const openEditModal = (day) => {
     editingDay.value = {
         id: day.id,
-        country_id: day.country_id,
+        countryId: day.countryId,
         date: day.date,
         description: day.description,
     };
