@@ -13,11 +13,11 @@ export default {
    * @param {string} passwordConfirmation The password confirmation.
    * @returns {Promise<object>}
    */
-  setPassword(token, password, passwordConfirmation) {
+  setPassword(data) {
     const payload = {
-      token,
-      password,
-      password_confirmation: passwordConfirmation,
+      token: data.token,
+      password: data.password,
+      password_confirmation: data.password_confirmation,
     };
 
     return new Promise((resolve, reject) => {

@@ -233,14 +233,21 @@ const openLogModal = (reqId, docTypeLabel) => {
 };
 
 const getStatusInfo = (status) => {
+    // 1. Handle null/undefined
+    if (!status) return { class: 'bg-gray-200', textClass: 'text-gray-800' };
+
+    // 2. Normalize to lowercase so "VALID" matches "valid"
+    const normalizedStatus = status.toLowerCase();
+
     const map = {
-        pending: { class: 'bg-gray-400', textClass: 'text-gray-600' },
-        received: { class: 'bg-green-500', textClass: 'text-white' },
-        valid: { class: 'bg-green-500', textClass: 'text-white' },
-        stale: { class: 'bg-yellow-500', textClass: 'text-yellow-700' },
-        not_applicable: { class: 'bg-blue-400', textClass: 'text-blue-600' },
+        pending: { class: 'bg-gray-200', textClass: 'text-gray-800' },
+        received: { class: 'bg-green-200', textClass: 'text-green-800' },
+        valid: { class: 'bg-green-200', textClass: 'text-green-800' },
+        stale: { class: 'bg-orange-200', textClass: 'text-orange-800' },
+        not_applicable: { class: 'bg-blue-100', textClass: 'text-blue-800' },
     };
-    return map[status] || map.pending;
+
+    return map[normalizedStatus] || map.pending;
 };
 
 onMounted(fetchRequirements);

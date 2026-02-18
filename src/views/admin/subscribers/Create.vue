@@ -36,8 +36,11 @@ const handleCreateSubscriber = async (subscriberData) => {
       pricing_plan_id: subscriberData.pricingPlanId, // Example conversion
 
       // Subscriber Admin fields
-      admin_name: subscriberData.adminName, // Convert camelCase to snake_case
-      admin_email: subscriberData.adminEmail, // Convert camelCase to snake_case
+      admin_first_name: subscriberData.adminFirstName,
+      admin_last_name: subscriberData.adminLastName,
+      admin_name: `${subscriberData.adminFirstName} ${subscriberData.adminLastName}`.trim(), // Concatenate for the 'name' field
+      admin_email: subscriberData.adminEmail,
+      admin_cell_number: subscriberData.adminCellNumber,
     };
 
     // Now, send the correctly formatted 'payload' object to the API

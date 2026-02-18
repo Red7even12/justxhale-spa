@@ -60,7 +60,11 @@ const reminderService = {
   snoozeReminderByDays(reminderId, payload) {
     return api.post(`/reminders/${reminderId}/snooze-by-days`, payload);
   },
+   
   
+  triggerAction(id, actionName) {
+    return api.post(`/reminders/${id}/action`, { action: actionName });
+  },
 };
 
 export default reminderService;

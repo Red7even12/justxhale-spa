@@ -48,7 +48,7 @@
 
       <!-- Contact Person -->
       <div>
-        <label for="contactPerson" class="block text-sm font-medium text-gray-700">Contact Person</label>
+        <label for="contactPerson" class="block text-sm font-medium text-gray-700">Contact Person (Person responsible for billing)</label>
         <input
           type="text"
           id="contactPerson"
@@ -85,21 +85,33 @@
         <!-- New Section for Admin User -->
         <div>
           <h3 class="text-lg font-medium leading-6 text-gray-900">
-            Primary Administrator Account
+            Primary Administrator Account 
           </h3>
           <p class="mt-1 text-sm text-gray-600">
             This will create the first user for the new subscriber and send them an invitation.
           </p>
+          <p class="mt-1 text-sm text-gray-600">
+            Role: Subscriber setup and Estates Management.
+          </p>
         </div>
 
         <div class="mt-4">
-          <label for="admin_name" class="block text-sm font-medium text-gray-700">Admin Name</label>
-          <input type="text" id="admin_name" v-model="formState.adminName" required class="...">
+          <label for="admin_first_name" class="block text-sm font-medium text-gray-700">Admin First Name</label>
+          <input type="text" id="admin_first_name" v-model="formState.adminFirstName" required class="...">
+        </div>
+        <div class="mt-4">
+          <label for="admin_last_name" class="block text-sm font-medium text-gray-700">Admin Last Name</label>
+          <input type="text" id="admin_last_name" v-model="formState.adminLastName" required class="...">
         </div>
 
         <div class="mt-4">
           <label for="admin_email" class="block text-sm font-medium text-gray-700">Admin Email</label>
           <input type="email" id="admin_email" v-model="formState.adminEmail" required class="...">
+        </div>
+
+        <div class="mt-4">
+          <label for="admin_cell_number" class="block text-sm font-medium text-gray-700">Admin Cell Number</label>
+          <input type="text" id="admin_cell_number" v-model="formState.adminCellNumber" class="...">
         </div>
       </template>
 
@@ -160,8 +172,10 @@ const props = defineProps({
       contactPerson: '',
       cellNumber: '',
       personEmail: '',
-      adminName: '',
+      adminFirstName: '',
+      adminLastName: '',
       adminEmail: '',
+      adminCellNumber: '',
     }),
   },
   isLoading: {

@@ -151,9 +151,7 @@ const handleSetPassword = async () => {
   }
   
   try {
-    const response = await authService.setPassword(formData);
-    // Use the login action from the auth store to save the token and user data
-    authStore.login(response.data);
+    await authService.setPassword(formData);
     // Redirect to the dashboard upon success
     router.push('/');
   } catch (error) {
