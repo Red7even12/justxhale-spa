@@ -34,13 +34,23 @@
           <div v-if="currentTab === 'manage'">
             <form @submit.prevent="saveUser">
               <div class="space-y-4">
-                <div>
-                  <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                  <input type="text" v-model="formData.name" id="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                  <div>
+                    <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" v-model="formData.firstName" id="first_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                  </div>
+                  <div>
+                    <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" v-model="formData.lastName" id="last_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                  </div>
                 </div>
                 <div>
                   <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                   <input type="email" v-model="formData.email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                </div>
+                <div>
+                  <label for="cell_number" class="block text-sm font-medium text-gray-700">Cell Number</label>
+                  <input type="text" v-model="formData.cellNumber" id="cell_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
                 </div>
               </div>
               <p v-if="saveError" class="mt-2 text-sm text-red-600 text-center">{{ saveError }}</p>
@@ -90,13 +100,23 @@
           <div v-if="currentTab === 'create'">
             <form @submit.prevent="createNewAdmin">
               <div class="space-y-4">
-                <div>
-                  <label for="new-name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                  <input type="text" v-model="newAdminData.name" id="new-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                  <div>
+                    <label for="new-first-name" class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" v-model="newAdminData.firstName" id="new-first-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                  </div>
+                  <div>
+                    <label for="new-last-name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" v-model="newAdminData.lastName" id="new-last-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                  </div>
                 </div>
                 <div>
                   <label for="new-email" class="block text-sm font-medium text-gray-700">Email Address</label>
                   <input type="email" v-model="newAdminData.email" id="new-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+                </div>
+                <div>
+                  <label for="new-cell" class="block text-sm font-medium text-gray-700">Cell Number</label>
+                  <input type="text" v-model="newAdminData.cellNumber" id="new-cell" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
                 </div>
               </div>
               <p v-if="saveError" class="mt-2 text-sm text-red-600 text-center">{{ saveError }}</p>
@@ -136,8 +156,11 @@ const saveError = ref(null);
 
 // --- Tab 1: Manage Current ---
 const formData = reactive({
+  firstName: '',
+  lastName: '',
   name: '',
   email: '',
+  cellNumber: '',
 });
 
 // --- Tab 2: Assign Existing ---
@@ -148,16 +171,33 @@ let debounceTimer = null;
 
 // --- Tab 3: Create New ---
 const newAdminData = reactive({
+  firstName: '',
+  lastName: '',
   name: '',
   email: '',
+  cellNumber: '',
 });
 
 
 // Initialize form data when component mounts
 onMounted(() => {
   if (props.user) {
+    formData.firstName = props.user.firstName;
+    formData.lastName = props.user.lastName;
     formData.name = props.user.name;
     formData.email = props.user.email;
+    formData.cellNumber = props.user.cellNumber;
+
+    // Rule: If firstName or lastName are missing, split from name
+    if (!formData.firstName && formData.name) {
+      const parts = formData.name.trim().split(/\s+/);
+      if (parts.length > 1) {
+        formData.firstName = parts[0];
+        formData.lastName = parts.slice(1).join(' ');
+      } else {
+        formData.firstName = parts[0];
+      }
+    }
   }
 });
 
@@ -165,10 +205,17 @@ onMounted(() => {
 const saveUser = async () => {
   isSaving.value = true;
   saveError.value = null;
+
+  // Concatenate first and last names into the name field
+  formData.name = `${formData.firstName || ''} ${formData.lastName || ''}`.trim();
+
   try {
     const response = await apiClient.put(`/users/${props.user.id}`, {
       name: formData.name,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
       email: formData.email,
+      cell_number: formData.cellNumber,
     });
     emit('user-updated', response.data);
     emit('close');
@@ -233,9 +280,19 @@ const assignNewAdmin = async (newUser) => {
 const createNewAdmin = async () => {
   isSaving.value = true;
   saveError.value = null;
+
+  // Concatenate first and last names into the name field
+  newAdminData.name = `${newAdminData.firstName || ''} ${newAdminData.lastName || ''}`.trim();
+
   try {
     const subscriberId = props.user.subscriberId;
-    const response = await apiClient.post(`/subscribers/${subscriberId}/users`, newAdminData);
+    const response = await apiClient.post(`/subscribers/${subscriberId}/users`, {
+      name: newAdminData.name,
+      first_name: newAdminData.firstName,
+      last_name: newAdminData.lastName,
+      email: newAdminData.email,
+      cell_number: newAdminData.cellNumber,
+    });
     emit('user-updated', response.data);
     emit('close');
   } catch (err) {

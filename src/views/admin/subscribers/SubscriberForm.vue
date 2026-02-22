@@ -198,7 +198,22 @@ const formState = ref({});
 // The watch effect copies the incoming prop data into our local formState.
 // This will now work correctly because the keys will match.
 watch(() => props.subscriber, (newVal) => {
-    formState.value = JSON.parse(JSON.stringify(newVal));
+    if (newVal) {
+      formState.value = {
+        name: newVal.name || '',
+        companyEmail: newVal.companyEmail || '',
+        pricingPlanId: newVal.pricingPlanId || null,
+        accountNumber: newVal.accountNumber || '',
+        companyNumber: newVal.companyNumber || '',
+        contactPerson: newVal.contactPerson || '',
+        cellNumber: newVal.cellNumber || '',
+        personEmail: newVal.personEmail || '',
+        adminFirstName: newVal.adminFirstName || '',
+        adminLastName: newVal.adminLastName || '',
+        adminEmail: newVal.adminEmail || '',
+        adminCellNumber: newVal.adminCellNumber || '',
+      };
+    }
 }, { immediate: true, deep: true });
 
 const handleSubmit = () => {

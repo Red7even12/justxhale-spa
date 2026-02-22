@@ -174,6 +174,8 @@ const handleUserDetailsUpdate = (updatedUser) => {
   if (index !== -1) {
     // Just update the relevant fields, keeping roles intact
     users.value[index].name = updatedUser.name;
+    users.value[index].firstName = updatedUser.firstName;
+    users.value[index].lastName = updatedUser.lastName;
     users.value[index].email = updatedUser.email;
     users.value[index].cellNumber = updatedUser.cellNumber;
   }

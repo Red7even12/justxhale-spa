@@ -16,13 +16,23 @@
         <!-- Form -->
         <form @submit.prevent="saveUser">
           <div class="mt-4 space-y-4">
-            <div>
-              <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-              <input type="text" id="name" v-model="newUser.name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+            <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+              <div>
+                <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                <input type="text" id="first_name" v-model="newUser.firstName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+              </div>
+              <div>
+                <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                <input type="text" id="last_name" v-model="newUser.lastName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+              </div>
             </div>
             <div>
               <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
               <input type="email" id="email" v-model="newUser.email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+            </div>
+            <div>
+              <label for="cell_number" class="block text-sm font-medium text-gray-700">Cell Number</label>
+              <input type="text" id="cell_number" v-model="newUser.cellNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
             </div>
             
             <fieldset class="border-t border-b border-gray-200 pt-4">
@@ -65,8 +75,11 @@ import apiClient from '../../services/api';
 const emit = defineEmits(['close', 'user-added']);
 
 const newUser = reactive({
+  firstName: '',
+  lastName: '',
   name: '',
   email: '',
+  cellNumber: '',
   roles: [],
 });
 
@@ -90,8 +103,22 @@ onMounted(async () => {
 const saveUser = async () => {
   saveError.value = null;
   isSaving.value = true;
+  
+  // Concatenate first and last names into the name field
+  newUser.name = `${newUser.firstName} ${newUser.lastName}`.trim();
+
+  // Convert to snake_case for the API
+  const payload = {
+    name: newUser.name,
+    first_name: newUser.firstName,
+    last_name: newUser.lastName,
+    email: newUser.email,
+    cell_number: newUser.cellNumber,
+    roles: newUser.roles,
+  };
+  
   try {
-    const response = await apiClient.post('/users', newUser);
+    const response = await apiClient.post('/users', payload);
     emit('user-added', response.data);
     emit('close');
   } catch (err) {

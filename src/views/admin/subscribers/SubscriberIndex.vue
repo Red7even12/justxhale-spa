@@ -22,7 +22,7 @@
                 <tr v-for="subscriber in subscribers" :key="subscriber.id">
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ subscriber.name }}</td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ subscriber.companyEmail || 'N/A' }}</td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ new Date(subscriber.createdAt).toLocaleDateString() }}</td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ formatDate(subscriber.createdAt) }}</td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                     <router-link :to="`/admin/subscribers/${subscriber.id}/edit`" class="text-indigo-600 hover:text-indigo-900">
                       Edit
@@ -69,6 +69,15 @@ const links = ref({}); // To store pagination links
 const meta = ref({}); // To store pagination meta data
 const loading = ref(true);
 const error = ref(null);
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}/${month}/${day}`;
+};
 
 const fetchSubscribers = async (url = '/subscribers') => {
   loading.value = true;

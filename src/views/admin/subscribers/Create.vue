@@ -32,13 +32,18 @@ const handleCreateSubscriber = async (subscriberData) => {
     const payload = {
       // Subscriber fields
       name: subscriberData.name,
-      company_email: subscriberData.companyEmail, // Example conversion
-      pricing_plan_id: subscriberData.pricingPlanId, // Example conversion
+      company_email: subscriberData.companyEmail,
+      pricing_plan_id: subscriberData.pricingPlanId,
+      account_number: subscriberData.accountNumber,
+      company_number: subscriberData.companyNumber,
+      contact_person: subscriberData.contactPerson,
+      cell_number: subscriberData.cellNumber,
+      person_email: subscriberData.personEmail,
 
       // Subscriber Admin fields
       admin_first_name: subscriberData.adminFirstName,
       admin_last_name: subscriberData.adminLastName,
-      admin_name: `${subscriberData.adminFirstName} ${subscriberData.adminLastName}`.trim(), // Concatenate for the 'name' field
+      admin_name: `${subscriberData.adminFirstName} ${subscriberData.adminLastName}`.trim(),
       admin_email: subscriberData.adminEmail,
       admin_cell_number: subscriberData.adminCellNumber,
     };

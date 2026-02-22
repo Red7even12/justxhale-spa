@@ -4,13 +4,23 @@
       <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">Add New Core User</h3>
         <form @submit.prevent="saveUser" class="mt-4 space-y-4">
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-            <input type="text" id="name" v-model="newUser.name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+          <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+            <div>
+              <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+              <input type="text" id="first_name" v-model="newUser.firstName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+              <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+              <input type="text" id="last_name" v-model="newUser.lastName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+            </div>
           </div>
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
             <input type="email" id="email" v-model="newUser.email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+          </div>
+          <div>
+            <label for="cell_number" class="block text-sm font-medium text-gray-700">Cell Number</label>
+            <input type="text" id="cell_number" v-model="newUser.cellNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
           </div>
           <fieldset>
             <legend class="text-sm font-medium text-gray-900">Roles</legend>
@@ -48,7 +58,14 @@ import userService from '@/services/userService';
 
 const emit = defineEmits(['close', 'user-added']);
 
-const newUser = reactive({ name: '', email: '', roles: [] });
+const newUser = reactive({ 
+  firstName: '', 
+  lastName: '', 
+  name: '', 
+  email: '', 
+  cellNumber: '', 
+  roles: [] 
+});
 const availableRoles = ref([]);
 const loadingRoles = ref(true);
 const saveError = ref(null);
@@ -71,8 +88,22 @@ onMounted(async () => {
 const saveUser = async () => {
   saveError.value = null;
   isSaving.value = true;
+  
+  // Concatenate first and last names into the name field
+  newUser.name = `${newUser.firstName} ${newUser.lastName}`.trim();
+
+  // Convert to snake_case for the API
+  const payload = {
+    name: newUser.name,
+    first_name: newUser.firstName,
+    last_name: newUser.lastName,
+    email: newUser.email,
+    cell_number: newUser.cellNumber,
+    roles: newUser.roles,
+  };
+  
   try {
-    const response = await userService.createCoreUser(newUser);
+    const response = await userService.createCoreUser(payload);
     emit('user-added', response.data);
   } catch (err) {
     saveError.value = err.response?.data?.message || 'Failed to send invitation.';

@@ -5,10 +5,16 @@
     <div class="bg-white shadow rounded-lg p-6">
       <form v-if="user" @submit.prevent="updateProfile">
         <div class="space-y-6">
-          <!-- Name -->
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-            <input type="text" id="name" v-model="user.name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+          <!-- Name Fields -->
+          <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <div>
+              <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+              <input type="text" id="first_name" v-model="user.firstName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+              <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+              <input type="text" id="last_name" v-model="user.lastName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+            </div>
           </div>
           
           <!-- Email (Read-only) -->
@@ -52,6 +58,17 @@ const router = useRouter();
 // Create a deep, local copy of the user from the store to prevent direct mutation
 const user = ref(JSON.parse(JSON.stringify(authStore.user)));
 
+// Rule: If firstName or lastName are missing, split from name
+if (user.value && !user.value.firstName && user.value.name) {
+  const parts = user.value.name.trim().split(/\s+/);
+  if (parts.length > 1) {
+    user.value.firstName = parts[0];
+    user.value.lastName = parts.slice(1).join(' ');
+  } else {
+    user.value.firstName = parts[0];
+  }
+}
+
 const isSaving = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
@@ -67,10 +84,14 @@ const updateProfile = async () => {
   successMessage.value = '';
   errorMessage.value = '';
 
+  // Concatenate first and last names into the name field
+  user.value.name = `${user.value.firstName || ''} ${user.value.lastName || ''}`.trim();
 
   // Convert to snake_case for the API
   const payload = {
     name: user.value.name,
+    first_name: user.value.firstName,
+    last_name: user.value.lastName,
     cell_number: user.value.cellNumber,
   };
 
