@@ -2,19 +2,19 @@ import apiClient from './api';
 
 const workflowDefinitionService = {
   getDefinitions() {
-    return apiClient.get('/admin/workflow-definitions');
+    return apiClient.get('admin/workflow-definitions');
   },
   getDefinition(id) {
-    return apiClient.get(`/admin/workflow-definitions/${id}`);
+    return apiClient.get(`admin/workflow-definitions/${id}`);
   },
   createDefinition(data) {
-    return apiClient.post('/admin/workflow-definitions', data);
+    return apiClient.post('admin/workflow-definitions', data);
   },
   updateDefinition(id, data) {
-    return apiClient.put(`/admin/workflow-definitions/${id}`, data);
+    return apiClient.put(`admin/workflow-definitions/${id}`, data);
   },
   deleteDefinition(id) {
-    return apiClient.delete(`/admin/workflow-definitions/${id}`);
+    return apiClient.delete(`admin/workflow-definitions/${id}`);
   },
   exportSteps(definitionId) {
     return apiClient.get(`admin/workflow-definitions/${definitionId}/export-steps`, {
@@ -27,7 +27,7 @@ const workflowDefinitionService = {
 
       // When sending FormData, the browser automatically sets the correct
     // 'Content-Type': 'multipart/form-data' header.
-    return apiClient.post(`workflow-definitions/${definitionId}/import-steps`, formData);
+    return apiClient.post(`admin/workflow-definitions/${definitionId}/import-steps`, formData);
   }, 
 };
 

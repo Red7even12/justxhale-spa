@@ -269,7 +269,7 @@ const updateHeaderActions = () => {
       label: 'Cancel', 
       onClick: () => {
          if (route.query.popup === 'true') window.close();
-         else router.push({ name: 'companies.index' });
+         else router.push({ name: 'entities.index' });
       }
     }
   ]);
@@ -335,7 +335,7 @@ const handleCompanySubmit = async () => {
         } 
         // If normal mode, we are done -> Go back to Index
         else {
-            router.push({ name: 'companies.index' });
+            router.push({ name: 'entities.index' });
         }
     } 
     
@@ -362,7 +362,7 @@ const handleCompanySubmit = async () => {
         
         // 2. Update URL silently (so refresh works)
         const newRoute = router.resolve({ 
-            name: 'companies.edit', 
+            name: 'entities.index', 
             params: { id: newCompanyId },
             query: route.query 
         });

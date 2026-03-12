@@ -49,7 +49,7 @@ const handleCreateSubscriber = async (subscriberData) => {
     };
 
     // Now, send the correctly formatted 'payload' object to the API
-    await apiClient.post('/subscribers', payload);
+    await apiClient.post('subscribers', payload);
 
     showNotification('Subscriber and Admin created successfully! Invitation sent.', 'success');
     router.push('/admin/subscribers'); // Navigate back to the list

@@ -1,28 +1,34 @@
-// frontend-spa/src/services/noteService.js
-
 import api from './api';
 
 const noteService = {
   /**
-   * Creates a new note for a given "noteable" entity.
-   * @param {object} payload - The note data.
-   * @param {string} payload.noteable_type - The alias for the parent model (e.g., 'estate').
-   * @param {number} payload.noteable_id - The ID of the parent record.
-   * @param {string} payload.content - The text content of the note.
-   * @returns {Promise} Axios promise with the API response for the newly created note.
+   * Creates a new note.
+   * V2: Requires 'contextUrl' (e.g., 'vizabiliti/cases/1') to hit the correct endpoint.
    */
-  createNote(payload) {
-    return api.post('/notes', payload);
+  createNote(payload, contextUrl = null) {
+    if (contextUrl) {
+      // V2 Path: /vizabiliti/cases/1/notes
+      return api.post(`/${contextUrl}/notes`, payload);
+    } else {
+      // V1 Legacy Path: /notes
+      return api.post('/notes', payload);
+    }
   },
 
   /**
-   * Retrieves all notes for a given "noteable" entity.
-   * @param {string} noteableType - The alias for the parent model (e.g., 'estate').
-   * @param {number} noteableId - The ID of the parent record.
-   * @returns {Promise} Axios promise with the API response for the list of notes.
+   * Get notes.
+   * V2: Uses contextUrl + Query Params for filtering.
    */
-  getNotes(noteableType, noteableId) {
-    return api.get(`/notes/${noteableType}/${noteableId}`);
+  getNotes(noteableType, noteableId, contextUrl = null) {
+    if (contextUrl) {
+      // V2 Path: /vizabiliti/cases/1/notes?noteable_type=...&noteable_id=...
+      return api.get(`/${contextUrl}/notes`, {
+        params: { noteable_type: noteableType, noteable_id: noteableId }
+      });
+    } else {
+      // V1 Legacy Path: /notes/{type}/{id}
+      return api.get(`/notes/${noteableType}/${noteableId}`);
+    }
   }
 };
 

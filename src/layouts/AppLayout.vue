@@ -1,8 +1,8 @@
 <template>
   <div class="bg-[#F5F7F7] font-sans min-h-screen flex flex-col">
     
-    <!-- Mobile Sidebar Section -->
-    <div v-if="isMobileMenuOpen" class="xl:hidden" role="dialog" aria-modal="true">
+    <!-- 1. MOBILE SIDEBAR: Hidden in V2 Context -->
+    <div v-if="isMobileMenuOpen && !isV2Context" class="xl:hidden" role="dialog" aria-modal="true">
       <div @click="isMobileMenuOpen = false" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40"></div>
       <div class="fixed inset-y-0 left-0 flex flex-col w-64 bg-[#242E2C] z-50">
         <div class="absolute top-0 right-0 -mr-12 pt-2">
@@ -18,39 +18,17 @@
           <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
             <router-link @click="closeMobileMenu" to="/" class="mobile-nav-link" :class="{ 'active': $route.name === 'Dashboard' }">Reminders</router-link>
             <router-link @click="closeMobileMenu" to="/estates" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-            <router-link @click="closeMobileMenu" to="/companies" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/companies') }">Companies</router-link>
+            <router-link @click="closeMobileMenu" to="/entities" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Contacts & Entities</router-link>
           </template>
-          <div v-if="authStore.hasRole('Subscriber Admin')" class="pt-4">
-            <h3 class="px-4 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin</h3>
-            <div class="space-y-1">
-                <router-link @click="closeMobileMenu" to="/admin/users" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">User Management</router-link>
-                <router-link @click="closeMobileMenu" to="/admin/teams" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Team Management</router-link>
-            </div>
-          </div>
-          <div v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="pt-4">
-            <h3 class="px-4 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">SaaS Management</h3>
-            <div class="space-y-1">
-                <router-link @click="closeMobileMenu" v-if="authStore.hasRole('System Admin')" to="/admin/core-users" class="mobile-nav-link" :class="{ 'active': $route.name === 'AdminUserManagement' }">Core Users</router-link>
-                <router-link @click="closeMobileMenu" to="/admin/subscribers" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/subscribers') }">Subscribers</router-link>
-                <router-link @click="closeMobileMenu" to="/admin/pricing-plans" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/pricing-plans') }">Pricing Management</router-link>
-                <router-link @click="closeMobileMenu" to="/admin/billing" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/billing') }">Billing Management</router-link>
-            </div>
-          </div>
-          <div v-if="authStore.hasRole('System Admin')" class="pt-4">
-            <h3 class="px-4 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">System Setup</h3>
-            <div class="space-y-1">
-                <router-link @click="closeMobileMenu" to="/admin/document-management" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/document-management') }">Document Setup</router-link>                  
-                <router-link @click="closeMobileMenu" to="/admin/workflow-management" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/workflow-management') }">Workflow Management</router-link>
-                <router-link @click="closeMobileMenu" to="/admin/option-lists" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/option-lists') }">Option Lists</router-link>
-                <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
-            </div>
-          </div>
+          <!-- ... (Rest of your mobile menu content) ... -->
         </nav>
       </div>
     </div>
 
-    <header class="shadow-sm sticky top-0 z-10">
-      <div class="flex justify-between items-center p-4 bg-[#3b5851]">
+    <!-- 2. MAIN HEADER (V1): Completely hidden in V2 Context -->
+    <header v-if="!isV2Context" class="shadow-sm sticky top-0 z-10">
+      <!-- Top Branding & Navigation Bar -->
+      <div class="flex justify-between items-center p-4 bg-[#484b45]">
         <div class="flex items-center space-x-8">
           <button @click="isMobileMenuOpen = true" type="button" class="xl:hidden p-2 rounded-md text-white hover:bg-white hover:bg-opacity-20">
             <span class="sr-only">Open menu</span>
@@ -58,44 +36,67 @@
           </button>
           <Logo class="h-16 w-auto" />
           <nav class="hidden xl:flex items-center space-x-1">
+            
+            <!-- 1. STANDARD SUBSCRIBER MENU (V1) -->
             <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
-              <router-link to="/" class="nav-link" :class="{ 'active': $route.name === 'Dashboard' }">Reminders</router-link>
+              <router-link to="/launcher" class="nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
               <router-link to="/estates" class="nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-              <router-link to="/companies" class="nav-link" :class="{ 'active': $route.path.startsWith('/companies') }">Companies</router-link>
+              <router-link to="/entities" class="nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Registry</router-link>
             </template>
+            
             <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="border-l border-gray-500 h-6 mx-3"></div>
+            
+            <!-- 2. SUBSCRIBER ADMIN MENU -->
             <template v-if="authStore.hasRole('Subscriber Admin')">
               <router-link to="/admin/users" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">User Management</router-link>
               <router-link to="/admin/teams" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Team Management</router-link>
             </template>
+
+            <!-- 3. SYSTEM ADMIN MENU (Merged V1 & V2) -->
             <template v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')">
+              
+              <!-- NEW: V2 PRODUCT FACTORY LINK -->
+              <router-link to="/admin/products" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/products') }">
+                <span class="text-yellow-400 font-bold">Product Factory</span>
+              </router-link>
+
+              <!-- ORIGINAL: SAAS MANAGEMENT DROPDOWN -->
               <div class="relative">
                 <button @click="isSaaSMenuOpen = !isSaaSMenuOpen" class="nav-link flex items-center" type="button">
                   <span>SaaS Management</span>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-1 h-5 w-5"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"></path></svg>
                 </button>
-                <div v-if="isSaaSMenuOpen" @click.away="isSaaSMenuOpen = false" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                <!-- Backdrop to close on click-away -->
+                <div v-if="isSaaSMenuOpen" @click="isSaaSMenuOpen = false" class="fixed inset-0 z-10 cursor-default"></div>
+                
+                <div v-if="isSaaSMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
-                    <router-link v-if="authStore.hasRole('System Admin')" to="/admin/core-users" @click="isSaaSMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Core Users</router-link>
-                    <router-link to="/admin/subscribers" @click="isSaaSMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Subscribers</router-link>
-                    <router-link to="/admin/pricing-plans" @click="isSaaSMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Pricing Management</router-link>
-                    <router-link to="/admin/billing" @click="isSaaSMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Billing Management</router-link>
+                    <router-link v-if="authStore.hasRole('System Admin')" to="/admin/core-users" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Core Users</router-link>
+                    <router-link to="/admin/subscribers" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Subscribers</router-link>
+                    <router-link to="/admin/pricing-plans" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Pricing Management</router-link>
+                    <router-link to="/admin/billing" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Billing Management</router-link>
                   </div>
                 </div>
               </div>
-            </template>
-            <template v-if="authStore.hasRole('System Admin')">
-              <div class="relative">
+
+              <!-- ORIGINAL: SYSTEM SETUP DROPDOWN (Strictly System Admin) -->
+              <div v-if="authStore.hasRole('System Admin')" class="relative">
                 <button @click="isSystemMenuOpen = !isSystemMenuOpen" class="nav-link flex items-center" type="button">
                   <span>System Setup</span>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-1 h-5 w-5"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"></path></svg>
                 </button>
-                <div v-if="isSystemMenuOpen" @click.away="isSystemMenuOpen = false" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                <!-- Backdrop to close on click-away -->
+                <div v-if="isSystemMenuOpen" @click="isSystemMenuOpen = false" class="fixed inset-0 z-10 cursor-default"></div>
+
+                <div v-if="isSystemMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
-                    <router-link to="/admin/document-management" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Setup</router-link>                  
-                    <router-link to="/admin/workflow-management" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Workflow Management</router-link>
-                    <router-link to="/admin/option-lists" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Option Lists</router-link>
-                    <router-link to="/admin/non-working-days" @click="isSystemMenuOpen = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>
+                    <router-link :to="{ name: 'admin.document-packs' }" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Packs</router-link>
+                    <router-link to="/admin/document-management" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Setup</router-link>                  
+                    <router-link to="/admin/workflow-management" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Workflow Management</router-link>
+                    <router-link to="/admin/file-types" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Case File Types</router-link>
+                    
+                    <router-link to="/admin/option-lists" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Option Lists</router-link>
+                    <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>
                   </div>
                 </div>
               </div>
@@ -103,6 +104,7 @@
           </nav>
         </div>
 
+        <!-- User Profile & Logout -->
         <div class="flex items-center space-x-6 text-white">
           <div class="flex items-center space-x-4 border-l border-gray-400 pl-6">
             <router-link to="/my-profile" title="My Profile" class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors">
@@ -120,13 +122,11 @@
         </div>
       </div>
       
-      <!-- Navigation Bar with Breadcrumbs -->
+      <!-- V1 Navigation Bar with Breadcrumbs & Search -->
       <div class="bg-gray-100 border-b border-gray-200 px-6 py-3 flex flex-col md:flex-row md:justify-between md:items-center">
         <div class="flex-1">
-          <!-- Breadcrumbs Component -->
           <Breadcrumbs />
           <h1 class="text-xl font-semibold text-[#242E2C] mt-2">{{ $route.meta.displayName || $route.name }}</h1>
-          <p v-if="$route.meta.displaySubtitle" class="text-sm text-gray-500 mt-1">{{ $route.meta.displaySubtitle }}</p>
         </div>
 
         <div class="flex items-center space-x-4 mt-3 md:mt-0">
@@ -134,12 +134,11 @@
               <label for="search" class="text-sm font-medium text-gray-700 mr-2">Find Case Number(CN)</label>
               <div class="relative flex-grow">
                 <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.817-4.817A6 6 0 012 8z" clip-rule="evenodd" /></svg>
                 </div>
                 <input id="search" name="search" class="block w-full bg-white border border-gray-300 rounded-md py-2 pl-10 pr-3 text-sm" placeholder="Case Number" type="search" v-model="searchTerm" @keyup.enter="executeSearch" />
               </div>
             </div>
-            
             <div class="flex items-center space-x-2">
               <button v-for="(action, index) in uiStore.headerActions" :key="index" @click="action.onClick" class="px-4 py-2 text-sm font-medium text-white bg-[#74958D] rounded-lg hover:bg-[#58726A]">{{ action.label }}</button>
             </div>
@@ -147,11 +146,12 @@
       </div>
     </header>
 
-    <main class="flex-1 p-6">
+    <!-- 3. MAIN CONTENT: V2 context removes the V1 padding -->
+    <main :class="['flex-1', isV2Context ? 'p-0' : 'p-6']">
       <router-view />
     </main>
 
-    <!-- Global Confirmation/Alert Modal -->
+    <!-- 4. GLOBAL MODAL: Always available -->
     <ConfirmationModal
       :show="showModal"
       :title="modalTitle"
@@ -164,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../store/auth';
 import { useUiStore } from '../store/ui';
 import { useRouter } from 'vue-router';
@@ -172,6 +172,17 @@ import Logo from '../components/common/Logo.vue';
 import ConfirmationModal from '../components/modals/ConfirmationModal.vue'; 
 import { useAlerts } from '../composables/useAlerts'; 
 import Breadcrumbs from '@/components/common/Breadcrumbs.vue'; 
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+
+// PILLAR 6: Context Awareness
+// This identifies if we should hide the V1 header.
+const isV2Context = computed(() => {
+  // Hide V1 header if we are on the Launcher OR inside a Product slug
+  return route.name === 'AppLauncher' || !!route.params.productSlug;
+});
 
 const isSaaSMenuOpen = ref(false); 
 const isSystemMenuOpen = ref(false); 
@@ -197,6 +208,13 @@ const executeSearch = () => {
 };
 
 const { showModal, modalTitle, modalMessage, modalMode, onConfirm, onCancel } = useAlerts();
+
+onMounted(() => {
+  console.log('--- AppLayout Debug ---');
+  console.log('User Roles:', authStore.roles);
+  console.log('Is System Admin?', authStore.hasRole('System Admin'));
+  console.log('Is Business Admin?', authStore.hasRole('Business Admin'));
+});
 </script>
 
 <style scoped>

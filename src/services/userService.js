@@ -6,7 +6,7 @@ export default {
    * Fetches a list of subscriber users.
    */
   getUsers(params = {}) {
-    return apiClient.get('/users', { params });
+    return apiClient.get('users', { params });
   },
 
   /**
@@ -15,14 +15,14 @@ export default {
    * @param {object} userData The data to update (e.g., { name, email, cell_number }).
    */
   updateUser(userId, userData) {
-    return apiClient.put(`/users/${userId}`, userData);
+    return apiClient.put(`users/${userId}`, userData);
   },
 
   /**
    * Fetches a list of CORE users (for System Admins).
    */
   getCoreUsers(params = {}) {
-    return apiClient.get('/admin/core-users', { params });
+    return apiClient.get('admin/core-users', { params });
   },
 
   /**
@@ -30,7 +30,7 @@ export default {
    * @param {object} userData - { name, email, roles: [...] }
    */
   createCoreUser(userData) {
-    return apiClient.post('/admin/core-users', userData);
+    return apiClient.post('admin/core-users', userData);
   },
 
   /**
@@ -39,7 +39,7 @@ export default {
    * @param {object} userData The data to update (e.g., { name, email, cell_number }).
    */
   updateCoreUser(userId, userData) {
-    return apiClient.put(`/admin/core-users/${userId}`, userData);
+    return apiClient.put(`admin/core-users/${userId}`, userData);
   },
 
   /**
@@ -47,7 +47,7 @@ export default {
    * @param {string} userId
    */
   forceSubscriberPasswordReset(userId) {
-    return apiClient.post(`/users/${userId}/force-reset-password`);
+    return apiClient.post(`users/${userId}/force-reset-password`);
   },
 
   /**
@@ -55,7 +55,7 @@ export default {
    * @param {string} userId
    */
   forceCoreUserPasswordReset(userId) {
-    return apiClient.post(`/admin/core-users/${userId}/force-reset-password`);
+    return apiClient.post(`admin/core-users/${userId}/force-reset-password`);
   },
 
   /**
@@ -65,6 +65,6 @@ export default {
    */
   getEmailFromToken(token) {
         // This will call the new route we created: GET /api/v1/user-email-from-token/{token}
-        return apiClient.get(`/user-email-from-token/${token}`);
+        return apiClient.get(`user-email-from-token/${token}`);
     },
 };

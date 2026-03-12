@@ -82,7 +82,7 @@
                 <td class="py-2 px-4">
                     <router-link
                         v-if="!company.isInactive && authStore.hasPermission('edit companies')"
-                        :to="{ name: 'companies.edit', params: { id: company.id } }"
+                        :to="{ name: 'entities.index', params: { id: company.id } }"
                         class="text-blue-600 hover:underline mr-4"
                     >
                         Edit
@@ -177,7 +177,7 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 const router = useRouter();
 const navigateToCreate = () => {
-  router.push({ name: 'companies.create' });
+  router.push({ name: 'entities.index' });
 };
 const companies = ref({});
 const teamList = ref([]);

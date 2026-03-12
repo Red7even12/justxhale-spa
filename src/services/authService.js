@@ -21,7 +21,7 @@ export default {
     };
 
     return new Promise((resolve, reject) => {
-      apiClient.post('/set-password', payload)
+      apiClient.post('set-password', payload)
         .then(response => {
           // The service's ONLY job on success is to call the auth store.
           const authStore = useAuthStore();

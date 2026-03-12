@@ -52,8 +52,8 @@ const breadcrumbs = computed(() => {
     } else if (segment === 'estates') {
         crumbs.push({ label: 'Estates', to: '/estates' });
         currentPath += segment + '/';
-    } else if (segment === 'companies') {
-        crumbs.push({ label: 'Companies', to: '/companies' });
+    } else if (segment === 'entities') {
+        crumbs.push({ label: 'Contacts & Entities', to: '/entities' });
         currentPath += segment + '/';
     } else if (segment === 'admin') {
         // If it's just 'admin' and not preceded by anything specific, we might have already added 'Administration'
@@ -68,8 +68,8 @@ const breadcrumbs = computed(() => {
     else if (!isNaN(segment) && crumbs[crumbs.length - 1]?.label === 'Estates') {
       // This is a crude way to get the ID. Ideally, use route.params.id and fetch the name.
       crumbs.push({ label: `Estate #${segment}`, to: null }); // Don't link back to just the ID segment
-    } else if (!isNaN(segment) && crumbs[crumbs.length - 1]?.label === 'Companies') {
-        crumbs.push({ label: `Company #${segment}`, to: null });
+    } else if (!isNaN(segment) && crumbs[crumbs.length - 1]?.label === 'Contacts & Entities') {
+        crumbs.push({ label: `Entity #${segment}`, to: null });
     }
     // You'll need to refine this for all your routes (e.g., /admin/users/:id)
   });

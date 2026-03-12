@@ -6,35 +6,35 @@ export default {
   getCompanies(params = {}) {
     // Axios will automatically convert the 'params' object into URL query parameters.
     // e.g., { status: 'inactive', search: 'acme' } becomes "?status=inactive&search=acme"
-    return apiClient.get('/companies', { params });
+    return apiClient.get('companies', { params });
   },
 
   getCompany(id) {
-    return apiClient.get(`/companies/${id}`);
+    return apiClient.get(`companies/${id}`);
   },
 
   createCompany(companyData) {
-    return apiClient.post('/companies', companyData);
+    return apiClient.post('companies', companyData);
   },
 
   updateCompany(id, companyData) {
-    return apiClient.put(`/companies/${id}`, companyData);
+    return apiClient.put(`companies/${id}`, companyData);
   },
 
   deactivateCompany(id) {
-    return apiClient.post(`/companies/${id}/deactivate`);
+    return apiClient.post(`companies/${id}/deactivate`);
   },
 
   activateCompany(id) {
-    return apiClient.post(`/companies/${id}/activate`);
+    return apiClient.post(`companies/${id}/activate`);
   },
   
   getContacts(companyId) {
-    return apiClient.get(`/companies/${companyId}/contacts`);
+    return apiClient.get(`companies/${companyId}/contacts`);
   },
 
   getContact(contactId) {
     // Use "contacts", not "contact-persons"
-    return apiClient.get(`/contacts/${contactId}`); 
+    return apiClient.get(`contacts/${contactId}`); 
   },
 };

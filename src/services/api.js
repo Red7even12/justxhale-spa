@@ -6,12 +6,20 @@ import { useAuthStore } from '@/store/auth';
 
 const apiClient = axios.create({
   // Use the environment variable for the full base URL
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  
+  //baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: '/api/v1',
   headers: {
     'Accept': 'application/json',
   }
 });
+
+// Helper for assets (logos, etc.)
+export const getAssetUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    // Return relative path for Vite proxy
+    return `/storage/${path}`;
+};
 
 // This interceptor will apply to EVERY API call made through this file.
 apiClient.interceptors.request.use(config => {

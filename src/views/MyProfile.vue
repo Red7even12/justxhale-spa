@@ -96,7 +96,7 @@ const updateProfile = async () => {
   };
 
   try {
-    const response = await apiClient.put('/user/profile', payload);
+    const response = await apiClient.put('user/profile', payload);
     
     // On success, update the auth store with the new user data
     authStore.user = response.data;

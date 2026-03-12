@@ -6,7 +6,7 @@
       <div class="flex justify-center">
         <Logo class="h-22 w-auto" /> 
       </div>
-      
+      <h3 class="text-1.5xl font-bold text-center text-gray-500">Compliance Excellence</h3>
       <h2 class="text-2xl font-bold text-center text-gray-900">Login</h2>
       <form @submit.prevent="handleLogin">
         <div class="space-y-4">

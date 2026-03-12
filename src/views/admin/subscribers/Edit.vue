@@ -81,7 +81,7 @@ const fetchSubscriber = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await apiClient.get(`/subscribers/${subscriberId.value}`);
+    const response = await apiClient.get(`subscribers/${subscriberId.value}`);
     subscriber.value = response.data;
   } catch (err) {
     console.error('Failed to fetch subscriber:', err);
@@ -106,7 +106,7 @@ const handleUpdate = async (formData) => {
       person_email: formData.personEmail,
     };
 
-    await apiClient.put(`/subscribers/${subscriberId.value}`, payload);
+    await apiClient.put(`subscribers/${subscriberId.value}`, payload);
     router.push({ name: 'admin-subscribers' }); 
 
   } catch (err) {

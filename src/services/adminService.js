@@ -7,8 +7,8 @@ export default {
   /**
    * Fetches all document types for the admin management screen.
    */
-  getDocumentTypes() {
-    return apiClient.get('/admin/document-types');
+  getDocumentTypes(params) {
+    return apiClient.get('/admin/document-types', { params });
   },
 
   /**
@@ -16,7 +16,7 @@ export default {
    * @param {object} documentTypeData - The data for the new document type.
    */
   createDocumentType(documentTypeData) {
-    return apiClient.post('/admin/document-types', documentTypeData);
+    return apiClient.post('admin/document-types', documentTypeData);
   },
 
   /**
@@ -25,36 +25,89 @@ export default {
    * @param {object} documentTypeData - The updated data.
    */
   updateDocumentType(id, documentTypeData) {
-    return apiClient.put(`/admin/document-types/${id}`, documentTypeData);
+    return apiClient.put(`admin/document-types/${id}`, documentTypeData);
   },
+
+  // === Document Pack Management ===
+
+  getDocumentPacks(params = {}) {
+    return apiClient.get('admin/document-packs', { params });
+  },
+
+  createDocumentPack(packData) {
+    return apiClient.post('admin/document-packs', packData);
+  },
+
+  updateDocumentPack(id, packData) {
+    return apiClient.put(`admin/document-packs/${id}`, packData);
+  },
+
+  deleteDocumentPack(id) {
+    return apiClient.delete(`admin/document-packs/${id}`);
+  },
+
+// File Types (Niches)
+    getFileTypes() {
+        return apiClient.get('admin/file-types');
+    },
+    getFileType(id) {
+        return apiClient.get(`admin/file-types/${id}`);
+    },
+    getProducts() {
+        return apiClient.get('admin/products');
+    },
+    getSubscribers() {
+        return apiClient.get('subscribers?all=true');
+    },
+    saveFileType(data) {
+        if (data.id) return apiClient.put(`admin/file-types/${data.id}`, data);
+        return apiClient.post('admin/file-types', data);
+    },
+    deleteFileType(id) {
+        return apiClient.delete(`admin/file-types/${id}`);
+    },
+
+    // Case Field Definitions (Dynamic Fields)
+    getFieldDefinitions(fileTypeId) {
+        return apiClient.get(`admin/field-definitions?file_type_id=${fileTypeId}`);
+    },
+    saveFieldDefinition(data) {
+        if (data.id) return apiClient.put(`admin/field-definitions/${data.id}`, data);
+        return apiClient.post('admin/field-definitions', data);
+    },
+    deleteFieldDefinition(id) {
+        return apiClient.delete(`admin/field-definitions/${id}`);
+    },
+
+
 
   /**
    * Toggles the is_active status of a document type.
    * @param {number} id - The ID of the document type.
    */
   toggleDocumentTypeActive(id) {
-    return apiClient.patch(`/admin/document-types/${id}/toggle`);
+    return apiClient.patch(`admin/document-types/${id}/toggle`);
   },
 
   // === Sourced Option Management ===
 
   getSourcedOptionSources() {
-    return apiClient.get('/document-sourced-options/sources');
+    return apiClient.get('document-sourced-options/sources');
   },
 
   getOptionsForSource(sourceName) {
-    return apiClient.get(`/document-sourced-options/${sourceName}`);
+    return apiClient.get(`document-sourced-options/${sourceName}`);
   },
 
   createSourcedOption(optionData) {
-    return apiClient.post('/admin/document-sourced-options', optionData);
+    return apiClient.post('admin/document-sourced-options', optionData);
   },
 
   updateSourcedOption(id, optionData) {
-    return apiClient.put(`/admin/document-sourced-options/${id}`, optionData);
+    return apiClient.put(`admin/document-sourced-options/${id}`, optionData);
   },
 
   deleteSourcedOption(id) {
-    return apiClient.delete(`/admin/document-sourced-options/${id}`);
+    return apiClient.delete(`admin/document-sourced-options/${id}`);
   },
 };

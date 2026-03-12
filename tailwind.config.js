@@ -9,10 +9,14 @@ export default {
     "./src/**/*.{vue,js,ts,jsx,tsx}", 
   ],
  
-
   theme: {
     extend: {
-    colors: {
+      colors: {
+        // PILLAR 5 & 6: Dynamic Branding Hooks
+        // These map to the CSS variables injected by ProductLayout.vue
+        'brand-primary': 'var(--brand-primary)',
+        'brand-secondary': 'var(--brand-secondary)',
+
         'brand-blue': {
           50: '#f0f5f4',
           100: '#e0ebe9',
@@ -26,8 +30,7 @@ export default {
           900: '#2e3935',
           950: '#1f2623',
         },
-  },
-      
+      },
     },
   },
   plugins: [

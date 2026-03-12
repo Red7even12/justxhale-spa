@@ -1,28 +1,33 @@
-// File: frontend-spa/src/router/index.js
-
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../store/auth';
 
-// --- Import your main layout and views ---
+// --- Imports ---
 import AppLayout from '../layouts/AppLayout.vue';
 import Login from '../views/Login.vue';
-import Dashboard from '../views/Dashboard.vue';
-import RemindersDashboard from '@/views/RemindersDashboard.vue';
+//import Dashboard from '../views/Dashboard.vue';
+import Dashboard from '../views/RemindersDashboard.vue';
+// V1 Legacy Imports
 import EstatesIndex from '../views/estates/EstatesIndex.vue'; 
+import EstateEditor from '../views/estates/EstateEditor.vue'; 
+import EstateForm from '../views/estates/EstateForm.vue';
+
+// Admin Imports
 import TeamIndex from '../views/admin/TeamIndex.vue';
 import Administration from '../views/Administration.vue';
 import SubscriberIndex from '../views/admin/subscribers/SubscriberIndex.vue';
 import UserIndex from '../views/admin/UserIndex.vue'; 
-import EstateEditor from '../views/estates/EstateEditor.vue'; 
-import EstateForm from '../views/estates/EstateForm.vue'; // This might eventually be renamed to EstateCreateForm.vue or similar
-import DocumentTypeManager from '@/views/admin/DocumentTypeManager.vue';
-import CompanyIndex from '@/views/clients/CompanyIndex.vue';
-import CompanyForm from '@/views/clients/CompanyForm.vue';
+import DocumentTypeManager from '@/views/admin/DocumentTypes/DocumentTypeManager.vue';   //frontend-spa\src\views\admin\DocumentTypes\DocumentTypeManager.vue
+import EntityIndex from '@/views/admin/entities/EntityIndex.vue';
+
+// Auth Imports
 import SetPassword from '../views/SetPassword.vue';
 import ForgotPassword from '@/views/ForgotPassword.vue';
 import ResetPassword from '@/views/ResetPassword.vue';
 
-
+// V2 Imports
+import AppLauncher from '@/views/AppLauncher.vue';
+import ProductLayout from '@/layouts/ProductLayout.vue'; 
+import CaseIndex from '@/views/cases/CaseIndex.vue';
 
 const routes = [
   {
@@ -31,11 +36,14 @@ const routes = [
     component: Login,
   },
   {
+    path: '/',
+    redirect: { name: 'AppLauncher' }
+  },
+  {
     path: '/set-password/:token', 
     name: 'SetPassword',
     component: SetPassword,
   },
-    // --- Password management routes ---
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
@@ -46,93 +54,50 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword,
   },
-  // ------
+
   {
-    // All authenticated routes will live inside this path
     path: '/',
     component: AppLayout,
     meta: { requiresAuth: true },
     children: [
-    {
-        path: '/',
-        name: 'Dashboard', // Making this the new home page
-        component: RemindersDashboard,
-        meta: { requiresAuth: true, displayName: 'Reminders' }
-      },
-      // --- START: ESTATE ROUTES ---
-      { 
-          path: 'estates', 
-          name: 'estates.index',
-          component: EstatesIndex,
-          meta: { displayName: 'Estates' }
+      // 1. STATIC ROUTES (Profile & Launcher)
+      {
+        path: 'my-profile',
+        name: 'MyProfile',
+        component: () => import('@/views/MyProfile.vue'),
+        meta: { displayName: 'My Profile' }
       },
       {
-          path: 'estates/create',
-          name: 'estates.create', // This is for the "Add Estate" button
-          component: EstateForm,   // It should load the simple form
-          meta: { displayName: 'Create Estate' }
+        path: 'launcher', 
+        name: 'AppLauncher',
+        component: AppLauncher,
       },
-      {
-          path: 'estates/:id',
-          name: 'estates.edit',     // This is the main "Control Panel" dashboard
-          component: EstateEditor,
-          props: true,
-          meta: { displayName: 'Estate Details' }
-      },
-      {
-          path: 'estates/:id/edit-data', // A distinct path for the editing form
-          name: 'estates.form.edit',
-          component: EstateForm,
-          props: true,
-          meta: { displayName: 'Estate Details' }
-      },
-      // --- END: ESTATE ROUTES ---
 
-      // --- START: COMPANY/CONTACT ROUTES ---
-      {
-        path: 'companies',
-        name: 'companies.index',
-        component: CompanyIndex,
-        meta: { permission: 'view companies', displayName: 'Companies' },
-      },
-      {
-        path: 'companies/create',
-        name: 'companies.create',
-        component: CompanyForm,
-        meta: { permission: 'create companies', displayName: 'Create Company' },
-      },
-      {
-        path: 'companies/:id/edit',
-        name: 'companies.edit',
-        component: CompanyForm,
-        props: true, 
-        meta: { permission: 'edit companies', displayName: 'Edit Company' },
-      },
-      // --- END: COMPANY/CONTACT ROUTES ---
-
-      {
-        path: 'admin/teams',
-        name: 'AdminTeams',
-        component: TeamIndex,
-        meta: { displayName: 'Team Management' }
-      },
-      {
-        path: 'admin/users',
-        name: 'AdminUsers',
-        component: UserIndex,
-        meta: { displayName: 'User Management' }
-      },
+      // 2. SYSTEM ADMIN ROUTES (Restored from Imports)
+      // Placed BEFORE :productSlug to ensure they capture "admin/*" correctly
       {
         path: 'administration',
         name: 'Administration',
         component: Administration,
-        meta: { displayName: 'Administration' }
+        meta: { displayName: 'System Administration' }
       },
       {
-        path: 'admin/subscribers',
-        name: 'AdminSubscribers',
-        component: SubscriberIndex,
-        meta: { displayName: 'Subscribers' }
+         path: 'admin/subscribers',
+         name: 'admin.subscribers.index',
+         component: SubscriberIndex,
+         meta: { displayName: 'Subscriber Management' }
+      },
+      {
+        path: '/admin/subscribers/create',
+        name: 'admin-subscribers-create',
+        component: () => import('@/views/admin/subscribers/Create.vue'),
+        meta: { requiresAuth: true, permission: 'edit subscribers' } // Or a 'create' permission
+      },
+      {
+        path: '/admin/subscribers/:id/edit',
+        name: 'admin-subscribers-edit',
+        component: () => import('@/views/admin/subscribers/Edit.vue'),
+        meta: { requiresAuth: true, permission: 'edit subscribers' }
       },
       {
         path: 'admin/workflow-management',
@@ -141,6 +106,36 @@ const routes = [
         meta: { displayName: 'Workflow Management' }
         // meta: { permission: 'manage workflows' } // Optional: Add permission check
       }, 
+
+      {
+        path: 'admin/file-types',              // Changed to match the resource
+        name: 'admin.file-types',              // Changed to match the path
+        component: () => import('@/views/admin/FileTypes/FileTypeIndex.vue'),
+        meta: { displayName: 'Case File Types' }
+      },
+    {
+      path: 'admin/file-types/:id/fields',
+      name: 'admin.file-type-fields',
+      component: () => import('@/views/admin/FileTypes/CaseFieldDefinitionIndex.vue'),
+      props: true,
+      meta: { displayName: 'Field Definitions' }
+    },
+    {
+      path: 'admin/document-packs',
+        name: 'admin.document-packs',
+        component: () => import('@/views/admin/DocumentPacks/DocumentPackIndex.vue'),
+        meta: { displayName: 'Document Packs' }
+      },
+      // V2 Route (Pack Content Manager)
+      {
+        path: 'document-packs/:id/documents',
+        name: 'admin.pack-documents',
+        component: () => import('@/views/admin/DocumentTypes/DocumentTypeManager.vue'), // REUSE V1 COMPONENT  frontend-spa\src\views\admin\DocumentTypeManager.vue
+        props: (route) => ({ packId: route.params.id }), // Pass ID as prop
+        meta: { displayName: 'Manage Pack Content' }
+      },
+
+
       {
         path: 'admin/document-management',
         name: 'admin.documents',
@@ -159,26 +154,6 @@ const routes = [
         component: () => import('@/views/admin/NonWorkingDays.vue'),
         meta: { requiresAuth: true, isAdmin: true, displayName: 'Non-Working Days' }
       },    
-      {
-        path: 'estates/:id/timeline',
-        name: 'estates.timeline',
-        component: () => import('@/views/reports/EstateTimelineReport.vue'),
-        props: true, // This passes the :id from the URL as a prop to the component
-        meta: { requiresAuth: true, displayName: 'Estate Timeline' }
-      }, 
-      {
-        path: 'estates/:id/case-numbers',
-        name: 'estates.case-numbers',
-        component: () => import('@/views/estates/EstateCaseNumbersReport.vue'),
-        props: true,
-        meta: { requiresAuth: true, displayName: 'Estate Case Numbers' }
-      },
-      {
-        path: '/search',
-        name: 'search.results',
-        component: () => import('@/views/SearchResults.vue'),
-        meta: { requiresAuth: true, displayName: 'Search Results' }
-      },
 
       // --- Billing routes  // 
       {
@@ -200,50 +175,148 @@ const routes = [
           meta: { requiresAuth: true, permission: 'view invoices' }
       }, 
 
-      // --- Subscriber Management routes  // 
-      {
-        path: '/admin/subscribers',
-        name: 'admin-subscribers',
-        component: () => import('@/views/admin/subscribers/SubscriberIndex.vue'),
-        meta: { requiresAuth: true, permission: 'view subscribers' } // Add appropriate permission
-      },
-      {
-        path: '/admin/subscribers/create',
-        name: 'admin-subscribers-create',
-        component: () => import('@/views/admin/subscribers/Create.vue'),
-        meta: { requiresAuth: true, permission: 'edit subscribers' } // Or a 'create' permission
-      },
-      {
-        path: '/admin/subscribers/:id/edit',
-        name: 'admin-subscribers-edit',
-        component: () => import('@/views/admin/subscribers/Edit.vue'),
-        meta: { requiresAuth: true, permission: 'edit subscribers' }
-      },
       /// --- Business Users routes  // 
       {
-        path: '/admin/core-users',
-        name: 'AdminUserManagement',
-        component: () => import('@/views/admin/AdminUserManagement.vue'),
-        // This is the navigation guard that protects the route
-        beforeEnter: (to, from, next) => {
-          const authStore = useAuthStore();
-          if (authStore.hasRole('System Admin')) {
-            next(); // Allow access
-          } else {
-            next({ name: 'Dashboard' }); // Or wherever you want to redirect them
-          }
+          path: '/admin/core-users',
+          name: 'AdminUserManagement',
+          component: () => import('@/views/admin/AdminUserManagement.vue'),
+          // This is the navigation guard that protects the route
+          beforeEnter: (to, from, next) => {
+            const authStore = useAuthStore();
+            if (authStore.hasRole('System Admin')) {
+              next(); // Allow access
+            } else {
+              next({ name: 'Dashboard' }); // Or wherever you want to redirect them
+            }
         },
       },
 
-      /// --- Users routes  // 
       {
-        path: '/my-profile', // Or '/profile', '/account', etc.
-        name: 'MyProfile',
-        component: () => import('@/views/MyProfile.vue'),
-        meta: { 
-          requiresAuth: true,
-          displayName: 'My Profile' // Optional: for your header
-        },
+         path: 'admin/users',
+         name: 'admin.users.index',
+         component: UserIndex,
+         meta: { displayName: 'User Management' }
+      },
+      {
+         path: 'admin/teams',
+         name: 'admin.teams.index',
+         component: TeamIndex,
+         meta: { displayName: 'Team Management' }
+      },
+      {
+        path: 'document-types',
+        name: 'admin.document-types',
+        component: () => import('@/views/admin/DocumentTypes/DocumentTypeManager.vue'),
+        meta: { displayName: 'Global Document Types' }
+      },
+      {
+        path: 'admin/products',
+        name: 'admin.products',
+        component: () => import('@/views/products/ProductIndex.vue'),
+        meta: { displayName: 'Product Factory' }
+      },
+      {
+        path: 'admin/products/:slug',
+        name: 'admin.products.detail',
+        component: () => import('@/views/admin/products/ProductDetail.vue'),
+        props: true,
+        meta: { displayName: 'Product Detail' }
+      },
+
+      // 3. V1 LEGACY ROUTES (Estates)
+      { 
+         path: 'estates', 
+         name: 'estates.index',
+         component: EstatesIndex,
+         meta: { displayName: 'Estates Management' } 
+      },
+      {
+        path: 'estates/create',
+        name: 'estates.create',
+        component: EstateForm,
+        meta: { displayName: 'Create Estate' }
+      },
+      {
+        path: 'estates/:id/edit',
+        name: 'estates.form.edit',
+        component: EstateForm,
+        props: true,
+        meta: { displayName: 'Edit Estate' }
+      },
+      {
+        // Legacy Editor (V1)
+        path: 'estates/:id',
+        name: 'estates.edit',
+        component: EstateEditor,
+        props: true,
+        meta: { displayName: 'Estate Workspace' }
+      },
+
+      // 4. GLOBAL REGISTRY (Shared)
+      {
+        path: 'entities',
+        name: 'entities.index',
+        component: EntityIndex,
+        meta: { displayName: 'Global Registry' },
+      },
+
+      // 5. THE V2 GENERIC PRODUCT ENGINE (Must be LAST)
+      {
+        path: ':productSlug',
+        component: ProductLayout,
+        children: [
+          {
+            path: 'dashboard',
+            name: 'ProductDashboard',
+            component: Dashboard
+          },
+          {
+            path: 'cases',
+            name: 'ProductCases',
+            component: CaseIndex,
+            meta: { displayName: 'Case Files' }
+          },
+          // The NEW Case Workspace (Grid)
+          {
+            path: 'cases/:id',
+            name: 'ProductCaseWorkspace',
+            component: () => import('@/views/cases/CaseWorkspace.vue'),
+            props: true,
+            meta: { displayName: 'Case Workspace' }
+          },
+          // The OLD Case Detail (Tabs - now "Setup")
+          {
+            path: 'cases/:id/setup',
+            name: 'ProductCaseSetup',
+            component: () => import('@/views/cases/CaseDetail.vue'),
+            props: true,
+            meta: { displayName: 'Case Setup' }
+          },
+          {
+            path: 'registry',
+            name: 'ProductRegistry',
+            component: EntityIndex,
+            meta: { displayName: 'Entity Registry' }
+          },
+          {
+            path: 'users',
+            name: 'ProductUsers',
+            component: UserIndex,
+            meta: { displayName: 'User Management' }
+          },
+          {
+            path: 'teams',
+            name: 'ProductTeams',
+            component: TeamIndex,
+            meta: { displayName: 'Team Management' }
+          },
+          {
+            path: 'cases/:id/timeline-report',
+            name: 'CaseTimelineReport',
+            component: () => import('@/views/reports/CaseTimelineReport.vue'),
+            meta: { displayName: 'Timeline Report' }
+          },
+        ]
       },
     ],
   },
@@ -254,14 +327,15 @@ const router = createRouter({
   routes,
 });
 
-// This navigation guard protects our authenticated routes
+// Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
+  const token = localStorage.getItem('token');
   
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.meta.requiresAuth && !token) {
     next({ name: 'Login' });
-  } else if (to.name === 'Login' && authStore.isAuthenticated) {
-    next({ name: 'Dashboard' });
+  } else if (to.name === 'Login' && token) {
+    next({ name: 'AppLauncher' });
   } else {
     next();
   }

@@ -11,6 +11,9 @@
   :root {
     --c-primary-action: #4677bb;
     --c-primary-action-hover: #5d8dcf;
+    /* Default JustXhale Colors (Safe Fallbacks) */
+    --brand-primary: #3b82f6; 
+    --brand-secondary: #1e40af;
   }
 }
 

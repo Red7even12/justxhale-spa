@@ -47,20 +47,6 @@
       <p class="text-xs text-gray-500 mt-1">A reminder will be created when you save the note.</p>
     </div>
 
-    <!-- List of existing notes Old 
-    <div class="space-y-4">
-      <p v-if="notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
-      
-      <div v-for="note in notes" :key="note.id" class="bg-gray-50 p-4 rounded-lg border">
-        <div v-if="note.caseNumber" class="mb-2">
-          <p class="font-semibold text-brand-blue-600">Case Number: {{ note.caseNumber }}</p>
-        </div>
-        <p class="text-gray-800 whitespace-pre-wrap">{{ note.content }}</p>
-        <div class="text-xs text-gray-500 mt-2 text-right">
-          by <strong>{{ note.user?.firstName || 'Unknown User' }}</strong> - {{ note.createdAtHuman }}
-        </div>
-      </div>
-    </div>  -->
     <!-- List of existing notes -->
     <div class="space-y-4">
       <p v-if="notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
@@ -98,6 +84,7 @@
 // 1. IMPORTS
 import { ref, watch, nextTick } from 'vue';
 import noteService from '@/services/noteService';
+import apiClient from '@/services/api'; 
 
 
 // 2. PROPS & EMITS
@@ -105,6 +92,8 @@ const props = defineProps({
   initialNotes: { type: Array, required: true, default: () => [] },
   noteableType: { type: String, required: true },
   noteableId: { type: Number, required: true },
+  // NEW: V2 Context (Optional, defaults to null for V1)
+  contextUrl: { type: String, default: null } 
 });
 
 const emit = defineEmits(['note-added', 'cancel']);
@@ -140,26 +129,56 @@ const submitNote = async () => {
   isLoading.value = true;
   error.value = null;
 
-// To this object with snake_case keys:
-const payload = {
-  noteable_type: props.noteableType,
-  noteable_id: props.noteableId,
-  content: newNoteContent.value,
-  case_number: newCaseNumber.value || null, 
-  due_date: reminderDate.value || null, 
-};
+  const payload = {
+    noteable_type: props.noteableType,
+    noteable_id: props.noteableId,
+    content: newNoteContent.value,
+    case_number: newCaseNumber.value || null,
+  };
 
   try {
-    const response = await noteService.createNote(payload);
-    notes.value.unshift(response.data.data);
+    // 1. Create the Note First
+    const response = await noteService.createNote(payload, props.contextUrl);
     
+    // DEFINE IT FIRST
+    const savedNote = response.data?.data || response.data;
+
+    // THEN CHECK IT
+    if (!savedNote || !savedNote.id) {
+        throw new Error("Invalid response from server");
+    }
+
+    // Update UI
+    notes.value.unshift(savedNote);
+    
+    // 2. Check if Reminder is requested
+    if (showReminderInput.value && reminderDate.value) {
+        try {
+            const reminderPayload = {
+                due_date: reminderDate.value,
+                notes: newNoteContent.value,
+                note_id: savedNote.id, // Now safe to access
+                
+                // Context Logic
+                case_workflow_process_id: props.noteableType === 'case_workflow_process' ? props.noteableId : null,
+                case_document_requirement_id: props.noteableType === 'case_document_requirement' ? props.noteableId : null
+            };
+
+            await apiClient.post(`/${props.contextUrl}/reminders`, reminderPayload);
+            
+        } catch (remErr) {
+            console.error("Failed to create reminder", remErr);
+        }
+    }
+
     // Reset form state
     newNoteContent.value = ''; 
     newCaseNumber.value = '';
     reminderDate.value = '';
     showReminderInput.value = false;
 
-    emit('note-added', response.data.data);
+    emit('note-added', savedNote);
+
   } catch (err) {
     error.value = 'Failed to save the note. Please try again.';
     console.error(err);

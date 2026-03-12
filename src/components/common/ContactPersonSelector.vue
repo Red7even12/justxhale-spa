@@ -44,7 +44,7 @@
      <!-- 1. Full Width Management Buttons -->
       <div class="space-y-3 mb-6">
         <router-link
-          :to="{ name: 'companies.create', query: { popup: 'true' } }" 
+          :to="{ name: 'entities.index', query: { popup: 'true' } }" 
           target="_blank"
           class="btn-secondary w-full block text-center"
         >
@@ -53,7 +53,7 @@
 
         <router-link
           v-if="selectedCompanyId"
-          :to="{ name: 'companies.edit', params: { id: selectedCompanyId }, query: { popup: 'true' } }"
+          :to="{ name: 'entities.index', params: { id: selectedCompanyId }, query: { popup: 'true' } }"
           target="_blank"
           class="btn-secondary w-full block text-center"
         >
@@ -179,3 +179,4 @@ const handleSelect = () => {
 .form-label { @apply block text-sm font-medium text-gray-700 mb-1; }
 .form-select { @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm; }
 </style>
+

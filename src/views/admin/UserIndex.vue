@@ -114,7 +114,7 @@ const fetchUsers = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await apiClient.get('/users');
+    const response = await apiClient.get('users');
     users.value = response.data.data;
   } catch (err) {
     console.error("Failed to fetch users:", err);

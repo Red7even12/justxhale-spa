@@ -9,7 +9,7 @@ const reminderService = {
    * @returns {Promise} Axios promise with the API response.
    */
   getReminders(params) {
-    return api.get('/reminders', { params });
+    return api.get('reminders', { params });
   },
 
   /**
@@ -17,7 +17,7 @@ const reminderService = {
    * @returns {Promise}
    */
   getDefaultToDate() {
-    return api.get('/config/default-to-date');
+    return api.get('config/default-to-date');
   },
 
   // --- NEW METHODS START HERE ---
@@ -28,7 +28,7 @@ const reminderService = {
    * @returns {Promise} Axios promise with the reminder data.
    */
   getReminder(reminderId) {
-    return api.get(`/reminders/${reminderId}`);
+    return api.get(`reminders/${reminderId}`);
   },
 
   /**
@@ -38,7 +38,7 @@ const reminderService = {
    * @returns {Promise} Axios promise with the updated reminder data.
    */
   updateReminder(reminderId, payload) {
-    return api.put(`/reminders/${reminderId}`, payload);
+    return api.put(`reminders/${reminderId}`, payload);
   },
 
   /**
@@ -48,7 +48,7 @@ const reminderService = {
    * @returns {Promise} Axios promise with the NEW reminder's data.
    */
   snoozeReminder(reminderId, payload) {
-    return api.post(`/reminders/${reminderId}/snooze`, payload);
+    return api.post(`reminders/${reminderId}/snooze`, payload);
   },
 
     /**
@@ -58,12 +58,12 @@ const reminderService = {
    * @returns {Promise}
    */
   snoozeReminderByDays(reminderId, payload) {
-    return api.post(`/reminders/${reminderId}/snooze-by-days`, payload);
+    return api.post(`reminders/${reminderId}/snooze-by-days`, payload);
   },
    
   
   triggerAction(id, actionName) {
-    return api.post(`/reminders/${id}/action`, { action: actionName });
+    return api.post(`reminders/${id}/action`, { action: actionName });
   },
 };
 

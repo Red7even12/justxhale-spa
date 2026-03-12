@@ -70,7 +70,7 @@ const fetchTeams = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await apiClient.get('/teams');
+    const response = await apiClient.get('teams');
     teams.value = response.data.data;
   } catch (err) {
     console.error('Failed to fetch teams:', err);

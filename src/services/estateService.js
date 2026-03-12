@@ -6,19 +6,19 @@ import apiClient from './api.js';
 export default {
   // === Existing Estate Methods ===
   getEstates() {
-    return apiClient.get('/estates');
+    return apiClient.get('estates');
   },
   getEstate(id) {
-    return apiClient.get(`/estates/${id}`);
+    return apiClient.get(`estates/${id}`);
   },
   createEstate(estateData) {
-    return apiClient.post('/estates', estateData);
+    return apiClient.post('estates', estateData);
   },
   updateEstate(id, estateData) {
-    return apiClient.put(`/estates/${id}`, estateData);
+    return apiClient.put(`estates/${id}`, estateData);
   },
   deleteEstate(id) {
-    return apiClient.delete(`/estates/${id}`);
+    return apiClient.delete(`estates/${id}`);
   },
 
  // === ESTATE LOCKING METHODS ===
@@ -28,7 +28,7 @@ export default {
    * @returns {Promise} Axios promise object.
    */
   lockEstate(id) {
-    return apiClient.post(`/estates/${id}/lock`);
+    return apiClient.post(`estates/${id}/lock`);
   },
 
   /**
@@ -37,7 +37,7 @@ export default {
    * @returns {Promise} Axios promise object.
    */
   refreshLock(id) {
-    return apiClient.put(`/estates/${id}/lock`);
+    return apiClient.put(`estates/${id}/lock`);
   },
 
   /**
@@ -46,7 +46,7 @@ export default {
    * @returns {Promise} Axios promise object.
    */
   unlockEstate(id) {
-    return apiClient.delete(`/estates/${id}/lock`);
+    return apiClient.delete(`estates/${id}/lock`);
   },
 
 
@@ -57,28 +57,28 @@ export default {
    * @returns {Promise} Axios promise with the timeline data.
    */
   getEstateTimeline(estateId, params) {
-    return apiClient.get(`/estates/${estateId}/timeline`, { params });
+    return apiClient.get(`estates/${estateId}/timeline`, { params });
   },
   getEstateQuickView(estateId) {
-    return apiClient.get(`/estates/${estateId}/quickview-data`);
+    return apiClient.get(`estates/${estateId}/quickview-data`);
   },
   getCaseNumbers(estateId) {
-    return apiClient.get(`/estates/${estateId}/case-numbers`);
+    return apiClient.get(`estates/${estateId}/case-numbers`);
   },
 
 
   // === Document Methods ===
   getDocumentRequirements(estateId) {
-    return apiClient.get(`/estates/${estateId}/document-requirements`);
+    return apiClient.get(`estates/${estateId}/document-requirements`);
   },
   submitDocumentLog(estateId, payload) {
-    return apiClient.post(`/estates/${estateId}/document-log`, payload);
+    return apiClient.post(`estates/${estateId}/document-log`, payload);
   },
   getDocumentLogHistory(requirementId) {
-      return apiClient.get(`/document-requirements/${requirementId}/history`);
+      return apiClient.get(`document-requirements/${requirementId}/history`);
   },
   batchUpdateDocumentRequirements(estateId, requirementsPayload) {
-    return apiClient.post(`/estates/${estateId}/document-requirements/batch-update`, {
+    return apiClient.post(`estates/${estateId}/document-requirements/batch-update`, {
       requirements: requirementsPayload 
     });
   },
@@ -91,11 +91,11 @@ export default {
    * @returns {Promise}
    */
   getWorkflowProcesses(estateId) {
-    return apiClient.get(`/estates/${estateId}/workflow-processes`);
+    return apiClient.get(`estates/${estateId}/workflow-processes`);
   },
 
   completeWorkflowProcess(processId, value) {
-    return apiClient.post(`/workflow-processes/${processId}/complete`, { value });
+    return apiClient.post(`workflow-processes/${processId}/complete`, { value });
   },
   /**
    * Activates a workflow process and creates its first reminder.
@@ -104,7 +104,7 @@ export default {
    * @returns {Promise} A promise that resolves with the refreshed workflow list.
    */
   activateWorkflowProcess(estateId, processId) {
-    return apiClient.post(`/estates/${estateId}/workflow-processes/${processId}/activate`);
+    return apiClient.post(`estates/${estateId}/workflow-processes/${processId}/activate`);
   },
 
   /**
@@ -113,16 +113,16 @@ export default {
    * @returns {Promise} A promise that resolves with an array of reminder objects.
    */
   getReminderHistory(processId) {
-    return apiClient.get(`/workflow-processes/${processId}/reminders`);
+    return apiClient.get(`workflow-processes/${processId}/reminders`);
   },
 
   getMastersOffices() {
-    return apiClient.get('/reference-data/masters-offices');
+    return apiClient.get('reference-data/masters-offices');
   },
 
   // === NOTE-SPECIFIC METHODS ===
   getNote(noteId) {
-    return apiClient.get(`/notes/${noteId}`);
+    return apiClient.get(`notes/${noteId}`);
   }
   
   

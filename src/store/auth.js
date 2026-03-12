@@ -14,10 +14,28 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: (state) => !!state.token,
     hasPermission: (state) => (permissionName) => {
-      return state.permissions.includes(permissionName);
+      if (!state.permissions) {
+        console.warn('hasPermission check failed: No permissions in state');
+        return false;
+      }
+      const target = permissionName.trim().toLowerCase();
+      const match = state.permissions.some(p => 
+        (typeof p === 'string' ? p : p.name).trim().toLowerCase() === target
+      );
+      // console.log(`hasPermission("${permissionName}")?`, match, 'Target:', target, 'Available:', state.permissions);
+      return match;
     },
     hasRole: (state) => (roleName) => {
-      return state.roles.includes(roleName);
+      if (!state.roles) {
+        console.warn('hasRole check failed: No roles in state');
+        return false;
+      }
+      const target = roleName.trim().toLowerCase();
+      const match = state.roles.some(r => 
+        (typeof r === 'string' ? r : r.name).trim().toLowerCase() === target
+      );
+      console.log(`hasRole("${roleName}")?`, match, 'Target:', target, 'Available:', state.roles);
+      return match;
     },
   },
   actions: {
@@ -33,8 +51,8 @@ export const useAuthStore = defineStore('auth', {
       const user = loginData.user;
       
       // 2. Extract roles and permissions. They come as objects, so we extract the names.
-      const roles = user.roles ? user.roles.map(r => r.name) : [];
-      const permissions = user.permissions ? user.permissions.map(p => p.name) : [];
+      const roles = user.roles ? user.roles.map(r => (typeof r === 'string' ? r : r.name).trim()) : [];
+      const permissions = user.permissions ? user.permissions.map(p => (typeof p === 'string' ? p : p.name).trim()) : [];
 
       // 3. Update the global API client to use the new token for all future requests.
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -53,7 +71,7 @@ export const useAuthStore = defineStore('auth', {
     },
     // --- END OF NEW ACTION ---
 
-    async login(credentials) {
+async login(credentials) {
       try {
         const loginData = {
           ...credentials,
@@ -61,17 +79,21 @@ export const useAuthStore = defineStore('auth', {
         };
         const response = await api.post('/login', loginData);
         
-        // The /login response structure might be different. Let's assume it has accessToken.
-        // We can reuse a part of the handleLoginSuccess logic here.
+        // 1. Set Token
         const token = response.data.accessToken;
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
-        // After setting the token, fetch the full user details.
+        // 2. Fetch User Details & Roles
         await this.fetchAndSetUser(token);
 
-        router.push({ name: 'Dashboard' });
+        // 3. UNIFIED REDIRECT: Everyone goes to the Launcher.
+        // The AppLauncher.vue component now handles the logic for 
+        // System Admins (Master Console Card) vs Subscribers (Auto-launch).
+        router.push({ name: 'AppLauncher' });
+
       } catch (error) {
         console.error('Login failed:', error);
+        // Ensure we clean up if the second step failed
         this.logout(); 
         throw error;
       }
@@ -85,8 +107,10 @@ export const useAuthStore = defineStore('auth', {
         // The /user endpoint gives user, roles, and permissions at the top level.
         this.token = token;
         this.user = response.data.user;
-        this.roles = response.data.roles;
-        this.permissions = response.data.permissions;
+        
+        // Ensure roles and permissions are arrays of strings (names) and trimmed
+        this.roles = (response.data.roles || []).map(r => (typeof r === 'string' ? r : r.name).trim());
+        this.permissions = (response.data.permissions || []).map(p => (typeof p === 'string' ? p : p.name).trim());
 
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(this.user));

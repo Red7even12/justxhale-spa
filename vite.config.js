@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5180,
+    port: 5181,
     host: true,
     allowedHosts: [
       // This must contain your static domain
@@ -23,9 +23,14 @@ export default defineConfig({
       // This says: whenever a request starts with "/api",
       // forward it to the target server.
       '/api': {
-        target: 'http://localhost:8010', // Your Laravel backend
+        target: 'http://localhost:8011', // Your Laravel backend
         changeOrigin: true,
         // We don't need to rewrite the path, as Laravel expects '/api/...'
+      },
+      // Proxy storage assets as well
+      '/storage': {
+        target: 'http://localhost:8011',
+        changeOrigin: true,
       }
   }
   }

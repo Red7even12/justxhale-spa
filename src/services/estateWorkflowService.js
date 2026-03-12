@@ -7,7 +7,7 @@ const estateWorkflowService = {
    * @returns {Promise} A promise that resolves with the API response.
    */
   getProcesses(estateId) {
-    return apiClient.get(`/estates/${estateId}/workflow-processes`);
+    return apiClient.get(`estates/${estateId}/workflow-processes`);
   },
 
   /**
@@ -17,7 +17,7 @@ const estateWorkflowService = {
    * @returns {Promise} A promise that resolves with the API response.
    */
   activateProcess(estateId, processId) {
-    return apiClient.post(`/estates/${estateId}/workflow-processes/${processId}/activate`);
+    return apiClient.post(`estates/${estateId}/workflow-processes/${processId}/activate`);
   },
 };
 

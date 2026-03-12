@@ -6,8 +6,8 @@
     <div class="bg-white shadow-md rounded-lg p-4 mb-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="filter-group">
-          <label for="search" class="block text-sm font-medium text-gray-700">Search Estate/Task</label>
-          <input id="search" type="text" v-model="filters.search" placeholder="e.g., Williams H or Coded as Estate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          <label for="search" class="block text-sm font-medium text-gray-700">Search Case File/Task Keyword</label>
+          <input id="search" type="text" v-model="filters.search" placeholder="e.g., Williams H or Coded" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
         </div>
         <div class="filter-group">
           <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -39,7 +39,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" @click="handleSort('due_date')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-20">Due Date ⇅</th>
-              <th scope="col" @click="handleSort('estate_name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">Estate ⇅</th>
+              <th scope="col" @click="handleSort('case_name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">Case File ⇅</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Status</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Actions</th>
@@ -49,57 +49,51 @@
             <tr v-for="reminder in reminders.data" :key="reminder.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ formatDate(reminder.dueDate) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span class="font-medium text-gray-900">{{ reminder.estate.name }}</span>
-                <!-- <span class="ml-1 text-gray-500" v-if="reminder.estate.executor_ref">({{ reminder.estate.executor_ref }})</span> -->
+                <span class="font-medium text-gray-900">{{ reminder.caseName }}</span>
+                <div class="text-xs text-gray-400">{{ reminder.caseReference }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ reminder.origin ? reminder.origin.label : 'General' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {{ reminder.taskContext }}
+              </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <span :class="getStatusClass(reminder)">
-                  {{ reminder.status.name }}
+                  {{ reminder.statusName }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  
-                  <!-- START: MODIFIED CODE BLOCK -->
-                  <div class="flex items-center space-x-2">
-                      <!-- Lock Icon (shows if estate is locked) -->
-                      <div v-if="reminder.estate && reminder.estate.lock" 
-                          :title="`Locked by ${reminder.estate.lock.user.name}`">
-                          <svg class="w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                          </svg>
-                      </div>
-
-                      <!-- Estate Button (disabled if locked) -->
-                      <button @click="goToEstate(reminder.estate.id)" 
-                              :disabled="!!(reminder.estate && reminder.estate.lock)"
-                              class="text-brand-blue-600 hover:text-brand-blue-900 disabled:text-gray-400 disabled:cursor-not-allowed">
-                          Estate
-                      </button>
-                      
-                      <!-- Step Button (disabled if locked OR for invalid origin) 
-                      <button @click="goToWorkflowStep(reminder.estate.id, reminder.origin.id)" 
-                              :disabled="!reminder.origin || reminder.origin.type !== 'sars_workflow' || !!(reminder.estate && reminder.estate.lock)" 
-                              class="text-brand-blue-600 hover:text-brand-blue-900 disabled:text-gray-400 disabled:cursor-not-allowed">
-                          Step
-                      </button>
-                      -->
-                      
-                      <!-- Manage Button (disabled if locked) -->
-                      <button @click="openReminderModal(reminder.id)"
-                              :disabled="!!(reminder.estate && reminder.estate.lock)"
-                              class="text-brand-blue-600 hover:text-brand-blue-900 disabled:text-gray-400 disabled:cursor-not-allowed">
-                          Reminder
-                      </button>
-                      
-                      <!-- Note Button (remains enabled) -->
-                      <button @click="addNote(reminder)" 
-                              class="text-brand-blue-600 hover:text-brand-blue-900">
-                          Note
-                      </button>
-                  </div>
-                  <!-- END: MODIFIED CODE BLOCK -->
-                  
+                <div class="flex items-center space-x-3">
+                    
+                    <!-- Open Case Button -->
+                    <!-- Navigates to the specific tab (Workflow/Documents/Details) based on context -->
+                    <button 
+                        @click="goToCase(reminder.caseFileId || reminder.case_file_id, reminder.uiTab || reminder.ui_tab)" 
+                        class="text-brand-primary hover:text-blue-800 font-bold text-xs uppercase tracking-wide border border-transparent hover:border-blue-200 px-2 py-1 rounded transition-colors"
+                    >
+                        Open Case
+                    </button>
+                    
+                    <!-- Edit Reminder Details -->
+                    <button 
+                        @click="openReminderModal(reminder.id)"
+                        class="text-gray-500 hover:text-gray-800"
+                        title="Edit Reminder Settings"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                    </button>
+                    
+                    <!-- Add Note (Context Aware) -->
+                    <button 
+                        @click="addNote(reminder)" 
+                        class="text-gray-400 hover:text-brand-primary"
+                        title="Add Note to Context"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z" />
+                        </svg>
+                    </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -191,7 +185,10 @@ import NotesPanel from '@/components/estates/NotesPanel.vue';
 import ManageReminderModal from '@/components/reminders/ManageReminderModal.vue'; 
 import noteService from '@/services/noteService';
 import { formatDate } from '@/utils/formatters';
+import { useRoute } from 'vue-router'; // Add useRoute
+import apiClient from '@/services/api'; // Use generic client instead of reminderService
 
+const route = useRoute(); // Initialize useRoute to access route params
 const router = useRouter();
 
 const reminders = ref({});
@@ -225,13 +222,20 @@ const fetchReminders = async () => {
   error.value = null;
   try {
     const queryParams = { ...filters };
+    
+    // Clean empty filters
     for (const key in queryParams) {
       if (queryParams[key] === '' || queryParams[key] === null) {
         delete queryParams[key];
       }
     }
-    const response = await reminderService.getReminders(queryParams);
-    reminders.value = response.data;
+
+    // V2 CALL: /{productSlug}/reminders
+    const { data } = await apiClient.get(`/${route.params.productSlug}/reminders`, {
+        params: queryParams
+    });
+    
+    reminders.value = data;
   } catch (err) {
     error.value = err.response?.data?.message || 'An unknown error occurred.';
     console.error(err);
@@ -281,10 +285,14 @@ const debounceFetch = debounce(() => {
     fetchReminders();
 }, 300);
 
-const getStatusClass = (reminder) => {
-  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
 
-  if (reminder.status.name === 'Completed' || reminder.status.name === 'Cancelled') {
+ const getStatusClass = (reminder) => {
+  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
+  
+  // Use status_name or statusName (middleware might camelCase it)
+  const statusName = reminder.statusName || reminder.status_name || '';
+
+  if (statusName === 'Completed' || statusName === 'Cancelled') {
     return `${baseClasses} bg-gray-100 text-gray-800`;
   }
 
@@ -321,8 +329,16 @@ const changePage = (newPage) => {
     }
 }
 
-const goToEstate = (estateId) => {
-  router.push({ name: 'estates.edit', params: { id: estateId } });
+const goToCase = (caseId, tab = 'details') => {
+  router.push({ 
+      name: 'ProductCaseWorkspace', 
+      params: { 
+          productSlug: route.params.productSlug, 
+          id: caseId 
+      },
+      // If your workspace supports query params for tabs, pass them here
+      query: { tab: tab } 
+  });
 };
 
 const goToWorkflowStep = (estateId, processId) => {
@@ -338,35 +354,47 @@ const addNote = async (reminder) => {
 
   let noteableType, noteableId, titleLabel;
 
-  if (reminder.origin) {
-    // It's a reminder linked to a workflow or document
-    noteableType = reminder.origin.type;
-    noteableId = reminder.origin.id;
-    titleLabel = reminder.origin.label;
-  } else {
-    // It's a "General" reminder, so the note is on the reminder itself
+  // 1. Check for Workflow Context
+  if (reminder.caseWorkflowProcessId || reminder.case_workflow_process_id) {
+    noteableType = 'case_workflow_process';
+    noteableId = reminder.caseWorkflowProcessId || reminder.case_workflow_process_id;
+    titleLabel = reminder.taskContext || reminder.task_context;
+  }
+  // 2. Check for Document Context
+  else if (reminder.caseDocumentRequirementId || reminder.case_document_requirement_id) {
+    noteableType = 'case_document_requirement';
+    noteableId = reminder.caseDocumentRequirementId || reminder.case_document_requirement_id;
+    titleLabel = reminder.taskContext || reminder.task_context;
+  }
+  // 3. Fallback: Note on the Reminder itself
+  else {
     noteableType = 'reminder';
     noteableId = reminder.id;
-    titleLabel = 'General';
+    titleLabel = 'General Task';
   }
 
-  if (!noteableType || !noteableId) {
-    alert("Cannot add a note to a reminder with an unknown origin.");
-    return;
-  }
+  // Set up the Modal Context
+  // Note: We use caseName (camelCase) from the V2 View
+  const caseName = reminder.caseName || reminder.case_name || 'Unknown Case';
   
-  notesContext.title = `Notes for: ${reminder.estate.name} - ${titleLabel}`;
+  notesContext.title = `Notes: ${caseName} - ${titleLabel}`;
   notesContext.noteableType = noteableType;
   notesContext.noteableId = noteableId;
   notesContext.initialNotes = [];
+  
   isNotesModalOpen.value = true;
 
   try {
-    const response = await noteService.getNotes(noteableType, noteableId);
-    notesContext.initialNotes = response.data.data;
+    // We need to construct the URL context for the API call
+    // Logic: If we are on the dashboard, we might not have the productSlug in the reminder object itself.
+    // However, the dashboard route usually has it.
+    const contextUrl = `${route.params.productSlug}/cases/${reminder.caseFileId || reminder.case_file_id}`;
+
+    const response = await noteService.getNotes(noteableType, noteableId, contextUrl);
+    notesContext.initialNotes = response.data;
   } catch (err) {
     console.error("Failed to fetch notes history:", err);
-    isNotesModalOpen.value = false;
+    // Don't close modal, just show empty list or error
     alert('Could not load notes history.');
   }
 };
