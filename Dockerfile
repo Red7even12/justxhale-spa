@@ -8,6 +8,9 @@ COPY . .
 # FIX: Add executable permission to the vite script
 RUN chmod +x /app/node_modules/.bin/vite
 
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 RUN npm run build
 
 # Stage 2: Serve the built application with Nginx
