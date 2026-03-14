@@ -13,8 +13,8 @@
         
         <!-- Preview Header: Show Logo or Color Bar -->
         <div class="h-16 w-full flex items-center justify-center relative" :style="{ backgroundColor: getPrimaryColor(product) }">
-           <img v-if="product.logoPath || product.logo_path" 
-                :src="getAssetUrl(product.logoPath || product.logo_path)" 
+           <img v-if="product.logoUrl || product.logo_url" 
+                :src="getAssetUrl(product.logoUrl || product.logo_url)" 
                 class="h-12 w-auto object-contain bg-white/90 rounded px-2 py-1 shadow-sm absolute bottom-2" 
                 alt="Logo" />
         </div>

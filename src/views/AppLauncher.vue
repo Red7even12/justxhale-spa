@@ -60,10 +60,10 @@
             <div class="flex items-center mb-6">
               
               <!-- LOGO LOGIC START -->
-              <div v-if="product.logoPath || product.logo_path" 
+              <div v-if="product.logoUrl || product.logo_url" 
                    class="w-40 h-15 mr-4 bg-gray-500 rounded-lg shadow-sm border border-gray-400 flex items-center justify-center overflow-hidden p-1">
                  <img 
-                   :src="getAssetUrl(product.logoPath || product.logo_path)" 
+                   :src="getAssetUrl(product.logoUrl || product.logo_url)" 
                    class="w-full h-full object-contain" 
                    alt="App Logo"
                  />

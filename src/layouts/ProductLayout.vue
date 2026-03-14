@@ -12,9 +12,9 @@
           <div class="flex items-center gap-4 pr-6 border-r border-white/20 h-10">
             
             <!-- Logo OR Fallback Letter -->
-            <div v-if="product?.logoPath || product?.logo_path" class="h-16 w-auto">
+            <div v-if="product?.logoPath || product?.logo_path" class="h-30 w-auto">
                <img 
-                 :src="getAssetUrl(product.logoPath || product.logo_path)" 
+                 :src="getAssetUrl(product.logoUrl || product.logo_url)" 
                  alt="Product Logo" 
                  class="h-full w-auto object-contain drop-shadow-sm"
                />
@@ -37,10 +37,10 @@
             </router-link>
             <template v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')">
               <router-link :to="`/${productSlug}/users`" class="top-nav-link" active-class="top-nav-active">
-                User Management
+                Users
               </router-link>
               <router-link :to="`/${productSlug}/teams`" class="top-nav-link" active-class="top-nav-active">
-                Team Management
+                Teams
               </router-link>
             </template>
           </nav>
