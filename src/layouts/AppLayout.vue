@@ -209,12 +209,12 @@ const executeSearch = () => {
 
 const { showModal, modalTitle, modalMessage, modalMode, onConfirm, onCancel } = useAlerts();
 
-onMounted(() => {
-  console.log('--- AppLayout Debug ---');
-  console.log('User Roles:', authStore.roles);
-  console.log('Is System Admin?', authStore.hasRole('System Admin'));
-  console.log('Is Business Admin?', authStore.hasRole('Business Admin'));
-});
+//onMounted(() => {
+//  console.log('--- AppLayout Debug ---');
+//  console.log('User Roles:', authStore.roles);
+//  console.log('Is System Admin?', authStore.hasRole('System Admin'));
+//  console.log('Is Business Admin?', authStore.hasRole('Business Admin'));
+//});
 </script>
 
 <style scoped>

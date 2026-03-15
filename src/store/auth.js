@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.token,
     hasPermission: (state) => (permissionName) => {
       if (!state.permissions) {
-        console.warn('hasPermission check failed: No permissions in state');
+        //console.warn('hasPermission check failed: No permissions in state');
         return false;
       }
       const target = permissionName.trim().toLowerCase();
@@ -27,14 +27,14 @@ export const useAuthStore = defineStore('auth', {
     },
     hasRole: (state) => (roleName) => {
       if (!state.roles) {
-        console.warn('hasRole check failed: No roles in state');
+        //console.warn('hasRole check failed: No roles in state');
         return false;
       }
       const target = roleName.trim().toLowerCase();
       const match = state.roles.some(r => 
         (typeof r === 'string' ? r : r.name).trim().toLowerCase() === target
       );
-      console.log(`hasRole("${roleName}")?`, match, 'Target:', target, 'Available:', state.roles);
+      //console.log(`hasRole("${roleName}")?`, match, 'Target:', target, 'Available:', state.roles);
       return match;
     },
   },
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', {
      * @param {object} loginData - The successful payload from the API.
      */
     handleLoginSuccess(loginData) {
-      // 1. Extract the token and user from the payload.
+      // Extract the token and user from the payload.
       // The `||` makes it robust; it works if the key is `accessToken` or `access_token`.
       const token = loginData.accessToken || loginData.access_token;
       const user = loginData.user;
@@ -92,7 +92,7 @@ async login(credentials) {
         router.push({ name: 'AppLauncher' });
 
       } catch (error) {
-        console.error('Login failed:', error);
+        //console.error('Login failed:', error);
         // Ensure we clean up if the second step failed
         this.logout(); 
         throw error;
@@ -118,7 +118,7 @@ async login(credentials) {
         localStorage.setItem('permissions', JSON.stringify(this.permissions));
 
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        //console.error('Failed to fetch user:', error);
         this.logout();
       }
     },
