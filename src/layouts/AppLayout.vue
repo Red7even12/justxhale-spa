@@ -14,13 +14,56 @@
         <div class="flex items-center justify-center py-6 flex-shrink-0 px-4">
           <Logo class="h-12 w-auto" />
         </div>
-        <nav class="flex-1 flex flex-col px-2 pb-4 space-y-1">
+        <nav class="flex-1 flex flex-col px-2 pb-4 space-y-1 overflow-y-auto">
+          <!-- 1. STANDARD SUBSCRIBER MENU (V1) -->
           <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
-            <router-link @click="closeMobileMenu" to="/" class="mobile-nav-link" :class="{ 'active': $route.name === 'Dashboard' }">Reminders</router-link>
+            <router-link @click="closeMobileMenu" to="/launcher" class="mobile-nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
             <router-link @click="closeMobileMenu" to="/estates" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-            <router-link @click="closeMobileMenu" to="/entities" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Contacts & Entities</router-link>
+            <router-link @click="closeMobileMenu" to="/entities" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Registry</router-link>
           </template>
-          <!-- ... (Rest of your mobile menu content) ... -->
+
+          <!-- Divider -->
+          <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="border-t border-white/10 my-2 pt-2"></div>
+
+          <!-- 2. SUBSCRIBER ADMIN MENU -->
+          <template v-if="authStore.hasRole('Subscriber Admin')">
+            <router-link @click="closeMobileMenu" to="/admin/users" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">User Management</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/teams" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Team Management</router-link>
+          </template>
+
+          <!-- 3. SYSTEM ADMIN MENU -->
+          <template v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')">
+            <!-- Product Factory -->
+            <router-link @click="closeMobileMenu" to="/admin/products" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/products') }">
+              <span class="text-yellow-400 font-bold">Product Factory</span>
+            </router-link>
+
+            <!-- SaaS Management Group -->
+            <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS Management</div>
+            <router-link v-if="authStore.hasRole('System Admin')" @click="closeMobileMenu" to="/admin/core-users" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/core-users') }">Core Users</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/subscribers" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/subscribers') }">Subscribers</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/pricing-plans" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/pricing-plans') }">Pricing</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/billing" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/billing') }">Billing</router-link>
+
+            <!-- System Setup Group -->
+            <template v-if="authStore.hasRole('System Admin')">
+              <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">System Setup</div>
+              <router-link @click="closeMobileMenu" to="/admin/file-types" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/file-types') }">Case File Types</router-link>
+              <router-link @click="closeMobileMenu" :to="{ name: 'admin.document-packs' }" class="mobile-nav-link ml-2" :class="{ 'active': $route.name === 'admin.document-packs' }">Document Packs</router-link>
+              <router-link @click="closeMobileMenu" to="/admin/document-management" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/document-management') }">Document Setup</router-link>
+              <router-link @click="closeMobileMenu" to="/admin/workflow-management" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/workflow-management') }">Workflow Management</router-link>
+              <router-link @click="closeMobileMenu" :to="{ name: 'SystemMailsSetup' }" class="mobile-nav-link ml-2" :class="{ 'active': $route.name === 'SystemMailsSetup' }">System Mails Setup</router-link>
+              <router-link @click="closeMobileMenu" to="/admin/option-lists" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/option-lists') }">Option Lists</router-link>
+              <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
+            </template>
+          </template>
+
+          <!-- Divider -->
+          <div class="border-t border-white/10 my-4 pt-4"></div>
+          
+          <!-- User Actions -->
+          <router-link @click="closeMobileMenu" to="/my-profile" class="mobile-nav-link">My Profile</router-link>
+          <button @click="logout(); closeMobileMenu();" class="mobile-nav-link text-red-400 w-full text-left">Logout</button>
         </nav>
       </div>
     </div>
@@ -60,7 +103,7 @@
                 <span class="text-yellow-400 font-bold">Product Factory</span>
               </router-link>
 
-              <!-- ORIGINAL: SAAS MANAGEMENT DROPDOWN -->
+              <!-- ORIGINAL: PAAS MANAGEMENT DROPDOWN -->
               <div class="relative">
                 <button @click="isSaaSMenuOpen = !isSaaSMenuOpen" class="nav-link flex items-center" type="button">
                   <span>SaaS Management</span>
@@ -90,10 +133,11 @@
 
                 <div v-if="isSystemMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
+                    <router-link to="/admin/file-types" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Case File Types</router-link>
                     <router-link :to="{ name: 'admin.document-packs' }" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Packs</router-link>
                     <router-link to="/admin/document-management" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Setup</router-link>                  
                     <router-link to="/admin/workflow-management" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Workflow Management</router-link>
-                    <router-link to="/admin/file-types" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Case File Types</router-link>
+                    <router-link :to="{ name: 'SystemMailsSetup' }" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">System Mails Setup</router-link>
                     
                     <router-link to="/admin/option-lists" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Option Lists</router-link>
                     <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>

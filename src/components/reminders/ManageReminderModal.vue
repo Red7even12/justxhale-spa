@@ -1,41 +1,82 @@
 <template>
   <Modal :show="show" @close="$emit('close')">
-    <template #title>Manage Reminder</template>
+    <template #title>Manage Task</template>
     
     <div class="p-6">
-      <div v-if="loading">Loading details...</div>
+      <div v-if="loading" class="text-gray-500">Loading details...</div>
       <div v-else-if="error" class="text-red-600">{{ error }}</div>
       
       <div v-else-if="reminder">
-        <!-- Reminder Details Display -->
-        <div class="mb-6 space-y-2 text-sm">
-          <p><strong>Estate:</strong> {{ reminder.estate.name }}</p>
-          <p><strong>Task:</strong> {{ reminder.taskContext }}</p>
+        <!-- V2 Generic Case Details Display -->
+        <div class="mb-6 space-y-2 text-sm bg-gray-50 p-4 rounded-md border border-gray-200">
+          <p><strong>Case Reference:</strong> {{ reminder.caseFile?.fileReference || reminder.caseName || 'Unknown Case' }}</p>
+          <p><strong>Task:</strong> {{ reminder.taskContext || reminder.title || 'General Task' }}</p>
           <p><strong>Current Due Date:</strong> {{ reminder.dueDate }}</p>
           <p>
             <strong>Status:</strong> 
-            <span class="font-semibold" :class="statusClass">{{ reminder.status.name }}</span>
+            <span class="font-semibold" :class="statusClass">{{ reminder.status?.name || 'Unknown' }}</span>
           </p>
         </div>
 
-        <!-- NEW: SUGGESTED ACTION SECTION -->
+        <!-- NEW V2: DYNAMIC SUGGESTED ACTION SECTION -->
         <div v-if="isActionable && reminder.suggestedEmailAction" class="mb-8 p-4 bg-brand-blue-50 border border-brand-blue-200 rounded-lg">
-            <h4 class="text-sm font-bold text-brand-blue-800 uppercase mb-2">Automation Suggestion</h4>
-            <p class="text-xs text-brand-blue-700 mb-4">
-                The system suggests sending a template email to the Attorney for this task.
-            </p>
-            <button 
-                @click="handleSuggestedAction" 
-                :disabled="isExecutingAction"
-                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-blue-600 hover:bg-brand-blue-700 focus:outline-none disabled:opacity-50"
-            >
-                <svg v-if="isExecutingAction" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                {{ isExecutingAction ? 'Sending Email...' : 'Send Template Email to Attorney' }}
-            </button>
+            <h4 class="text-sm font-bold text-brand-blue-800 uppercase mb-2">Automated Email Task</h4>
+            
+            <!-- Step 1: Initial Prompt -->
+            <div v-if="!showEmailForm">
+                <p class="text-xs text-brand-blue-700 mb-4">
+                    The system suggests sending a requested document email for this task.
+                </p>
+                <button 
+                    @click="prepareEmailAction" 
+                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-brand-blue-600 text-sm font-medium rounded-md shadow-sm text-brand-blue-600 bg-white hover:bg-brand-blue-50 focus:outline-none"
+                >
+                    Prepare Email
+                </button>
+            </div>
+
+            <!-- Step 2: Recipient Selection Form -->
+            <div v-else>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Select Recipient:</label>
+                
+                <div v-if="isLoadingParticipants" class="text-xs text-gray-500 mb-3">Loading contacts...</div>
+                
+                <select 
+                    v-else 
+                    v-model="selectedParticipant" 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm mb-4"
+                >
+                    <option :value="null" disabled>-- Choose a contact --</option>
+                    <option 
+                        v-for="p in participants" 
+                        :key="p.participantId" 
+                        :value="p"
+                    >
+                        {{ p.name }} ({{ p.roleKey }}) - {{ p.email }}
+                    </option>
+                </select>
+
+                <div class="flex space-x-2">
+                    <button 
+                        @click="showEmailForm = false" 
+                        class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        @click="executeSuggestedAction" 
+                        :disabled="isExecutingAction || !selectedParticipant"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-blue-600 hover:bg-brand-blue-700 focus:outline-none disabled:opacity-50"
+                    >
+                        <svg v-if="isExecutingAction" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        {{ isExecutingAction ? 'Sending...' : 'Send Email' }}
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div v-if="!isActionable" class="bg-gray-100 p-4 rounded-md text-sm text-gray-700">
-          This reminder is already {{ reminder.status.name.toLowerCase() }} and cannot be modified.
+        <div v-if="!isActionable" class="bg-gray-100 p-4 rounded-md text-sm text-gray-700 mb-6">
+          This task is already {{ reminder.status?.name?.toLowerCase() || 'closed' }} and cannot be modified.
         </div>
 
         <div v-else>
@@ -43,35 +84,35 @@
           <div class="mb-6">
             <label for="new_due_date" class="form-label">Change Due Date</label>
             <p class="text-xs text-gray-500 mb-2">
-              Use this to correct an error. It moves the existing reminder without creating a history record.
+              Use this to correct an error. It moves the existing task without creating a history record.
             </p>
             <div class="flex items-center space-x-2">
               <input id="new_due_date" type="date" v-model="form.newDueDate" class="form-input flex-grow">
-              <button @click="updateDueDate" class="btn-primary">Update</button>
+              <button @click="updateDueDate" class="btn-primary" :disabled="!form.newDueDate">Update</button>
             </div>
           </div>
 
           <!-- Action 2: Snooze Reminder -->
           <div class="border-t pt-4">
-            <label class="form-label">Snooze Reminder</label>
+            <label class="form-label">Snooze Task</label>
             <p class="text-xs text-gray-500 mb-2">
-              This completes the current reminder and creates a new follow-up.
+              This completes the current task and creates a new follow-up for the future.
             </p>
             
             <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="snooze_due_date" class="text-sm font-medium text-gray-700">Snooze to a specific date</label>
+                <label for="snooze_due_date" class="text-sm font-medium text-gray-700">Snooze to date</label>
                 <div class="flex items-center space-x-2 mt-1">
                   <input id="snooze_due_date" type="date" v-model="form.snoozeDueDate" class="form-input flex-grow">
-                  <button @click="snoozeReminder" class="btn-secondary">Snooze</button>
+                  <button @click="snoozeReminder" class="btn-secondary" :disabled="!form.snoozeDueDate">Snooze</button>
                 </div>
               </div>
               <div>
-                <label for="snooze_days" class="text-sm font-medium text-gray-700">Snooze by workdays</label>
+                <label for="snooze_days" class="text-sm font-medium text-gray-700">Snooze by days</label>
                 <div class="flex items-center space-x-2 mt-1">
                   <input id="snooze_days" type="number" v-model.number="form.snoozeDays" min="1" class="form-input w-20 text-center">
                   <span class="text-sm text-gray-600">days</span>
-                  <button @click="snoozeByDays" class="btn-secondary">Snooze</button>
+                  <button @click="snoozeByDays" class="btn-secondary" :disabled="!form.snoozeDays">Snooze</button>
                 </div>
               </div>
             </div>
@@ -85,8 +126,12 @@
 
 <script setup>
 import { ref, reactive, watch, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import Modal from '@/components/common/Modal.vue';
-import reminderService from '@/services/reminderService';
+import apiClient from '@/services/api'; // V2 Hotwire: Use apiClient directly
+
+const route = useRoute();
+const productSlug = computed(() => route.params.productSlug);
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -97,7 +142,13 @@ const emit = defineEmits(['close', 'reminder-updated']);
 const reminder = ref(null);
 const loading = ref(false);
 const error = ref(null);
-const isExecutingAction = ref(false); // NEW: loading state for email action
+
+// V2 Action States
+const showEmailForm = ref(false);
+const isExecutingAction = ref(false);
+const participants = ref([]);
+const selectedParticipant = ref(null);
+const isLoadingParticipants = ref(false);
 
 const form = reactive({
   newDueDate: '',
@@ -119,29 +170,34 @@ const formatDateForInput = (dateString) => {
 const isActionable = computed(() => {
   if (!reminder.value) return false;
   const nonActionableStatuses = ['Completed', 'Cancelled'];
-  return !nonActionableStatuses.includes(reminder.value.status.name);
+  return !nonActionableStatuses.includes(reminder.value.status?.name);
 });
 
 const statusClass = computed(() => {
   if (!reminder.value) return 'text-gray-800';
-  switch (reminder.value.status.name) {
+  switch (reminder.value.status?.name) {
     case 'Completed': return 'text-green-600';
     case 'Cancelled': return 'text-red-600';
     default: return 'text-gray-800';
   }
 });
 
+// Load the reminder directly via generic V2 endpoints
 watch(() => props.reminderId, async (newId) => {
   if (newId) {
     loading.value = true;
     error.value = null;
+    showEmailForm.value = false;
+    selectedParticipant.value = null;
     resetForm();
+    
     try {
-      const response = await reminderService.getReminder(newId);
+      const response = await apiClient.get(`/${productSlug.value}/reminders/${newId}`);
       reminder.value = response.data.data;
       resetForm(formatDateForInput(reminder.value.dueDate)); 
     } catch (err) {
-      error.value = "Failed to load reminder details.";
+      error.value = "Failed to load task details.";
+      console.error(err);
     } finally {
       loading.value = false;
     }
@@ -151,15 +207,50 @@ watch(() => props.reminderId, async (newId) => {
   }
 });
 
-// --- NEW ACTION HANDLER ---
-const handleSuggestedAction = async () => {
-    if (!confirm("This will send the template email to the Attorney and mark this task as Completed. Proceed?")) return;
+// --- V2 ACTION FLOW ---
+const prepareEmailAction = async () => {
+    showEmailForm.value = true;
+    isLoadingParticipants.value = true;
+    
+    // Fallback: Check both camelCase and snake_case for the ID depending on your resource mapping
+    const caseId = reminder.value.caseFile?.id || reminder.value.caseFileId || reminder.value.case_file_id;
+
+    if (!caseId) {
+        alert("Cannot find Case File context for this task.");
+        isLoadingParticipants.value = false;
+        return;
+    }
+
+    try {
+        const response = await apiClient.get(`/${productSlug.value}/case-files/${caseId}/emailable-participants`);
+        participants.value = response.data.data;
+        
+        // Auto-select primary contact if available
+        const primary = participants.value.find(p => p.isPrimary);
+        if (primary) selectedParticipant.value = primary;
+
+    } catch (err) {
+        console.error("Failed to load participants:", err);
+        alert("Failed to load available email contacts.");
+    } finally {
+        isLoadingParticipants.value = false;
+    }
+};
+
+const executeSuggestedAction = async () => {
+    if (!selectedParticipant.value) return;
 
     isExecutingAction.value = true;
     try {
-        const response = await reminderService.triggerAction(props.reminderId, reminder.value.suggestedEmailAction);
+        const payload = {
+            action: reminder.value.suggestedEmailAction,
+            recipient_email: selectedParticipant.value.email,
+            recipient_name: selectedParticipant.value.name,
+            participant_role_key: selectedParticipant.value.roleKey
+        };
+
+        const response = await apiClient.post(`/${productSlug.value}/reminders/${props.reminderId}/execute`, payload);
         
-        // --- NEW: SUCCESS FEEDBACK ---
         alert(response.data.message || "Email sent successfully!");
         
         emit('reminder-updated');
@@ -172,9 +263,10 @@ const handleSuggestedAction = async () => {
     }
 };
 
+// --- Standard Reminder Controls ---
 const updateDueDate = async () => {
   try {
-    await reminderService.updateReminder(props.reminderId, { due_date: form.newDueDate });
+    await apiClient.put(`/${productSlug.value}/reminders/${props.reminderId}`, { due_date: form.newDueDate });
     emit('reminder-updated');
     emit('close');
   } catch (err) { alert("Failed to update due date."); }
@@ -182,22 +274,19 @@ const updateDueDate = async () => {
 
 const snoozeReminder = async () => {
   try {
-    await reminderService.snoozeReminder(props.reminderId, { due_date: form.snoozeDueDate });
+    await apiClient.post(`/${productSlug.value}/reminders/${props.reminderId}/snooze`, { due_date: form.snoozeDueDate });
     emit('reminder-updated');
     emit('close');
-  } catch (err) { alert("Failed to snooze reminder."); }
+  } catch (err) { alert("Failed to snooze task."); }
 };
 
 const snoozeByDays = async () => {
-  if (!form.snoozeDays || form.snoozeDays < 1) {
-    alert("Please enter a valid number of days to snooze.");
-    return;
-  }
+  if (!form.snoozeDays || form.snoozeDays < 1) return;
   try {
-    await reminderService.snoozeReminderByDays(props.reminderId, { days: form.snoozeDays });
+    await apiClient.post(`/${productSlug.value}/reminders/${props.reminderId}/snooze-days`, { days: form.snoozeDays });
     emit('reminder-updated');
     emit('close');
-  } catch (err) { alert("Failed to snooze reminder."); }
+  } catch (err) { alert("Failed to snooze task."); }
 };
 
 const resetForm = (baseDate) => {
@@ -210,4 +299,6 @@ const resetForm = (baseDate) => {
 <style scoped>
 .form-label { @apply block text-sm font-medium text-gray-700 mb-1; }
 .form-input { @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm; }
+.btn-primary { @apply inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-brand-blue-600 hover:bg-brand-blue-700 disabled:opacity-50; }
+.btn-secondary { @apply inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50; }
 </style>

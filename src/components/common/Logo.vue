@@ -3,7 +3,7 @@
     The hardcoded class has been removed. 
     Instead, we are now binding the class attribute to the prop we receive.
   -->
-  <img src="./justxhale_logo.svg" alt="Just Xhale Logo" :class="props.class">
+  <img src="./justxhale_logo_whitebg.svg" alt="Just Xhale Logo" :class="props.class">  
 </template>
 
 <script setup>

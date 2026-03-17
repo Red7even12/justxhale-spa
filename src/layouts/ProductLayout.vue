@@ -3,16 +3,91 @@
 
   <div :style="brandStyles" class="min-h-screen flex flex-col font-sans antialiased text-gray-900 bg-gray-50">
     
+    <!-- 1. MOBILE SIDEBAR (V2) -->
+    <div v-if="isMobileMenuOpen" class="xl:hidden" role="dialog" aria-modal="true">
+      <div @click="isMobileMenuOpen = false" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40"></div>
+      <div class="fixed inset-y-0 left-0 flex flex-col w-64 bg-brand-primary z-50 shadow-xl">
+        <!-- Close Button -->
+        <div class="absolute top-0 right-0 -mr-12 pt-2">
+          <button @click="isMobileMenuOpen = false" type="button" class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+            <span class="sr-only">Close sidebar</span>
+            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <!-- Mobile Logo -->
+        <div class="flex items-center justify-center py-6 flex-shrink-0 px-4 border-b border-white/10">
+          <div v-if="product?.logoPath || product?.logo_path" class="h-12 w-auto">
+             <img 
+               :src="getAssetUrl(product.logoUrl || product.logo_url)" 
+               alt="Product Logo" 
+               class="h-full w-auto object-contain"
+             />
+          </div>
+          <div v-else class="text-white font-bold text-xl uppercase tracking-tighter">
+            {{ product?.name || 'JustXhale' }}
+          </div>
+        </div>
+
+        <!-- Mobile Links -->
+        <nav class="flex-1 flex flex-col px-2 py-4 space-y-1 overflow-y-auto">
+          <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/dashboard`" class="mobile-nav-link" active-class="mobile-nav-active">
+            Dashboard
+          </router-link>
+          <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/cases`" class="mobile-nav-link" active-class="mobile-nav-active">
+            Case Files
+          </router-link>
+          <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/registry`" class="mobile-nav-link" active-class="mobile-nav-active">
+            Registry
+          </router-link>
+          
+          <template v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')">
+            <div class="pt-4 pb-2 px-4 text-[10px] font-bold text-white/40 uppercase tracking-widest">Administration</div>
+            <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/users`" class="mobile-nav-link" active-class="mobile-nav-active">
+              Users
+            </router-link>
+            <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/teams`" class="mobile-nav-link" active-class="mobile-nav-active">
+              Teams
+            </router-link>
+          </template>
+
+          <div class="border-t border-white/10 my-4 pt-4"></div>
+          
+          <router-link @click="isMobileMenuOpen = false" to="/launcher" class="mobile-nav-link text-yellow-400 font-bold">
+            Switch App
+          </router-link>
+          <router-link @click="isMobileMenuOpen = false" to="/my-profile" class="mobile-nav-link">
+            My Profile
+          </router-link>
+          <button @click="handleLogout(); isMobileMenuOpen = false;" class="mobile-nav-link text-red-400 w-full text-left">
+            Logout
+          </button>
+        </nav>
+
+        <!-- Context Footer -->
+        <div class="p-4 border-t border-white/10 bg-black/10">
+          <div class="text-[10px] uppercase tracking-widest text-white/60 font-bold leading-none mb-1">Active Context</div>
+          <div class="text-xs text-white font-black uppercase">{{ productSlug }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- CONSOLIDATED TOP NAVIGATION (V2) -->
     <header class="bg-brand-primary border-b border-white/10 sticky top-0 z-40 shadow-md">
-      <div class="max-w-[100%] mx-auto px-6 h-[75px] flex items-center justify-between">
+      <div class="max-w-[100%] mx-auto px-6 h-[96px] flex items-center justify-between">
         
         <!-- Left Section: Branding & Product Navigation -->
         <div class="flex items-center gap-6 h-full">
-          <div class="flex items-center gap-4 pr-6 border-r border-white/20 h-10">
+          <!-- Mobile Menu Toggle -->
+          <button @click="isMobileMenuOpen = true" type="button" class="xl:hidden p-2 rounded-md text-white hover:bg-white hover:bg-opacity-20 mr-2">
+            <span class="sr-only">Open menu</span>
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+
+          <div class="flex items-center gap-4 pr-6 border-r border-white/20 h-16 hidden sm:flex">
             
             <!-- Logo OR Fallback Letter -->
-            <div v-if="product?.logoPath || product?.logo_path" class="h-30 w-auto">
+            <div v-if="product?.logoPath || product?.logo_path" class="h-16 w-auto">
                <img 
                  :src="getAssetUrl(product.logoUrl || product.logo_url)" 
                  alt="Product Logo" 
@@ -24,8 +99,8 @@
             </div>
           </div>
 
-          <!-- Product Horizontal Menu -->
-          <nav class="flex items-center gap-2">
+          <!-- Product Horizontal Menu (Desktop) -->
+          <nav class="hidden xl:flex items-center gap-2">
             <router-link :to="`/${productSlug}/dashboard`" class="top-nav-link" active-class="top-nav-active">
               Dashboard
             </router-link>
@@ -46,16 +121,16 @@
           </nav>
         </div>
 
-        <!-- Right Section: Identity, Switcher & Logout -->
+        <!-- Right Section: Identity, Switcher & Logout (Desktop View) -->
         <div class="flex items-center gap-4 lg:gap-6 h-full">
 
-          <div class="hidden lg:block text-right">
+          <div class="hidden xl:block text-right">
             <div class="text-[10px] uppercase tracking-widest text-white/60 font-bold leading-none mb-1">Active Context</div>
             <div class="text-xs text-white font-black uppercase">{{ productSlug }}</div>
           </div>
           
           <!-- App Switcher -->
-          <router-link to="/launcher" class="text-[10px] font-bold text-white flex items-center gap-1.5 uppercase tracking-widest border border-white/40 px-3 py-1.5 rounded-md hover:bg-white/10 transition-all opacity-80 hover:opacity-100">
+          <router-link to="/launcher" class="text-[10px] font-bold text-white flex items-center gap-1.5 uppercase tracking-widest border border-white/40 px-3 py-1.5 rounded-md hover:bg-white/10 transition-all opacity-80 hover:opacity-100 hidden md:flex">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
             </svg>
@@ -70,7 +145,7 @@
               class="flex items-center gap-3 group"
               title="View My Profile"
             >
-              <div class="text-right hidden sm:block">
+              <div class="text-right hidden lg:block">
                 <div class="text-sm font-bold text-white leading-none group-hover:underline">
                   {{ authStore.user?.name }}
                 </div>
@@ -88,7 +163,7 @@
             <!-- Logout Button -->
             <button 
               @click="handleLogout" 
-              class="px-3 py-1.5 text-[10px] font-bold text-white bg-red-500/80 hover:bg-red-600 rounded-md transition-all uppercase tracking-wider shadow-sm border border-red-400/50"
+              class="px-3 py-1.5 text-[10px] font-bold text-white bg-red-500/80 hover:bg-red-600 rounded-md transition-all uppercase tracking-wider shadow-sm border border-red-400/50 hidden sm:block"
             >
               Logout
             </button>
@@ -115,6 +190,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const product = ref(null);
+const isMobileMenuOpen = ref(false); // Added for mobile navigation
 const productSlug = computed(() => route.params.productSlug);
 
 const userInitials = computed(() => {
@@ -160,5 +236,13 @@ onMounted(fetchBranding);
 
 .top-nav-active {
   @apply text-white font-semibold border-b-2 border-white;
+}
+
+.mobile-nav-link {
+  @apply flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-black/10 hover:text-white transition-all text-sm font-bold uppercase tracking-wide;
+}
+
+.mobile-nav-active {
+  @apply bg-black/20 text-white border-l-4 border-white;
 }
 </style>

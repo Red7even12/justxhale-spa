@@ -62,7 +62,7 @@
               </div>
               <div class="flex min-w-0 flex-1 space-x-4 pt-1.5">
                 <div class="whitespace-nowrap text-left text-sm text-gray-500 w-32 shrink-0">
-                    <div class="font-bold text-gray-700">{{ formatDate(event.eventDate) }}</div>
+                    <div class="font-bold text-gray-700">{{ formatDateTime(event.eventDate) }}</div>
                     <div class="text-[10px] uppercase text-gray-400">by {{ event.userName }}</div>
                 </div>
                 <div class="grow">
@@ -89,6 +89,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
+import { formatDateTime } from '@/utils/formatters';
 
 const route = useRoute();
 const router = useRouter();
@@ -184,13 +185,7 @@ const exportToCsv = async () => {
 
         // Specific Formatting
         if (col.key === 'eventDate' && value) {
-            // Format ISO string to readable "YYYY-MM-DD HH:MM"
-            const d = new Date(value);
-            value = d.getFullYear() + "-" + 
-                    String(d.getMonth() + 1).padStart(2, '0') + "-" + 
-                    String(d.getDate()).padStart(2, '0') + " " + 
-                    String(d.getHours()).padStart(2, '0') + ":" + 
-                    String(d.getMinutes()).padStart(2, '0');
+            value = formatDateTime(value);
         }
 
         // CSV Escaping: Wrap in quotes if it contains comma, newline, or double quotes
@@ -228,13 +223,6 @@ const getIconBgClass = (eventType) => {
   if (eventType === 'Note Added') return 'bg-blue-500';
   if (eventType === 'Reminder Action') return 'bg-green-500';
   return 'bg-gray-400';
-};
-
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-  });
 };
 
 const printPage = () => window.print();

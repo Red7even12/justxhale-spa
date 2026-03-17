@@ -1,5 +1,4 @@
 <template>
-
   <div class="notes-panel">
     <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Notes & History</h3>
 
@@ -51,27 +50,69 @@
     <div class="space-y-4">
       <p v-if="notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
       
-      <div v-for="note in notes" :key="note.id" class="bg-gray-50 p-4 rounded-lg border relative">
-        <!-- Content -->
-        <p class="text-gray-800 whitespace-pre-wrap mb-2">{{ note.content }}</p>
+      <!-- Loop through unified notes & emails -->
+      <!-- Change background color if it's an email for visual distinction -->
+      <div 
+        v-for="note in notes" 
+        :key="note.id" 
+        class="p-4 rounded-lg border relative"
+        :class="note.type === 'email' ? 'bg-brand-blue-50 border-brand-blue-200' : 'bg-gray-50 border-gray-200'"
+      >
         
-        <!-- Case Number (Data Style) -->
-        <div v-if="note.caseNumber" class="mb-2 text-sm text-brand-blue-600 bg-brand-blue-50 inline-block px-2 py-1 rounded">
-          <strong>CN:</strong> {{ note.caseNumber }}
-        </div>
+        <!-- ============================================== -->
+        <!-- SCENARIO A: STANDARD TEXT NOTE                 -->
+        <!-- ============================================== -->
+        <template v-if="note.type !== 'email'">
+            <p class="text-gray-800 whitespace-pre-wrap mb-2">{{ note.content }}</p>
+            
+            <!-- Case Number (Data Style) -->
+            <div v-if="note.caseNumber || note.case_number" class="mb-2 text-sm text-brand-blue-600 bg-brand-blue-50 inline-block px-2 py-1 rounded">
+                <strong>CN:</strong> {{ note.caseNumber || note.case_number }}
+            </div>
+        </template>
+
+        <!-- ============================================== -->
+        <!-- SCENARIO B: SYSTEM EMAIL CARD                  -->
+        <!-- ============================================== -->
+        <template v-else>
+            <!-- Email Header -->
+            <div class="mb-3 pb-3 border-b border-brand-blue-200 text-sm text-brand-blue-900 bg-white p-3 rounded shadow-sm">
+                <div class="flex items-center mb-2 text-brand-blue-600">
+                    <!-- Simple Mail Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span class="font-bold text-xs uppercase tracking-wider">Automated Email Sent</span>
+                </div>
+                <!-- Accommodate both camelCase and snake_case API mappings -->
+                <div class="mt-1">
+                    <strong>To:</strong> 
+                    {{ note.emailMeta?.toName || note.emailMeta?.to_name || note.email_meta?.to_name }} 
+                    &lt;{{ note.emailMeta?.toEmail || note.emailMeta?.to_email || note.email_meta?.to_email }}&gt;
+                </div>
+                <div>
+                    <strong>Subject:</strong> 
+                    {{ note.emailMeta?.subject || note.email_meta?.subject }}
+                </div>
+            </div>
+            
+            <!-- Email Body (Rendered HTML) -->
+            <div class="text-sm text-gray-700 email-body-wrapper" v-html="note.content"></div>
+        </template>
+        <!-- ============================================== -->
 
         <!-- Footer Row: Origin (Left) | User Info (Right) -->
-        <div class="flex justify-between items-center mt-3 pt-2 border-t border-gray-200">
+        <div class="flex justify-between items-center mt-3 pt-2 border-t" :class="note.type === 'email' ? 'border-brand-blue-200' : 'border-gray-200'">
             <!-- Left: Origin Context -->
             <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                <span v-if="note.origin" class="bg-gray-200 px-2 py-1 rounded text-gray-600">
+                <span v-if="note.origin" class="px-2 py-1 rounded text-gray-600" :class="note.type === 'email' ? 'bg-brand-blue-100' : 'bg-gray-200'">
                     {{ note.origin }}
                 </span>
             </div>
 
             <!-- Right: User & Date -->
             <div class="text-xs text-gray-500">
-                by <strong>{{ note.user?.name || note.user?.firstName || 'Unknown' }}</strong> - {{ note.createdAtHuman || note.created_at }}
+                by <strong>{{ note.user?.name || note.user?.firstName || note.user?.first_name || 'System' }}</strong> - {{ note.createdAtHuman || note.created_at }}
             </div>
         </div>
       </div>
@@ -92,7 +133,6 @@ const props = defineProps({
   initialNotes: { type: Array, required: true, default: () => [] },
   noteableType: { type: String, required: true },
   noteableId: { type: Number, required: true },
-  // NEW: V2 Context (Optional, defaults to null for V1)
   contextUrl: { type: String, default: null } 
 });
 
@@ -100,7 +140,6 @@ const emit = defineEmits(['note-added', 'cancel']);
 
 
 // 3. STATE MANAGEMENT (REFS)
-// All reactive variables are declared here first.
 const notes = ref([]);
 const newNoteContent = ref('');
 const newCaseNumber = ref('');
@@ -108,8 +147,6 @@ const isLoading = ref(false);
 const error = ref(null);
 const showReminderInput = ref(false);
 const reminderDate = ref('');
-
-// Ref for the textarea element to enable auto-resizing
 const textareaRef = ref(null);
 
 
@@ -117,9 +154,7 @@ const textareaRef = ref(null);
 const autoResize = () => {
   const textarea = textareaRef.value;
   if (textarea) {
-    // Reset height to auto to correctly calculate scrollHeight when text is deleted
     textarea.style.height = 'auto';
-    // Set the height to match the full content height
     textarea.style.height = `${textarea.scrollHeight}px`;
   }
 };
@@ -137,29 +172,21 @@ const submitNote = async () => {
   };
 
   try {
-    // 1. Create the Note First
     const response = await noteService.createNote(payload, props.contextUrl);
-    
-    // DEFINE IT FIRST
     const savedNote = response.data?.data || response.data;
 
-    // THEN CHECK IT
     if (!savedNote || !savedNote.id) {
         throw new Error("Invalid response from server");
     }
 
-    // Update UI
     notes.value.unshift(savedNote);
     
-    // 2. Check if Reminder is requested
     if (showReminderInput.value && reminderDate.value) {
         try {
             const reminderPayload = {
                 due_date: reminderDate.value,
                 notes: newNoteContent.value,
-                note_id: savedNote.id, // Now safe to access
-                
-                // Context Logic
+                note_id: savedNote.id, 
                 case_workflow_process_id: props.noteableType === 'case_workflow_process' ? props.noteableId : null,
                 case_document_requirement_id: props.noteableType === 'case_document_requirement' ? props.noteableId : null
             };
@@ -171,7 +198,6 @@ const submitNote = async () => {
         }
     }
 
-    // Reset form state
     newNoteContent.value = ''; 
     newCaseNumber.value = '';
     reminderDate.value = '';
@@ -188,15 +214,12 @@ const submitNote = async () => {
 };
 
 
-// 5. WATCHERS (REACTIVE LOGIC)
-// This runs when the 'initialNotes' prop changes.
+// 5. WATCHERS
 watch(() => props.initialNotes, (newNotes) => {
   notes.value = newNotes ? [...newNotes] : [];
 }, { immediate: true });
 
-// This runs when the 'newNoteContent' model changes programmatically.
 watch(newNoteContent, () => {
-  // Use nextTick to ensure the DOM has updated before resizing
   nextTick(() => {
     autoResize();
   });
@@ -204,8 +227,15 @@ watch(newNoteContent, () => {
 </script>
 
 <style scoped>
-/* Scoped styles remain unchanged */
 .form-input {
   @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm;
+}
+
+/* Add margin to injected Markdown paragraphs so they don't squish together */
+.email-body-wrapper :deep(p) {
+    margin-bottom: 0.75rem;
+}
+.email-body-wrapper :deep(p:last-child) {
+    margin-bottom: 0;
 }
 </style>

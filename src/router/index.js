@@ -18,6 +18,7 @@ import SubscriberIndex from '../views/admin/subscribers/SubscriberIndex.vue';
 import UserIndex from '../views/admin/UserIndex.vue'; 
 import DocumentTypeManager from '@/views/admin/DocumentTypes/DocumentTypeManager.vue';   //frontend-spa\src\views\admin\DocumentTypes\DocumentTypeManager.vue
 import EntityIndex from '@/views/admin/entities/EntityIndex.vue';
+import SystemMailsSetup from '@/views/admin/SystemMailsSetup.vue';
 
 // Auth Imports
 import SetPassword from '../views/SetPassword.vue';
@@ -134,13 +135,20 @@ const routes = [
         props: (route) => ({ packId: route.params.id }), // Pass ID as prop
         meta: { displayName: 'Manage Pack Content' }
       },
-
-
       {
         path: 'admin/document-management',
         name: 'admin.documents',
         component: DocumentTypeManager,
         meta: { requiresAuth: true, isAdmin: true, displayName: 'Document Management' } // Or your equivalent admin protection
+      },
+      {
+        path: '/admin/system-mails',
+        name: 'SystemMailsSetup',
+        component: SystemMailsSetup,
+        meta: { 
+            requiresAuth: true, 
+            // add any admin role checks you usually require here
+        }
       },
       {
         path: 'admin/option-lists',
