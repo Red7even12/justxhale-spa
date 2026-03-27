@@ -115,7 +115,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-// Note: We use standard axios or an unauthenticated instance so it doesn't try to attach Bearer tokens or redirect to /login
 import axios from 'axios'; 
 
 const route = useRoute();
@@ -125,14 +124,11 @@ const loading = ref(true);
 const error = ref(null);
 const portalData = ref({});
 
-// Fetch initial portal data
 onMounted(async () => {
     try {
-        // Calls the Public API Endpoint we built in the previous step
         const response = await axios.get(`/api/v1/portal/upload/${token}`);
         portalData.value = response.data.data;
         
-        // Inject custom local state properties into documents for UI tracking
         portalData.value.documents = portalData.value.documents.map(doc => ({
             ...doc,
             isUploading: false,
@@ -150,40 +146,108 @@ const triggerFileInput = (docId) => {
     document.getElementById(`file-${docId}`).click();
 };
 
-const handleFileUpload = async (event, doc) => {
-    const file = event.target.files[0];
-    if (!file) return;
+// ==========================================
+// THE COMPRESSION ENGINE (CLIENT-SIDE)
+// ==========================================
+const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            
+            img.onload = () => {
+                // 1. Calculate New Dimensions (Max Edge: 2048px)
+                const MAX_EDGE = 2048;
+                let width = img.width;
+                let height = img.height;
 
-    // Basic Validation (e.g., 10MB limit)
-    if (file.size > 20 * 1024 * 1024) {
-        doc.uploadError = "File is too large. Maximum size is 10MB.";
-        event.target.value = ''; // Reset input
-        return;
-    }
+                if (width > height) {
+                    if (width > MAX_EDGE) {
+                        height *= MAX_EDGE / width;
+                        width = MAX_EDGE;
+                    }
+                } else {
+                    if (height > MAX_EDGE) {
+                        width *= MAX_EDGE / height;
+                        height = MAX_EDGE;
+                    }
+                }
+
+                // 2. Draw on Canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // 3. Compress to 80% JPEG Blob
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('Canvas is empty'));
+                            return;
+                        }
+                        // Create a new File object from the Blob so it mimics the original
+                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    0.80 // 80% Quality
+                );
+            };
+            
+            img.onerror = (err) => reject(err);
+        };
+        
+        reader.onerror = (err) => reject(err);
+    });
+};
+
+// ==========================================
+// UPLOAD HANDLER
+// ==========================================
+const handleFileUpload = async (event, doc) => {
+    let file = event.target.files[0];
+    if (!file) return;
 
     doc.isUploading = true;
     doc.uploadError = null;
 
-    const formData = new FormData();
-    formData.append('document', file);
-    formData.append('document_requirement_id', doc.id);
-
     try {
-        // We will build this endpoint next! It will upload to S3/Backblaze and change status to 'submitted'
+        // Only compress if it's an image (Ignore PDFs)
+        if (file.type.startsWith('image/')) {
+            console.log(`Original Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            file = await compressImage(file);
+            console.log(`Compressed Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+        } else if (file.size > 10 * 1024 * 1024) {
+            // If it's a PDF over 10MB, reject it
+            throw new Error("PDF is too large. Maximum size is 10MB.");
+        }
+
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('document_requirement_id', doc.id);
+
         await axios.post(`/api/v1/portal/upload/${token}/process`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
 
-        // Update UI to show Success
         doc.status = 'submitted';
         
     } catch (err) {
-        // Grab the specific validation error message from Laravel (e.g., "The document must be a file of type: jpeg, png.")
+        // Fallback error messaging
         const laravelError = err.response?.data?.errors?.document?.[0];
-        doc.uploadError = laravelError || err.response?.data?.message || "Failed to upload file. Please try again.";
+        const status = err.response?.status ? `(Status: ${err.response.status}) ` : '';
+        doc.uploadError = laravelError || `${status}${err.message || err.response?.data?.message || 'Failed to upload file. Please try again.'}`;
     } finally {
         doc.isUploading = false;
-        event.target.value = ''; // Reset input so user can try again if needed
+        event.target.value = ''; // Reset input
     }
 };
 
