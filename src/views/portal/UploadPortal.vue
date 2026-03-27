@@ -155,7 +155,7 @@ const handleFileUpload = async (event, doc) => {
     if (!file) return;
 
     // Basic Validation (e.g., 10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 20 * 1024 * 1024) {
         doc.uploadError = "File is too large. Maximum size is 10MB.";
         event.target.value = ''; // Reset input
         return;
@@ -178,7 +178,9 @@ const handleFileUpload = async (event, doc) => {
         doc.status = 'submitted';
         
     } catch (err) {
-        doc.uploadError = err.response?.data?.message || "Failed to upload file. Please try again.";
+        // Grab the specific validation error message from Laravel (e.g., "The document must be a file of type: jpeg, png.")
+        const laravelError = err.response?.data?.errors?.document?.[0];
+        doc.uploadError = laravelError || err.response?.data?.message || "Failed to upload file. Please try again.";
     } finally {
         doc.isUploading = false;
         event.target.value = ''; // Reset input so user can try again if needed
