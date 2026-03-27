@@ -1,6 +1,14 @@
 <template>
-  <div>
-    <!-- The template for the table is unchanged -->
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-800 uppercase tracking-tight">
+        Users
+      </h1>
+      <button @click="openAddUserModal" class="bg-[var(--brand-primary)] text-white px-4 py-2 rounded-lg shadow-md font-bold hover:opacity-90 transition-all">
+        + Add User
+      </button>
+    </div>
+
     <div class="mt-8 flow-root">
       <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -75,8 +83,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useUiStore } from '../../store/ui';
+import { ref, onMounted } from 'vue';
 import apiClient from '../../services/api';
 import userService from '../../services/userService';
 import UserRolesModal from '../../components/admin/UserRolesModal.vue';
@@ -84,7 +91,6 @@ import AddUserModal from '../../components/admin/AddUserModal.vue';
 import EditUserModal from '../../components/admin/EditUserModal.vue';
 import ConfirmationModal from '../../components/modals/ConfirmationModal.vue';
 
-const uiStore = useUiStore();
 const users = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -228,15 +234,5 @@ const handleForceReset = async (user) => {
 // --- Lifecycle Hooks ---
 onMounted(() => {
   fetchUsers();
-  uiStore.setHeaderActions([
-    {
-      label: 'Add User',
-      onClick: openAddUserModal
-    }
-  ]);
-});
-
-onUnmounted(() => {
-  uiStore.clearHeaderActions();
 });
 </script>
