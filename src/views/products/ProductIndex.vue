@@ -41,11 +41,18 @@
           </div>
 
           <div class="flex gap-2">
-            <button @click="openModal(product)" class="flex-1 bg-gray-100 py-2 rounded text-sm font-medium hover:bg-gray-200">Edit Settings</button>
-            <router-link :to="{ name: 'admin.products.detail', params: { slug: product.slug  }}" class="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded text-sm text-center font-medium hover:bg-indigo-100">
-              Manage Licenses
-            </router-link>
-          </div>
+            <!-- Point to the Blueprint Dashboard -->
+            <button @click="$router.push({ name: 'admin.product.dashboard', params: { slug: product.slug } })"  
+                class="flex-1 bg-gray-100 py-2 rounded text-sm font-medium hover:bg-gray-200">
+                Edit DNA
+            </button>
+            
+            <!-- Open the Edit Modal -->
+            <button @click="openModal(product)" 
+                class="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded text-sm text-center font-medium hover:bg-indigo-100">
+                Edit Product
+            </button>
+        </div>
         </div>
       </div>
     </div>

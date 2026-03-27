@@ -92,9 +92,26 @@ const orderedParticipants = computed(() => {
 });
 
 // --- 2. METADATA PARSING LOGIC ---
+const getParticipantData = (roleKey, fieldKey) => {
+    if (!props.caseFile.participants) return '-';
+    
+    // Search for active participant with this role
+    const part = props.caseFile.participants.find(p => 
+        (p.role_key?.toLowerCase() === roleKey.toLowerCase() || p.roleKey?.toLowerCase() === roleKey.toLowerCase()) && p.isActive
+    );
+    
+    if (!part || !part.entity) return '-';
+    
+    // Logic Shift: Data now resides on the Entity so it's shared across cases
+    const metaData = part.entity.meta_data || part.entity.metaData || {};
+    const camelKey = fieldKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+    
+    return metaData[fieldKey] !== undefined ? metaData[fieldKey] : (metaData[camelKey] || '-');
+};
+
 const quickFields = computed(() => {
   const definitions = props.caseFile.fileType?.fieldDefinitions || props.caseFile.fileType?.field_definitions || [];
-  const metaData = props.caseFile.metaData || props.caseFile.meta_data || {};
+  const globalMetaData = props.caseFile.metaData || props.caseFile.meta_data || {};
 
   // Filter definitions where show_in_quick_view is true
   const visibleDefs = definitions.filter(def => 
@@ -105,10 +122,21 @@ const quickFields = computed(() => {
     const key = def.key || def.fieldKey || def.field_key;
     const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
     
+    let value = '-';
+    const roleKey = def.participantRole?.role_key || def.participantRole?.roleKey;
+
+    if (roleKey) {
+        // Participant-specific data
+        value = getParticipantData(roleKey, key);
+    } else {
+        // General Case data
+        value = globalMetaData[key] !== undefined ? globalMetaData[key] : (globalMetaData[camelKey] || '-');
+    }
+    
     return {
       id: def.id,
       label: def.label || def.fieldLabel || def.field_label,
-      value: metaData[key] !== undefined ? metaData[key] : (metaData[camelKey] || '')
+      value: value
     };
   });
 });

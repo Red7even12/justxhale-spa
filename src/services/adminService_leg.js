@@ -30,25 +30,28 @@ export default {
 
   // === Document Pack Management ===
 
-  getDocumentPacks(slug) {
-        return apiClient.get(`/admin/products/${slug}/document-packs`);
-    },
+  getDocumentPacks(params = {}) {
+    return apiClient.get('admin/document-packs', { params });
+  },
 
-  createDocumentPack(slug, data) {
-        return apiClient.post(`/admin/products/${slug}/document-packs`, data);
-    },
+  createDocumentPack(packData) {
+    return apiClient.post('admin/document-packs', packData);
+  },
 
-  updateDocumentPack(slug, id, data) {
-        return apiClient.put(`/admin/products/${slug}/document-packs/${id}`, data);
-    },
+  updateDocumentPack(id, packData) {
+    return apiClient.put(`admin/document-packs/${id}`, packData);
+  },
 
-  deleteDocumentPack(slug, id) {
-        return apiClient.delete(`/admin/products/${slug}/document-packs/${id}`);
-    },
+  deleteDocumentPack(id) {
+    return apiClient.delete(`admin/document-packs/${id}`);
+  },
 
 // File Types (Niches)
-    getFileTypes(slug) {
-        return apiClient.get(`/admin/products/${slug}/file-types`);
+    getFileTypes() {
+        return apiClient.get('admin/file-types');
+    },
+    getFileType(id) {
+        return apiClient.get(`admin/file-types/${id}`);
     },
     getProducts() {
         return apiClient.get('admin/products');
@@ -56,16 +59,12 @@ export default {
     getSubscribers() {
         return apiClient.get('subscribers?all=true');
     },
-    saveFileType(slug, data) {
-        const method = data.id ? 'put' : 'post';
-        const url = data.id ? `/admin/products/${slug}/file-types/${data.id}` : `/admin/products/${slug}/file-types`;
-        return apiClient[method](url, data);
+    saveFileType(data) {
+        if (data.id) return apiClient.put(`admin/file-types/${data.id}`, data);
+        return apiClient.post('admin/file-types', data);
     },
-    deleteFileType(slug, id) {
-        return apiClient.delete(`/admin/products/${slug}/file-types/${id}`);
-    },
-    getFileType(id) {
-        return apiClient.get(`/admin/file-types/${id}`);
+    deleteFileType(id) {
+        return apiClient.delete(`admin/file-types/${id}`);
     },
 
     // Case Field Definitions (Dynamic Fields)

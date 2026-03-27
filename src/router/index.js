@@ -19,6 +19,7 @@ import UserIndex from '../views/admin/UserIndex.vue';
 import DocumentTypeManager from '@/views/admin/DocumentTypes/DocumentTypeManager.vue';   //frontend-spa\src\views\admin\DocumentTypes\DocumentTypeManager.vue
 import EntityIndex from '@/views/admin/entities/EntityIndex.vue';
 import SystemMailsSetup from '@/views/admin/SystemMailsSetup.vue';
+import ProductBlueprintLayout from '@/layouts/ProductBlueprintLayout.vue';
 
 // Auth Imports
 import SetPassword from '../views/SetPassword.vue';
@@ -35,6 +36,16 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
+  },
+  {
+    path: '/portal/upload/:token',
+    name: 'ClientUploadPortal',
+    // We lazy-load it to keep the main admin bundle small
+    component: () => import('@/views/portal/UploadPortal.vue'),
+    meta: { 
+        requiresAuth: false, // CRITICAL: Do not force login
+        title: 'Secure Document Upload' 
+    }
   },
   {
     path: '/',
@@ -55,6 +66,7 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword,
   },
+  
 
   {
     path: '/',
@@ -100,47 +112,7 @@ const routes = [
         component: () => import('@/views/admin/subscribers/Edit.vue'),
         meta: { requiresAuth: true, permission: 'edit subscribers' }
       },
-      {
-        path: 'admin/workflow-management',
-        name: 'admin.workflows',
-        component: () => import('@/views/admin/workflows/WorkflowIndex.vue'),
-        meta: { displayName: 'Workflow Management' }
-        // meta: { permission: 'manage workflows' } // Optional: Add permission check
-      }, 
 
-      {
-        path: 'admin/file-types',              // Changed to match the resource
-        name: 'admin.file-types',              // Changed to match the path
-        component: () => import('@/views/admin/FileTypes/FileTypeIndex.vue'),
-        meta: { displayName: 'Case File Types' }
-      },
-    {
-      path: 'admin/file-types/:id/fields',
-      name: 'admin.file-type-fields',
-      component: () => import('@/views/admin/FileTypes/CaseFieldDefinitionIndex.vue'),
-      props: true,
-      meta: { displayName: 'Field Definitions' }
-    },
-    {
-      path: 'admin/document-packs',
-        name: 'admin.document-packs',
-        component: () => import('@/views/admin/DocumentPacks/DocumentPackIndex.vue'),
-        meta: { displayName: 'Document Packs' }
-      },
-      // V2 Route (Pack Content Manager)
-      {
-        path: 'document-packs/:id/documents',
-        name: 'admin.pack-documents',
-        component: () => import('@/views/admin/DocumentTypes/DocumentTypeManager.vue'), // REUSE V1 COMPONENT  frontend-spa\src\views\admin\DocumentTypeManager.vue
-        props: (route) => ({ packId: route.params.id }), // Pass ID as prop
-        meta: { displayName: 'Manage Pack Content' }
-      },
-      {
-        path: 'admin/document-management',
-        name: 'admin.documents',
-        component: DocumentTypeManager,
-        meta: { requiresAuth: true, isAdmin: true, displayName: 'Document Management' } // Or your equivalent admin protection
-      },
       {
         path: '/admin/system-mails',
         name: 'SystemMailsSetup',
@@ -226,7 +198,8 @@ const routes = [
       {
         path: 'admin/products/:slug',
         name: 'admin.products.detail',
-        component: () => import('@/views/admin/products/ProductDetail.vue'),
+        //component: () => import('@/views/admin/products/ProductDetail.vue'),
+        component: () => import('@/views/admin/products/ProductDetail.vue'),  // new path:  frontend-spa\src\layouts\ProductBlueprintLayout.vue
         props: true,
         meta: { displayName: 'Product Detail' }
       },
@@ -326,6 +299,80 @@ const routes = [
           },
         ]
       },
+
+      // 6. PRODUCT BLUEPRINTS (Nested under product detail)
+
+      {
+          path: '/admin/products/:slug/blueprints',
+          component: () => import('@/layouts/ProductBlueprintLayout.vue'),
+          props: true,
+          children: [
+              {
+                  path: 'dashboard', // Changed from '' to 'dashboard' to avoid matching conflicts
+                  name: 'admin.product.dashboard',
+                  component: () => import('@/views/admin/products/blueprints/ProductDashboard.vue'),
+                  props: true
+              },
+              {
+                  path: 'licensing',
+                  name: 'admin.product.licensing',
+                  component: () => import('@/views/admin/products/blueprints/LicenseBlueprint.vue'),
+              },
+              {
+                  path: 'file-types',
+                  name: 'admin.product.file-types',
+                  component: () => import('@/views/admin/products/blueprints/FileTypeBlueprint.vue'),
+                  props: true
+              },
+              {
+                  path: 'document-packs',
+                  name: 'admin.product.document-packs',
+                  component: () => import('@/views/admin/products/blueprints/DocumentPackBlueprint.vue'),
+                  props: true
+              },
+              {
+                  path: 'document-packs/:packId/documents',
+                  name: 'admin.product.pack-documents',
+                  component: () => import('@/views/admin/DocumentTypes/DocumentTypeManager.vue'),
+                  props: true
+              },
+              {
+                  path: 'document-packs/:packId/types',
+                  name: 'admin.product.pack-types', // The specific "Manage Docs" screen
+                  component: () => import('@/views/admin/DocumentTypes/DocumentTypeManager.vue'),
+                  props: true // This passes slug, product, AND packId to the component
+              },
+              {
+                  path: 'workflows',
+                  name: 'admin.product.workflows',
+                  component: () => import('@/views/admin/products/blueprints/WorkflowBlueprint.vue'),
+                  props: true
+              },
+              {
+                  path: 'blueprints/fields/:fileTypeId',
+                  name: 'admin.product.file-type-fields', // Matches the link in FileTypeBlueprint.vue
+                  component: () => import('@/views/admin/products/blueprints/CaseFieldDefinitionIndex.vue'), 
+                  props: true
+              },
+              {
+                  path: 'participant-roles',
+                  name: 'admin.product.participant-roles',
+                  component: () => import('@/views/admin/products/blueprints/ParticipantRoleBlueprint.vue'),
+              },
+              // --- NEW NODES TO REFACTOR NEXT ---
+              { 
+                  path: 'communication', 
+                  name: 'admin.product.communication', 
+                  component: () => import('@/views/admin/SystemMailsSetup.vue') // Placeholder for refactor
+              },
+              { 
+                  path: 'option-lists', 
+                  name: 'admin.product.option-lists', 
+                  component: () => import('@/views/admin/OptionListsManager.vue') // Placeholder for refactor
+              }
+          ]
+      }
+
     ],
   },
 ];

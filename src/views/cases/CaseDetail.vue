@@ -68,7 +68,7 @@
             </div>
 
             <!-- Dynamic Fields (From Definitions) -->
-            <div v-for="field in definitions" :key="field.id" class="col-span-2 md:col-span-1">
+            <div v-for="field in definitions.filter(d => !d.participantRoleId)" :key="field.id" class="col-span-2 md:col-span-1">
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1">
                 {{ field.label }} 
                 <span v-if="field.showInQuickView" class="text-[10px] text-brand-primary ml-1" title="Visible on Dashboard">★</span>
@@ -132,6 +132,10 @@
               <tr v-for="part in caseFile.participants" :key="part.id" class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="text-sm font-bold text-gray-900">{{ part.entity?.name }}</div>
+                  <!-- Primary Badge -->
+                    <svg v-if="part.isPrimaryContact || part.is_primary_contact" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500" viewBox="0 0 20 20" fill="currentColor" title="Primary Contact">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>              
                   <div class="text-[10px] text-gray-400 uppercase font-bold">{{ part.entity?.entityType || part.entity?.entity_type }}</div>
                 </td>
                 <td class="px-6 py-4">
@@ -229,11 +233,10 @@
               <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">2. Role in Case</label>
               <select v-model="participantForm.role_key" required class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm font-bold text-gray-700">
                 <option value="" disabled>Select Role...</option>
-                <option value="executor">Executor</option>
-                <option value="attorney">Attorney</option>
-                <option value="beneficiary">Beneficiary</option>
-                <option value="agent">Agent / Broker</option>
-                <option value="other">Other</option>
+                <!-- CORRECTED: role.roleKey (camelCase from Middleware) -->
+                <option v-for="role in participantRoles" :key="role.roleKey" :value="role.roleKey">
+                  {{ role.name }}
+                </option>
               </select>
             </div>
 
@@ -242,6 +245,62 @@
               <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">3. Reference #</label>
               <input v-model="participantForm.reference_number" type="text" class="w-full p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm" placeholder="Optional">
             </div>
+          </div>
+
+          <!-- NEW V2: Primary Contact Flag -->
+          <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-4">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                v-model="participantForm.is_primary_contact" 
+                class="form-checkbox h-5 w-5 text-brand-primary rounded border-gray-300 focus:ring-brand-primary"
+              >
+              <span class="text-sm font-bold text-gray-800">Mark as Primary Contact</span>
+            </label>
+            <p class="text-[10px] text-gray-500 mt-1 ml-8 uppercase font-bold tracking-widest">
+              Automated emails and portal requests will default to this participant.
+            </p>
+          </div>
+
+          <!-- DYNAMIC ROLE METADATA FIELDS -->
+          <div v-if="activeRoleFields.length > 0" class="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              <div class="col-span-2 text-[10px] font-black text-brand-primary uppercase tracking-widest mb-1">
+                  Metadata for Character: {{ participantForm.role_key }}
+              </div>
+              
+              <div v-for="field in activeRoleFields" :key="field.id" 
+                  :class="(field.fieldType || field.field_type) === 'textarea' ? 'col-span-2' : 'col-span-1'">
+                  
+                  <!-- FIX 1: Robust Label Fallback -->
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                      {{ field.fieldLabel || field.field_label || field.label || 'Untitled Field' }}
+                  </label>
+                  
+                  <!-- FIX 2: Ensure v-model key is never undefined to prevent mirroring -->
+                  <template v-if="field.fieldKey || field.field_key">
+                      <input v-if="(field.fieldType || field.field_type) === 'text'" 
+                            v-model="participantForm.meta_data[field.fieldKey || field.field_key]" 
+                            type="text" 
+                            class="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm"
+                      >
+                      <input v-else-if="(field.fieldType || field.field_type) === 'date'" 
+                            v-model="participantForm.meta_data[field.fieldKey || field.field_key]" 
+                            type="date" 
+                            class="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm"
+                      >
+                      <input v-else-if="(field.fieldType || field.field_type) === 'number'" 
+                            v-model="participantForm.meta_data[field.fieldKey || field.field_key]" 
+                            type="number" 
+                            class="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm"
+                      >
+                      <textarea v-else-if="(field.fieldType || field.field_type) === 'textarea'" 
+                            v-model="participantForm.meta_data[field.fieldKey || field.field_key]" 
+                            rows="2"
+                            class="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm"
+                      ></textarea>
+                  </template>
+                  <div v-else class="text-[10px] text-red-400 italic">Error: Missing Field Key</div>
+              </div>
           </div>
 
           <!-- Notes -->
@@ -268,7 +327,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
@@ -305,7 +364,75 @@ const searchResults = ref([]);
 const isSearching = ref(false);
 const selectedEntity = ref(null);
 let searchTimeout = null;
-const participantForm = ref({ role_key: '', reference_number: '', notes: '', is_active: true });
+const participantForm = ref({ 
+    role_key: '', 
+    reference_number: '', 
+    notes: '', 
+    is_active: true, 
+    is_primary_contact: false,
+    meta_data: {} 
+});
+
+/**
+ * Normalizes metadata by mapping camelCased keys from the API 
+ * back to the literal keys defined in the Product Blueprint.
+ */
+const normalizeMetadata = (rawMeta, definitions) => {
+    const normalized = {};
+    if (!rawMeta) return normalized;
+
+    definitions.forEach(field => {
+        const blueprintKey = field.fieldKey || field.field_key;
+        
+        // 1. Create the camelCase version of the blueprint key (e.g. viz-att_id -> vizAttId)
+        const camelKey = blueprintKey.replace(/[-_]([a-z])/g, (g) => g[1].toUpperCase());
+
+        // 2. Try to find the value in rawMeta using: 
+        //    a) The exact key (attmd1)
+        //    b) The camelCase key (vizAttId)
+        normalized[blueprintKey] = rawMeta[blueprintKey] !== undefined 
+            ? rawMeta[blueprintKey] 
+            : (rawMeta[camelKey] !== undefined ? rawMeta[camelKey] : '');
+    });
+    
+    return normalized;
+};
+
+const activeRoleFields = computed(() => {
+  if (!caseFile.value || !participantForm.value.role_key || !participantRoles.value) return [];
+
+  // 1. Find the Role ID for the currently selected key (e.g., 'attorney')
+  const selectedRole = participantRoles.value.find(r => 
+    (r.roleKey === participantForm.value.role_key) || (r.role_key === participantForm.value.role_key)
+  );
+  
+  if (!selectedRole) return [];
+
+  // 2. Filter fields linked to this specific Role ID
+  // Check both camelCase and snake_case for the definition and the role link
+  return (caseFile.value.fileType?.fieldDefinitions || []).filter(f => {
+    const roleId = f.participantRoleId || f.participant_role_id;
+    return parseInt(roleId) === parseInt(selectedRole.id);
+  });
+});
+
+const participantRoles = ref([]);
+
+const fetchParticipantRoles = async () => {
+    try {
+        const response = await apiClient.get(`/${route.params.productSlug}/participant-roles`);
+        // Robust handling of both raw array response and wrapped { data: [...] } response
+        participantRoles.value = Array.isArray(response.data) ? response.data : (response.data.data || []);
+    } catch (error) {
+        console.error("Failed to fetch participant roles", error);
+    }
+};
+
+// Call it when the component mounts
+onMounted(() => {
+    fetchParticipantRoles();
+    // ... any other existing onMounted logic ...
+});
 
 // --- CORE FETCH LOGIC ---
 const fetchCase = async () => {
@@ -327,7 +454,8 @@ const fetchCase = async () => {
         label: def.label || def.fieldLabel || def.field_label || 'Unnamed Field',
         key: def.key || def.fieldKey || def.field_key, // The critical DB key (e.g. 'tax_no')
         fieldType: def.fieldType || def.field_type || 'text',
-        showInQuickView: !!(def.showInQuickView || def.show_in_quick_view)
+        showInQuickView: !!(def.showInQuickView || def.show_in_quick_view),
+        participantRoleId: def.participantRoleId || def.participant_role_id || null
     }));
 
     /// 3. Initialize Form State
@@ -387,23 +515,34 @@ const saveMetadata = async () => {
 // --- PARTICIPANT LOGIC ---
 
 const openAssignModal = (participant = null) => {
+  const definitions = caseFile.value?.fileType?.fieldDefinitions || [];
+  
   if (participant) {
     // Edit Mode
     isEditingParticipant.value = true;
     editingParticipantId.value = participant.id;
-    selectedEntity.value = participant.entity; // Lock entity
+    selectedEntity.value = participant.entity;
+
+    // Use the helper to map vizAttId -> viz-att_id
+    const rawData = participant.entity?.metaData || participant.entity?.meta_data || {};
+    
     participantForm.value = {
       role_key: participant.roleKey || participant.role_key,
       reference_number: participant.referenceNumber || participant.reference_number,
       notes: participant.notes,
-      is_active: participant.isActive !== undefined ? participant.isActive : participant.is_active
+      is_active: participant.isActive !== undefined ? participant.isActive : participant.is_active,
+      is_primary_contact: participant.isPrimaryContact !== undefined ? participant.isPrimaryContact : (participant.is_primary_contact || false),
+      // CRITICAL: Normalize the data so keys match the Blueprint
+      meta_data: normalizeMetadata(rawData, definitions)
     };
   } else {
-    // Create Mode
+    // Create Mode (Normal initialization)
     isEditingParticipant.value = false;
-    editingParticipantId.value = null;
-    clearSelection();
-    participantForm.value = { role_key: '', reference_number: '', notes: '', is_active: true };
+    participantForm.value = { 
+        role_key: '', reference_number: '', notes: '', 
+        is_active: true, is_primary_contact: false, 
+        meta_data: normalizeMetadata({}, definitions) 
+    };
   }
   showAssignModal.value = true;
 };
@@ -411,7 +550,7 @@ const openAssignModal = (participant = null) => {
 const closeModal = () => {
   showAssignModal.value = false;
   clearSelection();
-  participantForm.value = { role_key: '', reference_number: '', notes: '', is_active: true };
+  participantForm.value = { role_key: '', reference_number: '', notes: '', is_active: true, meta_data: {} };
 };
 
 const handleSearch = () => {
@@ -439,6 +578,11 @@ const selectEntity = (entity) => {
   selectedEntity.value = entity;
   searchQuery.value = '';
   searchResults.value = [];
+  
+  // NEW: Pre-load global metadata from the registry if assigning an existing entity
+  if (entity.metaData || entity.meta_data) {
+      participantForm.value.meta_data = { ...(entity.metaData || entity.meta_data) };
+  }
 };
 
 const clearSelection = () => {
@@ -455,14 +599,14 @@ const saveParticipant = async () => {
       role_key: participantForm.value.role_key,
       reference_number: participantForm.value.reference_number,
       notes: participantForm.value.notes,
-      is_active: participantForm.value.is_active
+      is_active: participantForm.value.is_active,
+      is_primary_contact: participantForm.value.is_primary_contact,
+      meta_data: participantForm.value.meta_data
     };
 
     const baseUrl = `/${route.params.productSlug}/cases/${route.params.id}/participants`;
 
     if (isEditingParticipant.value) {
-        // Backend must support PUT /participants/{id}
-        // If not supported yet, we might need to add it to CaseParticipantController
         await apiClient.put(`${baseUrl}/${editingParticipantId.value}`, payload);
         showAlert('Success', 'Participant updated.');
     } else {

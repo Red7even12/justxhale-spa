@@ -63,7 +63,6 @@
            noteable-type="case_file"
            :noteable-id="caseFile.id"
            :context-url="`${route.params.productSlug}/cases/${caseFile.id}`" 
-           @note-added="(n) => currentNotes.unshift(n)"
            @cancel="showNotesModal = false"
         />
       </div>

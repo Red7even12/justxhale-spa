@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, shallowRef, onMounted } from 'vue';
+import { ref, shallowRef, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 
@@ -81,6 +81,16 @@ const fetchCaseAndLoadTemplate = async () => {
     loading.value = false;
   }
 };
+
+// Re-fetch if user switches app or case ID while component is active
+watch(
+  () => [route.params.productSlug, route.params.id],
+  ([newSlug, newId]) => {
+    if (newSlug && newId) {
+      fetchCaseAndLoadTemplate();
+    }
+  }
+);
 
 onMounted(fetchCaseAndLoadTemplate);
 </script>

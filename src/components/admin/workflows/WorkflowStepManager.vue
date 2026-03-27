@@ -1,208 +1,151 @@
 <template>
-  <div class="mt-4">
+  <div class="flex flex-col h-full">
     <!-- Action Bar -->
-    <div class="flex justify-end items-center mb-4 space-x-3">
-      <button v-if="steps.length > 0" @click="exportSteps" :disabled="isExporting" class="btn-secondary">
+    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest">Logic Steps</h4>
+        <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+            {{ steps.length }} Steps
+        </span>
+      </div>
+      <button @click="exportSteps" :disabled="isExporting" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
         {{ isExporting ? 'Exporting...' : 'Export to Excel' }}
       </button>
-      <!-- "Add Step" button is removed as per the plan to manage via import/export -->
     </div>
 
-    <!-- Import Section -->
-    <div class="mb-8 p-4 border rounded-lg bg-gray-50">
-      <h4 class="font-medium text-gray-800">Import Steps from File</h4>
-      <p class="text-sm text-gray-500 mt-1">
-        Upload an .xlsx file to bulk create or update workflow steps. The file must match the format of the export.
-      </p>
-      <form @submit.prevent="handleImport" class="mt-4 flex items-center space-x-3">
-        <input type="file" @change="handleFileSelect" ref="fileInput" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand-blue-50 file:text-brand-blue-700 hover:file:bg-brand-blue-100"/>
-        <button type="submit" class="btn-primary whitespace-nowrap" :disabled="!importFile || isImporting">
-          {{ isImporting ? 'Importing...' : 'Upload & Import' }}
+    <!-- Bulk Import Panel -->
+    <div class="p-4 bg-indigo-50/50 border-b">
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex-1">
+            <input type="file" @change="handleFileSelect" ref="fileInput" class="block w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer"/>
+        </div>
+        <button @click="handleImport" class="bg-white border border-indigo-200 text-indigo-600 px-4 py-1 rounded text-xs font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm" :disabled="!importFile || isImporting">
+          {{ isImporting ? 'Processing...' : 'Upload & Sync Steps' }}
         </button>
-      </form>
-      <!-- Import Feedback -->
-      <div v-if="importSuccessMessage" class="mt-3 text-sm text-green-600 font-medium">{{ importSuccessMessage }}</div>
-      <div v-if="importErrors.length > 0" class="mt-3">
-          <p class="text-sm text-red-600 font-bold">Import failed with the following errors:</p>
-          <ul class="list-disc list-inside mt-1 text-sm text-red-600">
-              <li v-for="(error, index) in importErrors" :key="index">
-                  Row {{ error.row }}: {{ error.message }}
-              </li>
+      </div>
+      
+      <!-- Feedback -->
+      <div v-if="importSuccessMessage" class="mt-2 text-[10px] text-green-600 font-bold uppercase">{{ importSuccessMessage }}</div>
+      <div v-if="importErrors.length > 0" class="mt-2 p-2 bg-red-50 rounded border border-red-100 max-h-24 overflow-y-auto">
+          <ul class="text-[10px] text-red-600 space-y-1">
+              <li v-for="(error, index) in importErrors" :key="index">Row {{ error.row }}: {{ error.message }}</li>
           </ul>
       </div>
     </div>
 
-    <!-- Table of steps -->
-    <div v-if="loading" class="text-center">Loading steps...</div>
-    <div v-else-if="error" class="text-red-600">{{ error }}</div>
-    <div v-else-if="steps.length === 0">
-      <p class="text-gray-500">No steps defined for this workflow yet.</p>
+    <!-- Steps Table -->
+    <div class="flex-1 overflow-y-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 sticky top-0 z-10">
+                <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <th @click="sortBy('id')" class="px-6 py-3 text-left cursor-pointer hover:text-indigo-600">ID</th>
+                    <th @click="sortBy('name')" class="px-6 py-3 text-left cursor-pointer hover:text-indigo-600">Step Name</th>
+                    <th class="px-6 py-3 text-left">Automation Logic</th>
+                    <th class="px-6 py-3 text-center">Active</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="step in steps" :key="step.id" class="hover:bg-gray-50 text-sm">
+                    <td class="px-6 py-3 font-mono text-gray-400 text-xs">{{ step.id }}</td>
+                    <td class="px-6 py-3 font-bold text-gray-800">{{ step.name }}</td>
+                    <td class="px-6 py-3">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs text-gray-600 italic">{{ step.reminderSubject || 'No Subject Defined' }}</span>
+                            <span class="text-[10px] text-gray-400 uppercase font-bold">
+                                {{ step.reminderMaxCycles || 0 }} Cycles / {{ step.reminderIntervalDays || 0 }} Days
+                            </span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-3 text-center">
+                        <span :class="step.isActive ? 'text-green-500' : 'text-red-400'">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
+                                <path v-if="step.isActive" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div v-if="steps.length === 0" class="p-12 text-center text-gray-400 italic">No steps loaded.</div>
     </div>
-    <div v-else class="overflow-x-auto border rounded-lg">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <!-- CHANGED: ID Column is now the first sortable column -->
-            <th @click="sortBy('id')" class="w-20 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
-              ID
-              <span v-if="sortState.by === 'id'">{{ sortState.dir === 'asc' ? '▲' : '▼' }}</span>
-            </th>
-            
-            <th @click="sortBy('name')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
-              Name
-              <span v-if="sortState.by === 'name'">{{ sortState.dir === 'asc' ? '▲' : '▼' }}</span>
-            </th>
-
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reminders</th>
-
-            <!-- ADDED: Reminder Subject Column -->
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reminder Subject</th>
-
-            <!-- ADDED: Trigger Field Column -->
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Triggered By ID</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
-            
-            <!-- REMOVED: Actions Column -->
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="step in steps" :key="step.id">
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ step.id }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ step.name }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">
-              {{ step.reminderMaxCycles || 0 }} cycles @ {{ step.reminderIntervalDays || 0 }} days
-            </td>
-            
-            <!-- ADDED: Reminder Subject Data Cell -->
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{{ step.reminderSubject || 'N/A' }}</td>
-
-            <!-- ADDED: Trigger Field Data Cell -->
-            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600 font-mono">{{ step.startsAfterStepId || 'N/A' }}</td>
-            
-            <!-- ADDED: Is Active Data Cell -->
-            <td class="px-4 py-2 whitespace-nowrap text-sm">
-              <span :class="step.isActive ? 'text-green-600' : 'text-red-600'">
-                {{ step.isActive ? 'Yes' : 'No' }}
-              </span>
-            </td>
-
-            <!-- REMOVED: Actions Data Cell -->
-          </tr>
-        </tbody>
-
-      </table>
-    </div>
-
-    <!-- The modal is no longer needed here as we are not editing/creating steps directly -->
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, watch } from 'vue';
-import workflowStepService from '@/services/workflowStepService';
-import workflowDefinitionService from '@/services/workflowDefinitionService'; 
+import apiClient from '@/services/api';
+import { useAlerts } from '@/composables/useAlerts';
 
 const props = defineProps({
   definition: { type: Object, required: true },
+  slug: { type: String, required: true } // Inherited from Layout
 });
 
+const { showAlert } = useAlerts();
 const steps = ref([]);
 const loading = ref(false);
-const error = ref(null);
 const isExporting = ref(false);
-
-const sortState = reactive({
-  by: 'id',   // CHANGED: Default sort column is now 'id'
-  dir: 'asc',
-});
-
-const importFile = ref(null);
-const fileInput = ref(null);
 const isImporting = ref(false);
+const importFile = ref(null);
 const importSuccessMessage = ref('');
 const importErrors = ref([]);
 
-const fetchSteps = async (definitionId) => {
-  if (!definitionId) return;
-  loading.value = true;
-  error.value = null;
-  try {
-    const params = { sortBy: sortState.by, sortDir: sortState.dir };
-    const response = await workflowStepService.getSteps(definitionId, params);
-    steps.value = response.data;
-  } catch (err) {
-    error.value = 'Could not load steps.';
-  } finally {
+const sortState = reactive({ by: 'id', dir: 'asc' });
+
+const fetchSteps = async () => {
+    if (!props.definition?.id) return;
+    loading.value = true;
+    try {
+        const params = { sort_by: sortState.by, sort_dir: sortState.dir };
+        const { data } = await apiClient.get(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/steps`, { params });
+        steps.value = data;
+    } catch (e) { console.error(e); }
     loading.value = false;
-  }
 };
 
-const sortBy = (column) => {
-  if (sortState.by === column) {
-    sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortState.by = column;
-    sortState.dir = 'asc';
-  }
-  fetchSteps(props.definition.id);
+const sortBy = (col) => {
+    sortState.dir = (sortState.by === col && sortState.dir === 'asc') ? 'desc' : 'asc';
+    sortState.by = col;
+    fetchSteps();
 };
 
 const exportSteps = async () => {
-  isExporting.value = true;
-  try {
-    const response = await workflowDefinitionService.exportSteps(props.definition.id);
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    const fileName = `workflow-steps-def-${props.definition.id}.xlsx`;
-    link.setAttribute('download', fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    alert('An error occurred during the export.');
-  } finally {
+    isExporting.value = true;
+    try {
+        const response = await apiClient.get(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/export`, { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `DNA-Steps-${props.slug}-${props.definition.id}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+    } catch (e) { showAlert('Error', 'Export failed.'); }
     isExporting.value = false;
-  }
 };
 
-const handleFileSelect = (event) => {
-  importFile.value = event.target.files[0] || null;
-  importSuccessMessage.value = '';
-  importErrors.value = [];
-};
+const handleFileSelect = (e) => { importFile.value = e.target.files[0]; };
 
 const handleImport = async () => {
-  if (!importFile.value) return;
-  isImporting.value = true;
-  importSuccessMessage.value = '';
-  importErrors.value = [];
-  try {
-    const response = await workflowDefinitionService.importSteps(props.definition.id, importFile.value);
-    importSuccessMessage.value = response.data.message;
-    if (fileInput.value) fileInput.value.value = '';
-    importFile.value = null;
-    await fetchSteps(props.definition.id);
-  } catch (err) {
-    if (err.response?.status === 422 && err.response.data.errors) {
-      importErrors.value = err.response.data.errors.map(fail => ({
-        row: fail.row,
-        message: `${fail.attribute}: ${fail.errors.join(', ')}`
-      }));
-    } else {
-      importErrors.value = [{ row: 'N/A', message: 'An unexpected server error occurred.' }];
+    if (!importFile.value) return;
+    isImporting.value = true;
+    const formData = new FormData();
+    formData.append('file', importFile.value);
+
+    try {
+        await apiClient.post(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/import`, formData);
+        showAlert('Success', 'Steps synchronized with Product DNA.');
+        fetchSteps();
+    } catch (e) {
+        if (e.response?.status === 422) {
+            importErrors.value = e.response.data.errors;
+        } else {
+            showAlert('Error', 'Import failed. Check file format.');
+        }
     }
-  } finally {
     isImporting.value = false;
-  }
 };
 
-watch(() => props.definition, (newDefinition) => {
-  if (newDefinition) {
-    fetchSteps(newDefinition.id);
-  } else {
-    steps.value = [];
-  }
-}, { immediate: true });
+watch(() => props.definition?.id, fetchSteps, { immediate: true });
 </script>

@@ -48,12 +48,6 @@
             <!-- System Setup Group -->
             <template v-if="authStore.hasRole('System Admin')">
               <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">System Setup</div>
-              <router-link @click="closeMobileMenu" to="/admin/file-types" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/file-types') }">Case File Types</router-link>
-              <router-link @click="closeMobileMenu" :to="{ name: 'admin.document-packs' }" class="mobile-nav-link ml-2" :class="{ 'active': $route.name === 'admin.document-packs' }">Document Packs</router-link>
-              <router-link @click="closeMobileMenu" to="/admin/document-management" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/document-management') }">Document Setup</router-link>
-              <router-link @click="closeMobileMenu" to="/admin/workflow-management" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/workflow-management') }">Workflow Management</router-link>
-              <router-link @click="closeMobileMenu" :to="{ name: 'SystemMailsSetup' }" class="mobile-nav-link ml-2" :class="{ 'active': $route.name === 'SystemMailsSetup' }">System Mails Setup</router-link>
-              <router-link @click="closeMobileMenu" to="/admin/option-lists" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/option-lists') }">Option Lists</router-link>
               <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
             </template>
           </template>
@@ -133,13 +127,6 @@
 
                 <div v-if="isSystemMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
-                    <router-link to="/admin/file-types" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Case File Types</router-link>
-                    <router-link :to="{ name: 'admin.document-packs' }" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Packs</router-link>
-                    <router-link to="/admin/document-management" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Document Setup</router-link>                  
-                    <router-link to="/admin/workflow-management" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Workflow Management</router-link>
-                    <router-link :to="{ name: 'SystemMailsSetup' }" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">System Mails Setup</router-link>
-                    
-                    <router-link to="/admin/option-lists" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Option Lists</router-link>
                     <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>
                   </div>
                 </div>

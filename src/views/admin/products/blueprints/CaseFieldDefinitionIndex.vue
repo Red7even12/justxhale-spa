@@ -1,0 +1,182 @@
+<template>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <div>
+        <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
+            ← Back to Casefile Types
+        </router-link>
+        <h2 class="text-xl font-bold text-gray-800">Field Definitions: {{ fileType?.name }}</h2>
+        <p class="text-sm text-gray-500">Configure custom data points and participant metadata.</p>
+      </div>
+      <button @click="openModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold transition-all">
+        + Add Data Field
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50 uppercase text-[10px] font-black text-gray-400 tracking-widest">
+          <tr>
+            <th class="px-6 py-4 text-left">Label (UI) / Context</th>
+            <th class="px-6 py-4 text-left">Key (Database)</th>
+            <th class="px-6 py-4 text-center">Type</th>
+            <th class="px-6 py-4 text-center">Order</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+          <tr v-for="field in fields" :key="field.id" class="hover:bg-indigo-50/30 transition-colors">
+            <td class="px-6 py-4">
+                <div class="font-bold text-gray-900">{{ field.fieldLabel || field.field_label }}</div>
+                <div v-if="field.participantRole" class="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">
+                    Linked to Role: {{ field.participantRole.name }}
+                </div>
+                <div v-else class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">General Case Data</div>
+            </td>
+            <td class="px-6 py-4 font-mono text-xs text-gray-400">{{ field.fieldKey || field.field_key }}</td>
+            <td class="px-6 py-4 text-center text-xs font-medium uppercase">{{ field.fieldType || field.field_type }}</td>
+            <td class="px-6 py-4 text-center text-sm text-gray-500">{{ field.sortOrder || field.sort_order }}</td>
+            <td class="px-6 py-4 text-right space-x-3 text-sm font-medium">
+              <button @click="openModal(field)" class="text-gray-400 hover:text-indigo-600">Edit</button>
+              <button @click="confirmDelete(field)" class="text-red-400 hover:text-red-600">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal -->
+    <div v-if="showModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl">
+        <h2 class="text-xl font-bold mb-6 text-gray-900 border-b pb-4">{{ form.id ? 'Edit' : 'Create' }} Field</h2>
+        <form @submit.prevent="save" class="grid grid-cols-2 gap-5">
+            <div class="col-span-2">
+                <label class="block text-xs font-black text-gray-400 uppercase mb-1">Field Label (UI Display)</label>
+                <input v-model="form.field_label" type="text" required class="w-full border-gray-300 rounded-lg shadow-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase mb-1">Field Key (System)</label>
+                <input v-model="form.field_key" type="text" required class="w-full border-gray-300 rounded-lg shadow-sm font-mono text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase mb-1">Input Type</label>
+                <select v-model="form.field_type" class="w-full border-gray-300 rounded-lg shadow-sm">
+                    <option value="text">Short Text</option>
+                    <option value="date">Date Picker</option>
+                    <option value="number">Numeric</option>
+                    <option value="textarea">Long Text</option>
+                </select>
+            </div>
+            
+            <div class="col-span-2 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                <label class="block text-xs font-black text-indigo-900 uppercase mb-2">Character Context (Optional)</label>
+                <select v-model="form.participant_role_id" class="w-full border-indigo-200 rounded-lg shadow-sm text-sm">
+                    <option :value="null">-- General Case Field --</option>
+                    <option v-for="role in roles" :key="role.id" :value="role.id">
+                         Metadata for character: {{ role.name }}
+                    </option>
+                </select>
+                <p class="text-[10px] text-indigo-400 mt-2 italic font-medium">If selected, this field only appears when this Character is added to the case.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input v-model="form.is_required" type="checkbox" id="req" class="rounded text-indigo-600">
+                <label for="req" class="text-xs font-bold text-gray-700">Mandatory?</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input v-model="form.show_in_quick_view" type="checkbox" id="sqv" class="rounded text-indigo-600">
+                <label for="sqv" class="text-xs font-bold text-gray-700">Show in Quickview?</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-gray-700">Order:</label>
+                <input v-model="form.sort_order" type="number" class="w-20 border-gray-300 rounded-lg shadow-sm text-sm">
+            </div>
+
+            <div class="col-span-2 mt-4 flex justify-end gap-3 pt-5 border-t">
+                <button type="button" @click="showModal = false" class="text-gray-400 font-bold px-4 py-2">Cancel</button>
+                <button type="submit" class="bg-indigo-600 text-white font-bold px-8 py-2 rounded-lg shadow hover:bg-indigo-700">Save Field</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import apiClient from '@/services/api';
+import { useAlerts } from '@/composables/useAlerts';
+
+const props = defineProps(['slug', 'fileTypeId']);
+const { showConfirm, showAlert } = useAlerts();
+
+const fields = ref([]);
+const fileType = ref(null);
+const roles = ref([]);
+const showModal = ref(false);
+
+const form = reactive({ 
+    id: null, field_label: '', field_key: '', field_type: 'text', 
+    is_required: false, sort_order: 0, participant_role_id: null,
+    show_in_quick_view: false
+});
+
+const load = async () => {
+  try {
+    const [fieldsRes, typeRes, rolesRes] = await Promise.all([
+      apiClient.get(`admin/products/${props.slug}/file-types/${props.fileTypeId}/fields`),
+      apiClient.get(`admin/products/${props.slug}/file-types/${props.fileTypeId}`),
+      apiClient.get(`admin/products/${props.slug}/participant-roles`)
+    ]);
+    fields.value = fieldsRes.data;
+    fileType.value = typeRes.data;
+    roles.value = rolesRes.data;
+  } catch (e) { console.error(e); }
+};
+
+const openModal = (field = null) => {
+  if (field) {
+    Object.assign(form, {
+        id: field.id,
+        field_label: field.fieldLabel || field.field_label,
+        field_key: field.fieldKey || field.field_key,
+        field_type: field.fieldType || field.field_type,
+        is_required: !!(field.isRequired || field.is_required),
+        sort_order: field.sortOrder || field.sort_order,
+        participant_role_id: field.participantRoleId || field.participant_role_id,
+        show_in_quick_view: !!(field.showInQuickView || field.show_in_quick_view)
+    });
+  } else {
+    Object.assign(form, { 
+        id: null, field_label: '', field_key: '', field_type: 'text', 
+        is_required: false, sort_order: fields.value.length + 1, 
+        participant_role_id: null, show_in_quick_view: false 
+    });
+  }
+  showModal.value = true;
+};
+
+const save = async () => {
+    try {
+        const url = `admin/products/${props.slug}/file-types/${props.fileTypeId}/fields${form.id ? '/' + form.id : ''}`;
+        const method = form.id ? 'put' : 'post';
+        await apiClient[method](url, form);
+        showModal.value = false;
+        load();
+        showAlert('Success', 'DNA Field synchronized.');
+    } catch (e) { showAlert('Error', 'Save failed.'); }
+};
+
+const confirmDelete = async (field) => {
+  if (await showConfirm('Delete Field', `Permanent deletion of "${field.fieldLabel || field.field_label}"?`)) {
+    try {
+        await apiClient.delete(`admin/products/${props.slug}/file-types/${props.fileTypeId}/fields/${field.id}`);
+        load();
+    } catch (e) { showAlert('Error', 'Delete failed.'); }
+  }
+};
+
+onMounted(load);
+</script>

@@ -117,40 +117,49 @@
         </div>
       </div>
     </div>
-
+    <!-- NEW: Load More Button -->
+    <div v-if="hasMore" class="mt-6 text-center pb-4">
+      <button 
+          @click="loadMore" 
+          :disabled="isLoadingMore"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+      >
+          <svg v-if="isLoadingMore" class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          {{ isLoadingMore ? 'Loading...' : 'Load Older Notes' }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-// 1. IMPORTS
-import { ref, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import noteService from '@/services/noteService';
 import apiClient from '@/services/api'; 
 
-
-// 2. PROPS & EMITS
+// Allow noteableId to accept strings just in case Vue parses it as a string attribute
 const props = defineProps({
-  initialNotes: { type: Array, required: true, default: () => [] },
   noteableType: { type: String, required: true },
-  noteableId: { type: Number, required: true },
-  contextUrl: { type: String, default: null } 
+  noteableId: { type: [Number, String], required: true }, 
+  contextUrl: { type: String, required: true } 
 });
 
 const emit = defineEmits(['note-added', 'cancel']);
 
-
-// 3. STATE MANAGEMENT (REFS)
 const notes = ref([]);
 const newNoteContent = ref('');
 const newCaseNumber = ref('');
 const isLoading = ref(false);
 const error = ref(null);
+
+// Pagination State
+const currentPage = ref(1);
+const hasMore = ref(false);
+const isLoadingMore = ref(false);
+
 const showReminderInput = ref(false);
 const reminderDate = ref('');
 const textareaRef = ref(null);
 
-
-// 4. FUNCTIONS
 const autoResize = () => {
   const textarea = textareaRef.value;
   if (textarea) {
@@ -159,6 +168,86 @@ const autoResize = () => {
   }
 };
 
+// --- FETCH LOGIC ---
+const fetchNotes = async (page = 1) => {
+    if (!props.noteableId) return;
+
+    if (page === 1) isLoading.value = true;
+    else isLoadingMore.value = true;
+
+    try {
+        const response = await apiClient.get(`/${props.contextUrl}/notes`, {
+            params: {
+                noteable_type: props.noteableType,
+                noteable_id: Number(props.noteableId),
+                page: page
+            }
+        });
+
+        // 1. DIAGNOSTIC: Print the raw response to the browser console!
+        console.log("Raw API Response:", response);
+
+        // 2. AGGRESSIVE EXTRACTION
+        // Sometimes interceptors unwrap 'data', sometimes they don't. We check every level.
+        let payloadData = [];
+        let payloadMeta = {};
+
+        if (response.data && response.data.data) {
+            // Standard Axios wrapped response
+            payloadData = response.data.data;
+            payloadMeta = response.data.meta || {};
+        } else if (response.data && Array.isArray(response.data)) {
+            // Interceptor unwrapped the first 'data' layer, but it's an array?
+            payloadData = response.data;
+            payloadMeta = response.meta || {};
+        } else if (response.data) {
+            // Interceptor unwrapped it, and it's our exact JSON object
+            payloadData = response.data;
+            payloadMeta = response.meta || {};
+        } else {
+            // Absolute fallback
+            payloadData = response;
+        }
+
+        console.log("Extracted Meta:", payloadMeta);
+
+        if (page === 1) {
+            notes.value = payloadData;
+        } else {
+            notes.value = [...notes.value, ...payloadData];
+        }
+
+        // 3. Assign hasMore using exact boolean matching
+        hasMore.value = payloadMeta.has_more === true || payloadMeta.hasMore === true;
+        currentPage.value = page;
+
+    } catch (err) {
+        console.error("Failed to load notes:", err);
+        error.value = "Failed to load history.";
+    } finally {
+        isLoading.value = false;
+        isLoadingMore.value = false;
+    }
+};
+const loadMore = () => {
+    if (hasMore.value) fetchNotes(currentPage.value + 1);
+};
+
+// --- REACTIVITY: Watch for context changes (e.g., clicking a different document) ---
+watch(
+    () => props.noteableId, 
+    (newId, oldId) => {
+        if (newId && newId !== oldId) {
+            // Context changed! Reset pagination and fetch fresh data
+            notes.value = [];
+            hasMore.value = false;
+            fetchNotes(1);
+        }
+    }, 
+    { immediate: true } // immediate: true replaces the need for onMounted!
+);
+
+// --- SUBMIT LOGIC ---
 const submitNote = async () => {
   if (!newNoteContent.value.trim()) return;
   isLoading.value = true;
@@ -166,64 +255,51 @@ const submitNote = async () => {
 
   const payload = {
     noteable_type: props.noteableType,
-    noteable_id: props.noteableId,
+    noteable_id: Number(props.noteableId), // Force Integer for Laravel Validation
     content: newNoteContent.value,
     case_number: newCaseNumber.value || null,
   };
 
   try {
-    const response = await noteService.createNote(payload, props.contextUrl);
+    const response = await apiClient.post(`/${props.contextUrl}/notes`, payload);
     const savedNote = response.data?.data || response.data;
 
-    if (!savedNote || !savedNote.id) {
-        throw new Error("Invalid response from server");
-    }
-
+    // Instantly add the new note to the TOP of the array
     notes.value.unshift(savedNote);
     
+    // Handle Reminder
     if (showReminderInput.value && reminderDate.value) {
         try {
             const reminderPayload = {
                 due_date: reminderDate.value,
                 notes: newNoteContent.value,
                 note_id: savedNote.id, 
-                case_workflow_process_id: props.noteableType === 'case_workflow_process' ? props.noteableId : null,
-                case_document_requirement_id: props.noteableType === 'case_document_requirement' ? props.noteableId : null
+                case_workflow_process_id: props.noteableType === 'case_workflow_process' ? Number(props.noteableId) : null,
+                case_document_requirement_id: props.noteableType === 'case_document_requirement' ? Number(props.noteableId) : null
             };
-
             await apiClient.post(`/${props.contextUrl}/reminders`, reminderPayload);
-            
         } catch (remErr) {
             console.error("Failed to create reminder", remErr);
         }
     }
 
+    // Reset Form
     newNoteContent.value = ''; 
     newCaseNumber.value = '';
     reminderDate.value = '';
     showReminderInput.value = false;
+    nextTick(autoResize);
 
     emit('note-added', savedNote);
 
   } catch (err) {
-    error.value = 'Failed to save the note. Please try again.';
+    // Show exact validation error if Laravel rejects it
+    error.value = err.response?.data?.message || 'Failed to save the note. Please try again.';
     console.error(err);
   } finally {
     isLoading.value = false;
   }
 };
-
-
-// 5. WATCHERS
-watch(() => props.initialNotes, (newNotes) => {
-  notes.value = newNotes ? [...newNotes] : [];
-}, { immediate: true });
-
-watch(newNoteContent, () => {
-  nextTick(() => {
-    autoResize();
-  });
-});
 </script>
 
 <style scoped>

@@ -2,15 +2,22 @@
   <!--frontend-spa\src\components\cases\CaseDocumentsTable.vue-->
   <div class="documents-table h-full flex flex-col">
     <!-- Header -->
+
     <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 shrink-0">
       <h3 class="text-lg font-bold text-gray-800 uppercase tracking-tight">Document Checklist</h3>
-      <button 
-        @click="saveAllChanges" 
-        :disabled="dirtyRequirementIds.size === 0"
-        class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-      >
-        Save Changes
-      </button>
+      <div class="flex items-center gap-2">
+        <button 
+          @click="openRequestModal" 
+          class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 transition-all">
+          Request Documents
+        </button>
+        <button 
+          @click="saveAllChanges" 
+          :disabled="dirtyRequirementIds.size === 0"
+          class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          Save Changes
+        </button>
+      </div>
     </div>
     
     <!-- Loading / Error States -->
@@ -247,10 +254,90 @@
         </div>
     </div>
   </Modal>
+
+<Modal :show="isRequestModalOpen" @close="closeRequestModal">
+    <template #title>Request Documents via Secure Portal</template>
+    
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-6">
+            Select the required documents and choose who should receive the secure upload link. They will receive a passwordless Magic Link to upload these files directly from their phone or computer.
+        </p>
+
+        <!-- Step 1: Select Recipient -->
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">1. Who are you requesting these from?</label>
+            <div v-if="isLoadingParticipants" class="text-xs text-gray-500">Loading contacts...</div>
+            <select 
+                v-else 
+                v-model="requestPayload.participantId" 
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+            >
+                <option :value="null" disabled>-- Select a Contact --</option>
+                <option 
+                    v-for="p in availableParticipants" 
+                    :key="p.id" 
+                    :value="p.id"
+                >
+                    {{ p.isPrimaryContact ? '⭐ ' : '' }}{{ p.entity?.name }} ({{ p.roleKey }}) - {{ p.entity?.email || p.entity?.phonePrimary || 'No Contact Info' }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Step 2: Select Documents -->
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">2. Which pending documents do you need?</label>
+            
+            <div v-if="pendingDocuments.length === 0" class="p-4 bg-gray-50 text-sm text-gray-500 rounded-md border">
+                There are no pending documents available to request.
+            </div>
+            
+            <div v-else class="max-h-60 overflow-y-auto border rounded-md divide-y">
+                <label 
+                    v-for="doc in pendingDocuments" 
+                    :key="doc.id" 
+                    class="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
+                >
+                    <input 
+                        type="checkbox" 
+                        :value="doc.id" 
+                        v-model="requestPayload.documentIds" 
+                        class="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
+                    >
+                    <span class="ml-3 text-sm text-gray-700">
+                        {{ doc.documentType?.label || doc.documentType?.name }}
+                    </span>
+                </label>
+            </div>
+            <div class="mt-2 text-xs text-gray-500 flex justify-between">
+                <span>{{ requestPayload.documentIds.length }} selected</span>
+                <button type="button" @click="selectAllDocs" class="text-brand-primary hover:underline">Select All</button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+            <button 
+                @click="closeRequestModal" 
+                class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+                Cancel
+            </button>
+            <button 
+                @click="sendDocumentRequest" 
+                :disabled="isSendingRequest || !requestPayload.participantId || requestPayload.documentIds.length === 0"
+                class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-primary hover:bg-opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <svg v-if="isSendingRequest" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                {{ isSendingRequest ? 'Generating Link...' : 'Send Secure Link' }}
+            </button>
+        </div>
+    </div>
+</Modal>
+
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import noteService from '@/services/noteService';
@@ -261,6 +348,8 @@ import NotesPanel from '@/components/estates/NotesPanel.vue';
 
 const props = defineProps({ caseId: { type: [String, Number], required: true } });
 const route = useRoute();
+const productSlug = computed(() => route.params.productSlug);
+const caseId = computed(() => route.params.id);
 const { showAlert } = useAlerts();
 const authStore = useAuthStore(); // Needed for API Token in downloads
 
@@ -286,6 +375,90 @@ const fileInput = ref(null);
 const openFiles = (req) => {
     activeFileReq.value = req;
     showFilesModal.value = true;
+};
+
+// Document Request Modal State
+const isRequestModalOpen = ref(false);
+const isSendingRequest = ref(false);
+const isLoadingParticipants = ref(false);
+const availableParticipants = ref([]);
+
+const requestPayload = reactive({
+    participantId: null,
+    documentIds: []
+});
+
+const pendingDocuments = computed(() => {
+    // Only show documents that are 'pending' (or 'stale') and are actually required
+    return requirements.value.filter(doc => 
+        (doc.currentStatus === 'pending' || 
+            doc.currentStatus === 'stale' || 
+            doc.currentStatus === 'requested' 
+        ) && 
+        doc.isRequired !== false
+    );
+});
+
+const selectAllDocs = () => {
+    requestPayload.documentIds = pendingDocuments.value.map(doc => doc.id);
+};
+
+const openRequestModal = async () => {
+    isRequestModalOpen.value = true;
+    requestPayload.documentIds = [];
+    requestPayload.participantId = null;
+    isLoadingParticipants.value = true;
+
+    try {
+        // Fetch participants for this case to populate the dropdown
+        const response = await apiClient.get(`/${productSlug.value}/case-files/${caseId.value}/participants`);
+        
+        // Filter out participants that have absolutely no contact info
+        availableParticipants.value = response.data.data.filter(p => 
+            p.entity?.email || p.entity?.phonePrimary
+        );
+
+        // Auto-select the Primary Contact if one exists
+        const primary = availableParticipants.value.find(p => p.isPrimaryContact);
+        if (primary) {
+            requestPayload.participantId = primary.id;
+        }
+    } catch (error) {
+        console.error("Failed to load participants", error);
+        alert("Could not load contacts. Please ensure participants are added to the case.");
+    } finally {
+        isLoadingParticipants.value = false;
+    }
+};
+
+const closeRequestModal = () => {
+    isRequestModalOpen.value = false;
+};
+
+const sendDocumentRequest = async () => {
+    isSendingRequest.value = true;
+    try {
+        // We will build this backend endpoint in the next step!
+        const response = await apiClient.post(`/${productSlug.value}/case-files/${caseId.value}/portal-requests`, {
+            participant_id: requestPayload.participantId,
+            document_ids: requestPayload.documentIds
+        });
+
+        alert("Secure link generated and sent successfully!");
+        
+        // Update local UI state to 'requested' (Orange) so they don't have to refresh
+        requestPayload.documentIds.forEach(id => {
+            const doc = requirements.value.find(d => d.id === id);
+            if (doc) doc.currentStatus = 'requested';
+        });
+
+        closeRequestModal();
+    } catch (error) {
+        console.error("Failed to send request", error);
+        alert(error.response?.data?.message || "Failed to send the document request.");
+    } finally {
+        isSendingRequest.value = false;
+    }
 };
 
 const formatSize = (kb) => {
@@ -449,8 +622,10 @@ const getStatusInfo = (status) => {
         pending: { class: 'bg-gray-100', textClass: 'text-gray-600' },
         received: { class: 'bg-blue-100', textClass: 'text-blue-700' },
         valid: { class: 'bg-green-100', textClass: 'text-green-700' },
-        stale: { class: 'bg-orange-100', textClass: 'text-orange-700' },
+        stale: { class: 'bg-red-100', textClass: 'text-red-700' },
         not_applicable: { class: 'bg-gray-200', textClass: 'text-gray-500' },
+        requested: { class: 'bg-orange-100', textClass: 'text-orange-700' },
+        submitted: { class: 'bg-yellow-100', textClass: 'text-yellow-700' }
     };
     return map[normalized] || map.pending;
 };

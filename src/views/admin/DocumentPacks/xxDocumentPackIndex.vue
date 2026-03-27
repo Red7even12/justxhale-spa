@@ -17,9 +17,9 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter by Niche</label>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter by Casefile Type</label>
         <select v-model="filters.fileTypeId" class="w-full border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500">
-          <option :value="null">All Niches</option>
+          <option :value="null">All CF Types</option>
           <option v-for="type in fileTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
         </select>
       </div>

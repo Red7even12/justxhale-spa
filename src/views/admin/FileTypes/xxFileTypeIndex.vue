@@ -36,7 +36,7 @@
           <tr>
             <th @click="sortBy('name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors">
               <div class="flex items-center">
-                Niche Name
+                Casefile Name
                 <span class="ml-2 inline-block w-4 h-4">
                   <svg v-if="sortKey === 'name' && sortOrder === 'asc'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
                   <svg v-else-if="sortKey === 'name' && sortOrder === 'desc'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>

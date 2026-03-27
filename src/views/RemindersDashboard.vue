@@ -160,6 +160,7 @@
         :initial-notes="notesContext.initialNotes"
         :noteable-type="notesContext.noteableType"
         :noteable-id="notesContext.noteableId"
+        :context-url="notesContext.contextUrl" 
         @note-added="isNotesModalOpen = false"
         @cancel="isNotesModalOpen = false"
       />
@@ -214,6 +215,7 @@ const notesContext = reactive({
   title: '',
   noteableType: null,
   noteableId: null,
+  contextUrl: '', 
   initialNotes: [],
 });
 
@@ -373,30 +375,18 @@ const addNote = async (reminder) => {
     titleLabel = 'General Task';
   }
 
-  // Set up the Modal Context
-  // Note: We use caseName (camelCase) from the V2 View
+  // 4. Safely extract Case ID & Name
+  const caseId = reminder.caseFileId || reminder.case_file_id;
   const caseName = reminder.caseName || reminder.case_name || 'Unknown Case';
   
+  // 5. Set up the Modal Context (No API call needed here!)
   notesContext.title = `Notes: ${caseName} - ${titleLabel}`;
   notesContext.noteableType = noteableType;
   notesContext.noteableId = noteableId;
-  notesContext.initialNotes = [];
+  notesContext.contextUrl = `${route.params.productSlug}/cases/${caseId}`;
   
+  // 6. Open the Modal (The NotesPanel component will auto-fetch the data now)
   isNotesModalOpen.value = true;
-
-  try {
-    // We need to construct the URL context for the API call
-    // Logic: If we are on the dashboard, we might not have the productSlug in the reminder object itself.
-    // However, the dashboard route usually has it.
-    const contextUrl = `${route.params.productSlug}/cases/${reminder.caseFileId || reminder.case_file_id}`;
-
-    const response = await noteService.getNotes(noteableType, noteableId, contextUrl);
-    notesContext.initialNotes = response.data;
-  } catch (err) {
-    console.error("Failed to fetch notes history:", err);
-    // Don't close modal, just show empty list or error
-    alert('Could not load notes history.');
-  }
 };
 
 const handleNoteAdded = () => {
