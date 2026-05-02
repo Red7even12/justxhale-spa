@@ -17,7 +17,7 @@
 
         <!-- Mobile Logo -->
         <div class="flex items-center justify-center py-6 flex-shrink-0 px-4 border-b border-white/10">
-          <div v-if="product?.logoPath || product?.logo_path" class="h-12 w-auto">
+          <div v-if="product?.logoUrl || product?.logo_url" class="h-12 w-auto">
              <img 
                :src="getAssetUrl(product.logoUrl || product.logo_url)" 
                alt="Product Logo" 
@@ -43,6 +43,9 @@
           
           <template v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')">
             <div class="pt-4 pb-2 px-4 text-[10px] font-bold text-white/40 uppercase tracking-widest">Administration</div>
+            <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/import`" class="mobile-nav-link" active-class="mobile-nav-active">
+              Take-on
+            </router-link>
             <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/users`" class="mobile-nav-link" active-class="mobile-nav-active">
               Users
             </router-link>
@@ -84,10 +87,10 @@
             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
 
-          <div class="flex items-center gap-4 pr-6 border-r border-white/20 h-16 hidden sm:flex">
+          <div class="flex items-center gap-4 pr-6 border-r border-white/20 h-16">
             
             <!-- Logo OR Fallback Letter -->
-            <div v-if="product?.logoPath || product?.logo_path" class="h-16 w-auto">
+            <div v-if="product?.logoUrl || product?.logo_url" class="h-16 w-auto">
                <img 
                  :src="getAssetUrl(product.logoUrl || product.logo_url)" 
                  alt="Product Logo" 
@@ -111,6 +114,9 @@
               Registry
             </router-link>
             <template v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')">
+              <router-link :to="`/${productSlug}/import`" class="top-nav-link" active-class="top-nav-active">
+                Take-on
+              </router-link>
               <router-link :to="`/${productSlug}/users`" class="top-nav-link" active-class="top-nav-active">
                 Users
               </router-link>
@@ -130,7 +136,7 @@
           </div>
           
           <!-- App Switcher -->
-          <router-link to="/launcher" class="text-[10px] font-bold text-white flex items-center gap-1.5 uppercase tracking-widest border border-white/40 px-3 py-1.5 rounded-md hover:bg-white/10 transition-all opacity-80 hover:opacity-100 hidden md:flex">
+          <router-link to="/launcher" class="text-[10px] font-bold text-white items-center gap-1.5 uppercase tracking-widest border border-white/40 px-3 py-1.5 rounded-md hover:bg-white/10 transition-all opacity-80 hover:opacity-100 hidden md:flex">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
             </svg>

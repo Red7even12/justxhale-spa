@@ -23,7 +23,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
         
         <!-- 2. SYSTEM ADMIN CARD -->
-        <div v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" 
+        <div v-if="isAdmin" 
              class="bg-[#242E2C] text-white rounded-xl shadow-xl border border-gray-800 overflow-hidden hover:scale-105 transition-transform duration-300">
           <div class="h-2 bg-yellow-500"></div>
           <div class="p-8 flex flex-col h-full">
@@ -97,7 +97,7 @@
         </div>
 
         <!-- 4. NO PRODUCTS STATE -->
-        <div v-if="products.length === 0 && !authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')" class="col-span-full text-center py-12">
+        <div v-if="products.length === 0 && !isAdmin" class="col-span-full text-center py-12">
            <div class="text-gray-400 mb-2">
              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth'; 
 import apiClient, { getAssetUrl } from '@/services/api';
@@ -126,6 +126,23 @@ const subscriberName = ref('');
 // Helper to handle casing (snake vs camel)
 const getPrimaryColor = (p) => p.primaryColor || p.primary_color || '#3B82F6';
 
+// Robust Admin check covering common role naming/case variants
+const isAdmin = computed(() => {
+  // 1. Check Roles (Standard)
+  const hasAdminRole = authStore.hasRole('System Admin') || 
+                       authStore.hasRole('Business Admin') || 
+                       authStore.hasRole('Super Admin') || 
+                       authStore.hasRole('SuperAdmin') ||
+                       authStore.hasRole('SystemAdmin');
+
+  if (hasAdminRole) return true;
+
+  // 2. Fallback: Check User Name (for local dev/seeding issues)
+  const userName = authStore.user?.name || '';
+  return userName.toLowerCase() === 'superadmin' || 
+         userName.toLowerCase() === 'systemadmin';
+});
+
 const fetchMyProducts = async () => {
   try {
     const { data } = await apiClient.get('user/products');
@@ -133,8 +150,7 @@ const fetchMyProducts = async () => {
     subscriberName.value = data.subscriberName || '';
 
     // Logic: If user only has ONE product AND is NOT an Admin, auto-launch.
-    const isAdmin = authStore.hasRole('System Admin') || authStore.hasRole('Business Admin');
-    if (products.value.length === 1 && !isAdmin) {
+    if (products.value.length === 1 && !isAdmin.value) {
       launch(products.value[0].slug);
     }
   } catch (error) {

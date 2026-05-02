@@ -11,7 +11,15 @@
       <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- Left Panel: Team List -->
         <div class="md:col-span-1 bg-white p-4 rounded-lg shadow">
-          <h2 class="text-lg font-medium text-gray-900">Teams</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-gray-900">Teams X</h2>
+            <button 
+              @click="openNewTeamModal" 
+              class="inline-flex items-center rounded-md bg-brand-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue-600 uppercase tracking-wider"
+            >
+              Add Team
+            </button>
+          </div>
           <ul role="list" class="mt-4 divide-y divide-gray-200">
             <li 
               v-for="team in teams" 
@@ -46,6 +54,13 @@
      <NewTeamModal v-if="isNewTeamModalOpen" @close="isNewTeamModalOpen = false" @team-created="handleTeamCreated" /> 
 
   </div>
+
+  <button 
+    @click="testDownloadTemplate" 
+    class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150"
+>
+    Test Download Import Template
+</button>
 </template>
 
 <script setup>
@@ -119,4 +134,43 @@ onMounted(() => {
 onUnmounted(() => {
   uiStore.clearHeaderActions();
 });
+
+// Add this helper function to your script
+const testDownloadTemplate = async () => {
+    try {
+        // We will hardcode 'vizabiliti' and 'file_type_id=1' (Deceased Estate) for this test.
+        // Adjust these if your DB IDs are different!
+        const response = await apiClient.get('/vizabiliti/import/download-template', {
+            params: { file_type_id: 1 },
+            responseType: 'blob' // CRITICAL for Excel downloads
+        });
+
+        // Create a temporary link to force the browser to download the blob
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Extract filename from headers if possible, otherwise use a default
+        const contentDisposition = response.headers['content-disposition'];
+        let fileName = 'import_template.xlsx';
+        if (contentDisposition) {
+            const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (fileNameMatch && fileNameMatch.length === 2) {
+                fileName = fileNameMatch[1];
+            }
+        }
+        
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error("Download failed:", error);
+        alert("Failed to download template. Check console.");
+    }
+};
 </script>

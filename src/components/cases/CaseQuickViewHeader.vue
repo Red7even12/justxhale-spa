@@ -1,59 +1,69 @@
 <template>
+  <!-- Path: frontend-spa/src/components/cases/CaseQuickViewHeader.vue -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
     
-    <!-- SECTION 1: PARTICIPANTS (Strict Order) -->
+    <!-- SECTION 1: PARTICIPANTS (Role-Player Identities) -->
     <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-gray-50 border-b border-gray-200">
       
-      <!-- Loop through Sorted Participants -->
       <div v-for="part in orderedParticipants" :key="part.id" class="p-4 flex flex-col justify-center min-h-[80px]">
-        <div class="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">
-          {{ part.roleKey }}
+        <div class="text-[10px] uppercase tracking-widest font-black text-indigo-600 mb-1">
+          {{ part.roleKey || part.role_key }}
         </div>
         
         <div v-if="part.entity">
           <div class="text-sm font-bold text-gray-900 truncate" :title="part.entity.name">
             {{ part.entity.name }}
           </div>
-          <div class="text-xs text-gray-500 mt-0.5 truncate">
-            <span v-if="part.referenceNumber" class="font-mono bg-white border border-gray-200 px-1 rounded text-[10px] mr-1">
-              {{ part.referenceNumber }}
+          <div class="text-[12px] text-gray-800 mt-0.5 truncate flex items-center gap-2">
+            <span v-if="part.referenceNumber || part.reference_number" class="font-mono rounded text-[12px]">
+              {{ part.referenceNumber || part.reference_number }}
             </span>
-            <span v-if="part.entity.email" class="opacity-75">{{ part.entity.email }}</span>
+            <span class="truncate opacity-90">{{ part.entity.email }}</span>
           </div>
         </div>
-        <div v-else class="text-xs text-gray-400 italic">
-          Not Assigned
-        </div>
+        <div v-else class="text-xs text-gray-400 italic">Not Assigned</div>
       </div>
 
-      <!-- Filler text if empty -->
-      <div v-if="orderedParticipants.length === 0" class="p-4 text-xs text-gray-400 italic">
-        No participants assigned.
+      <div v-if="orderedParticipants.length === 0" class="p-4 text-xs text-gray-400 italic text-center col-span-4">
+        No active role-players assigned.
       </div>
     </div>
 
-    <!-- SECTION 2: METADATA (Quick View Fields) -->
+    <!-- SECTION 2: METADATA (Quick View & Global DNA Projections) -->
     <div class="p-5">
       <div v-if="quickFields.length > 0" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-6 gap-x-8">
         
         <!-- Standard Field: File Reference (Always First) -->
         <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+          <label class="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">
             File Reference
           </label>
           <div class="text-sm font-bold text-gray-800 font-mono">
-            {{ caseFile.fileReference || '-' }}
+            {{ caseFile.fileReference || caseFile.file_reference || '-' }}
           </div>
         </div>
 
         <!-- Dynamic Fields -->
         <div v-for="field in quickFields" :key="field.id">
-          <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1 truncate" :title="field.label">
+          <label class="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1 truncate flex items-center gap-1" :title="field.label">
             {{ field.label }}
+            <!-- Spark icon for Global Data -->
+            <svg v-if="field.isProjected" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M11.3 1.047a1 1 0 01.897.95V4.35l3.522 1.282a1 1 0 01.631 1.157L15.35 10.5h1.15a1 1 0 01.991 1.138l-1.5 12a1 1 0 01-1.398.815l-12-6a1 1 0 01-.444-1.398l1.5-3a1 1 0 01.894-.552H5.05L4.047 3.047a1 1 0 011.047-1.047h6.206z" clip-rule="evenodd" />
+            </svg>
           </label>
-          <div class="text-sm font-bold text-gray-800 truncate">
+          
+          <div 
+            class="text-sm font-bold truncate"
+            :class="field.isProjected ? 'text-emerald-700' : 'text-gray-800'"
+          >
             {{ field.value || '-' }}
           </div>
+          <!--
+          <div v-if="field.isProjected" class="text-[9px] text-emerald-400 font-bold uppercase tracking-tighter">
+            Global DNA Record
+          </div>
+          -->
         </div>
 
       </div>
@@ -61,7 +71,6 @@
         No 'Quick View' fields configured for this Niche.
       </div>
     </div>
-
   </div>
 </template>
 
@@ -72,72 +81,62 @@ const props = defineProps({
   caseFile: { type: Object, required: true }
 });
 
-// --- 1. PARTICIPANT ORDERING LOGIC ---
+// --- 1. PARTICIPANT ORDERING ---
 const ROLE_PRIORITY = ['executor', 'attorney', 'agent', 'master', 'sars'];
 
 const orderedParticipants = computed(() => {
   if (!props.caseFile.participants) return [];
-
-  const activeParts = props.caseFile.participants.filter(p => p.isActive);
+  const activeParts = props.caseFile.participants.filter(p => p.isActive || p.is_active);
 
   return activeParts.sort((a, b) => {
-    const indexA = ROLE_PRIORITY.indexOf(a.roleKey.toLowerCase());
-    const indexB = ROLE_PRIORITY.indexOf(b.roleKey.toLowerCase());
-    
-    const safeIndexA = indexA === -1 ? 999 : indexA;
-    const safeIndexB = indexB === -1 ? 999 : indexB;
-
-    return safeIndexA - safeIndexB;
+    const keyA = (a.roleKey || a.role_key || '').toLowerCase();
+    const keyB = (b.roleKey || b.role_key || '').toLowerCase();
+    const indexA = ROLE_PRIORITY.indexOf(keyA);
+    const indexB = ROLE_PRIORITY.indexOf(keyB);
+    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
   });
 });
 
-// --- 2. METADATA PARSING LOGIC ---
-const getParticipantData = (roleKey, fieldKey) => {
-    if (!props.caseFile.participants) return '-';
-    
-    // Search for active participant with this role
-    const part = props.caseFile.participants.find(p => 
-        (p.role_key?.toLowerCase() === roleKey.toLowerCase() || p.roleKey?.toLowerCase() === roleKey.toLowerCase()) && p.isActive
-    );
-    
-    if (!part || !part.entity) return '-';
-    
-    // Logic Shift: Data now resides on the Entity so it's shared across cases
-    const metaData = part.entity.meta_data || part.entity.metaData || {};
-    const camelKey = fieldKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-    
-    return metaData[fieldKey] !== undefined ? metaData[fieldKey] : (metaData[camelKey] || '-');
-};
-
+// --- 2. METADATA RESOLUTION (The Tri-Layer Logic) ---
 const quickFields = computed(() => {
-  const definitions = props.caseFile.fileType?.fieldDefinitions || props.caseFile.fileType?.field_definitions || [];
-  const globalMetaData = props.caseFile.metaData || props.caseFile.meta_data || {};
+  // Use the 'fields' relationship from FileType
+  const definitions = props.caseFile.fileType?.fields || [];
+  
+  // Standard Case Meta (Layer 1)
+  const metaData = props.caseFile.metaData || props.caseFile.meta_data || {};
+  
+  // Resolved Global DNA (Layer 3)
+  const projectedMeta = props.caseFile.projectedMetaData || props.caseFile.projected_meta_data || {};
 
-  // Filter definitions where show_in_quick_view is true
-  const visibleDefs = definitions.filter(def => 
-    def.showInQuickView || def.show_in_quick_view
-  );
+  return definitions
+    .filter(def => def.showInQuickView || def.show_in_quick_view)
+    .map(def => {
+      // 1. Get the Raw Key
+      const key = def.fieldKey || def.field_key;
+      
+      // 2. Generate camelCase fallback
+      const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+      
+      // 3. Bulletproof isProjected check
+      const hasId = !!def.entityFieldDefinitionId || !!def.entity_field_definition_id;
+      const isProjected = hasId || def.isProjected === true || def.is_projected === true;
+      
+      // 4. Resolve Value using robust Fallbacks
+      let value = null;
+      if (isProjected) {
+          value = projectedMeta[key] ?? projectedMeta[camelKey] ?? null;
+      } else {
+          value = metaData[key] ?? metaData[camelKey] ?? null;
+      }
 
-  return visibleDefs.map(def => {
-    const key = def.key || def.fieldKey || def.field_key;
-    const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-    
-    let value = '-';
-    const roleKey = def.participantRole?.role_key || def.participantRole?.roleKey;
-
-    if (roleKey) {
-        // Participant-specific data
-        value = getParticipantData(roleKey, key);
-    } else {
-        // General Case data
-        value = globalMetaData[key] !== undefined ? globalMetaData[key] : (globalMetaData[camelKey] || '-');
-    }
-    
-    return {
-      id: def.id,
-      label: def.label || def.fieldLabel || def.field_label,
-      value: value
-    };
-  });
+      return {
+        id: def.id,
+        label: def.fieldLabel || def.field_label,
+        value: value,
+        isProjected: isProjected,
+        sortOrder: def.sortOrder || def.sort_order || 0
+      };
+    })
+    .sort((a, b) => a.sortOrder - b.sortOrder); // Ensure fields display in expected order
 });
 </script>

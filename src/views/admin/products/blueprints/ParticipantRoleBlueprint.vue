@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
       <div>
-        <h2 class="text-xl font-bold text-gray-800">Participant Roles</h2>
+        <h2 class="text-xl font-bold text-gray-800">Role-player Roles</h2>
         <p class="text-sm text-gray-500">Define the characters involved in <span class="font-bold text-indigo-600">{{ product?.name }}</span> case files.</p>
       </div>
       <button @click="openModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold transition-all">

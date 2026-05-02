@@ -47,17 +47,17 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="reminder in reminders.data" :key="reminder.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ formatDate(reminder.dueDate) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ formatDate(reminder.dueDate || reminder.due_date) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span class="font-medium text-gray-900">{{ reminder.caseName }}</span>
-                <div class="text-xs text-gray-400">{{ reminder.caseReference }}</div>
+                <span class="font-medium text-gray-900">{{ reminder.caseName || reminder.case_name }}</span>
+                <div class="text-xs text-gray-400">{{ reminder.caseReference || reminder.case_reference }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                {{ reminder.taskContext }}
+                {{ reminder.taskContext || reminder.task_context }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <span :class="getStatusClass(reminder)">
-                  {{ reminder.statusName }}
+                  {{ getStatusLabel(reminder) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -107,7 +107,7 @@
 
     <!-- Pagination & Display Controls -->
     <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200" 
-         v-if="reminders.meta">
+         v-if="reminders.meta || reminders.total">
         
         <!-- Left: Rows Per Page -->
         <div class="flex items-center text-sm text-gray-700">
@@ -123,7 +123,7 @@
         </div>
 
         <!-- Right: Pagination Buttons -->
-        <div class="flex items-center space-x-2" v-if="reminders.meta.lastPage > 1">
+        <div class="flex items-center space-x-2" v-if="(reminders.meta?.lastPage || reminders.lastPage) > 1">
             <button 
                 @click="changePage(filters.page - 1)" 
                 :disabled="filters.page <= 1" 
@@ -132,12 +132,12 @@
             </button>
             
             <span class="text-sm text-gray-700 font-medium">
-                Page {{ reminders.meta.currentPage }} of {{ reminders.meta.lastPage }}
+                Page {{ reminders.meta?.currentPage || reminders.currentPage || filters.page }} of {{ reminders.meta?.lastPage || reminders.lastPage }}
             </span>
             
             <button 
                 @click="changePage(filters.page + 1)" 
-                :disabled="filters.page >= reminders.meta.lastPage" 
+                :disabled="filters.page >= (reminders.meta?.lastPage || reminders.lastPage)" 
                 class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Next
             </button>
@@ -145,7 +145,7 @@
         
         <!-- Fallback text if only 1 page exists -->
         <div v-else class="text-sm text-gray-500">
-            Returned: {{ reminders.meta.total }} Results
+            Returned: {{ reminders.meta?.total || reminders.total }} Results
         </div>
     </div>
   </div>
@@ -288,30 +288,58 @@ const debounceFetch = debounce(() => {
 }, 300);
 
 
- const getStatusClass = (reminder) => {
-  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
-  
-  // Use status_name or statusName (middleware might camelCase it)
-  const statusName = reminder.statusName || reminder.status_name || '';
+ const getStatusLabel = (reminder) => {
+  const name = reminder.statusName || reminder.status_name;
+  if (name) return name;
 
-  if (statusName === 'Completed' || statusName === 'Cancelled') {
-    return `${baseClasses} bg-gray-100 text-gray-800`;
-  }
+  const statusId = reminder.reminderStatusId || reminder.reminder_status_id;
+  if (statusId === 3) return 'Cancelled';
+
+  if (reminder.completedAt || reminder.completed_at) return 'Completed';
+
+  const rawDueDate = reminder.dueDate || reminder.due_date;
+  if (!rawDueDate) return 'Pending';
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(reminder.dueDate);
+
+  let dueDate;
+  if (typeof rawDueDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDueDate)) {
+      const parts = rawDueDate.split(' ')[0].split('-');
+      dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
+  } else {
+      dueDate = new Date(rawDueDate);
+  }
   dueDate.setHours(0, 0, 0, 0);
 
-  if (dueDate < today) {
-    return `${baseClasses} bg-red-100 text-red-800`;
+  if (dueDate < today) return 'Overdue';
+  if (dueDate.getTime() === today.getTime()) return 'Due Today';
+  return 'Pending';
+};
+
+ const getStatusClass = (reminder) => {
+  const baseClasses = 'px-2 py-0.5 inline-flex items-center text-[10px] uppercase tracking-wider font-bold rounded';
+  
+  // Normalized status name or derived status
+  const label = getStatusLabel(reminder).toLowerCase();
+
+  // Completed or Cancelled status (Gray pill)
+  if (label === 'completed' || label === 'cancelled') {
+    return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
   }
 
-  if (dueDate.getTime() === today.getTime()) {
-    return `${baseClasses} bg-green-100 text-green-800`;
+  // Overdue status (Red pill)
+  if (label === 'overdue') {
+    return `${baseClasses} bg-red-100 text-red-800 border border-red-200`;
+  }
+
+  // Due Today status (Green pill)
+  if (label === 'due today') {
+    return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
   }
   
-  return 'text-gray-600'; // Default for future reminders
+  // Future reminders (Pending)
+  return `${baseClasses} bg-blue-100 text-blue-800 border border-blue-200`; 
 };
 
 const handleSort = (field) => {
@@ -325,8 +353,11 @@ const handleSort = (field) => {
 };
 
 const changePage = (newPage) => {
-    // Use camelCase as the API response seems to be converted by a middleware.
-    if (reminders.value.meta && newPage > 0 && newPage <= reminders.value.meta.lastPage) {
+    // Determine the meta object (Resource wrapped or raw paginator)
+    const meta = reminders.value.meta || reminders.value;
+    const lastPage = meta.lastPage || meta.last_page;
+
+    if (newPage > 0 && lastPage && newPage <= lastPage) {
         filters.page = newPage;
     }
 }

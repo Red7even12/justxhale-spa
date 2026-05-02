@@ -7,7 +7,7 @@
             ← Back to Casefile Types
         </router-link>
         <h2 class="text-xl font-bold text-gray-800">Field Definitions: {{ fileType?.name }}</h2>
-        <p class="text-sm text-gray-500">Configure custom data points and participant metadata.</p>
+        <p class="text-sm text-gray-500">Configure custom data points and role-player metadata.</p>
       </div>
       <button @click="openModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold transition-all">
         + Add Data Field
@@ -30,10 +30,17 @@
           <tr v-for="field in fields" :key="field.id" class="hover:bg-indigo-50/30 transition-colors">
             <td class="px-6 py-4">
                 <div class="font-bold text-gray-900">{{ field.fieldLabel || field.field_label }}</div>
-                <div v-if="field.participantRole" class="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">
-                    Linked to Role: {{ field.participantRole.name }}
+                <div class="flex flex-col gap-1 mt-1">
+                    <div v-if="field.participantRole" class="text-[10px] text-indigo-500 font-black uppercase tracking-tighter flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        Role: {{ field.participantRole.name }}
+                    </div>
+                    <div v-if="field.entityFieldDefinitionId" class="text-[10px] text-emerald-600 font-black uppercase tracking-tighter flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        Projected Global Data
+                    </div>
+                    <div v-if="!field.participantRole" class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">General Case Data</div>
                 </div>
-                <div v-else class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">General Case Data</div>
             </td>
             <td class="px-6 py-4 font-mono text-xs text-gray-400">{{ field.fieldKey || field.field_key }}</td>
             <td class="px-6 py-4 text-center text-xs font-medium uppercase">{{ field.fieldType || field.field_type }}</td>
@@ -49,7 +56,7 @@
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl">
+      <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
         <h2 class="text-xl font-bold mb-6 text-gray-900 border-b pb-4">{{ form.id ? 'Edit' : 'Create' }} Field</h2>
         <form @submit.prevent="save" class="grid grid-cols-2 gap-5">
             <div class="col-span-2">
@@ -70,15 +77,40 @@
                 </select>
             </div>
             
-            <div class="col-span-2 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                <label class="block text-xs font-black text-indigo-900 uppercase mb-2">Character Context (Optional)</label>
-                <select v-model="form.participant_role_id" class="w-full border-indigo-200 rounded-lg shadow-sm text-sm">
-                    <option :value="null">-- General Case Field --</option>
-                    <option v-for="role in roles" :key="role.id" :value="role.id">
-                         Metadata for character: {{ role.name }}
-                    </option>
-                </select>
-                <p class="text-[10px] text-indigo-400 mt-2 italic font-medium">If selected, this field only appears when this Character is added to the case.</p>
+            <!-- LAYER 2: PARTICIPANT ROLE CONTEXT -->
+            <div class="col-span-2 p-4 bg-indigo-50 rounded-lg border border-indigo-100 space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-indigo-900 uppercase mb-2">Character Context (Optional)</label>
+                    <select v-model="form.participant_role_id" class="w-full border-indigo-200 rounded-lg shadow-sm text-sm">
+                        <option :value="null">-- General Case Field --</option>
+                        <option v-for="role in roles" :key="role.id" :value="role.id">
+                             Metadata for character: {{ role.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- LAYER 3: PROJECTION MAPPING -->
+                <div v-if="form.participant_role_id">
+                    <label class="block text-[12px] font-black text-indigo-400 uppercase tracking-widest mb-1 italic">
+                        Projection Mapping (Optional)
+                    </label>
+                    <select v-model="form.entity_field_definition_id" class="w-full border-indigo-200 rounded-lg shadow-sm text-xs bg-white">
+                        <option :value="null">-- No Projection (Manual Data) --</option>
+                        <option v-for="eField in entityFields" :key="eField.id" :value="eField.id">
+                             Project Global Value: {{ eField.fieldLabel }}
+                        </option>
+                    </select>
+                    <div class="mt-2 space-y-1">
+                        <p class="text-[11px] text-indigo-400 font-medium leading-tight">
+                            <strong class="uppercase text-[9px] opacity-70">Manual:</strong> 
+                            Data unique to this specific Case File (e.g. Appointment Date).
+                        </p>
+                        <p class="text-[11px] text-indigo-400 font-medium leading-tight">
+                            <strong class="uppercase text-[9px] opacity-70">Global:</strong> 
+                            Permanent data that follows this Person/Business across all cases (e.g. Tax ID).
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-2">
@@ -115,24 +147,28 @@ const { showConfirm, showAlert } = useAlerts();
 const fields = ref([]);
 const fileType = ref(null);
 const roles = ref([]);
+const entityFields = ref([]); // NEW: Global DNA fields
 const showModal = ref(false);
 
 const form = reactive({ 
     id: null, field_label: '', field_key: '', field_type: 'text', 
     is_required: false, sort_order: 0, participant_role_id: null,
+    entity_field_definition_id: null, // NEW
     show_in_quick_view: false
 });
 
 const load = async () => {
   try {
-    const [fieldsRes, typeRes, rolesRes] = await Promise.all([
+    const [fieldsRes, typeRes, rolesRes, entityRes] = await Promise.all([
       apiClient.get(`admin/products/${props.slug}/file-types/${props.fileTypeId}/fields`),
       apiClient.get(`admin/products/${props.slug}/file-types/${props.fileTypeId}`),
-      apiClient.get(`admin/products/${props.slug}/participant-roles`)
+      apiClient.get(`admin/products/${props.slug}/participant-roles`),
+      apiClient.get(`admin/entity-fields`) // Fetch Subscriber DNA
     ]);
     fields.value = fieldsRes.data;
     fileType.value = typeRes.data;
     roles.value = rolesRes.data;
+    entityFields.value = entityRes.data.data;
   } catch (e) { console.error(e); }
 };
 
@@ -146,13 +182,14 @@ const openModal = (field = null) => {
         is_required: !!(field.isRequired || field.is_required),
         sort_order: field.sortOrder || field.sort_order,
         participant_role_id: field.participantRoleId || field.participant_role_id,
+        entity_field_definition_id: field.entityFieldDefinitionId || field.entity_field_definition_id || null, // NEW
         show_in_quick_view: !!(field.showInQuickView || field.show_in_quick_view)
     });
   } else {
     Object.assign(form, { 
         id: null, field_label: '', field_key: '', field_type: 'text', 
         is_required: false, sort_order: fields.value.length + 1, 
-        participant_role_id: null, show_in_quick_view: false 
+        participant_role_id: null, entity_field_definition_id: null, show_in_quick_view: false 
     });
   }
   showModal.value = true;
@@ -162,6 +199,13 @@ const save = async () => {
     try {
         const url = `admin/products/${props.slug}/file-types/${props.fileTypeId}/fields${form.id ? '/' + form.id : ''}`;
         const method = form.id ? 'put' : 'post';
+        
+        // Ensure role is chosen if projection is selected
+        if (form.entity_field_definition_id && !form.participant_role_id) {
+            showAlert('Error', 'Projection mapping requires a Participant Role.');
+            return;
+        }
+
         await apiClient[method](url, form);
         showModal.value = false;
         load();

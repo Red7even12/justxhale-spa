@@ -241,7 +241,7 @@ const routes = [
         meta: { displayName: 'Global Registry' },
       },
 
-      // 5. THE V2 GENERIC PRODUCT ENGINE (Must be LAST)
+// 5. THE V2 GENERIC PRODUCT ENGINE (Must be LAST)
       {
         path: ':productSlug',
         component: ProductLayout,
@@ -257,6 +257,14 @@ const routes = [
             component: CaseIndex,
             meta: { displayName: 'Case Files' }
           },
+          // --- NEW: THE BULK IMPORT WIZARD ---
+          {
+            path: 'import',
+            name: 'ProductCaseImport',
+            component: () => import('@/views/cases/CaseImportWizard.vue'),
+            meta: { displayName: 'Bulk Case Import' }
+          },
+          // -----------------------------------
           // The NEW Case Workspace (Grid)
           {
             path: 'cases/:id',
@@ -359,6 +367,13 @@ const routes = [
                   name: 'admin.product.participant-roles',
                   component: () => import('@/views/admin/products/blueprints/ParticipantRoleBlueprint.vue'),
               },
+              {
+                  path: 'admin/entity-dna',
+                  name: 'admin.subscriber.entity-dna',
+                  component: () => import('@/views/admin/entities/EntityDNA.vue'),  
+                  meta: { displayName: 'Entity Global DNA' }
+              },
+
               // --- NEW NODES TO REFACTOR NEXT ---
               { 
                   path: 'communication', 

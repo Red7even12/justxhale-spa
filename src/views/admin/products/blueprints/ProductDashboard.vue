@@ -41,7 +41,7 @@
             <div class="text-4xl font-black mt-2" :style="{ color: 'var(--brand-primary)' }">
                 {{ product?.participantRolesCount ?? product?.participant_roles_count ?? 0 }}
             </div>
-            <div class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">Defined Participants</div>
+            <div class="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">Defined Role-players</div>
         </div>
 
         <!-- License Count -->
@@ -86,7 +86,7 @@
                     <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-black shrink-0 border border-white/20 shadow-lg">4</div>
                     <div>
                         <h4 class="font-bold text-base leading-tight">Configure Comms</h4>
-                        <p class="text-xs text-white/60 mt-2 font-medium leading-relaxed">Define the automated email templates and triggers for participant notifications.</p>
+                        <p class="text-xs text-white/60 mt-2 font-medium leading-relaxed">Define the automated email templates and triggers for role-player notifications.</p>
                     </div>
                 </div>
             </div>

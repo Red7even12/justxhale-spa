@@ -51,27 +51,30 @@ const fetchCaseAndLoadTemplate = async () => {
   error.value = null;
   
   try {
-    const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${route.params.id}`);
-    caseFile.value = data;
-
-    // Check the database string
-    // If the DB has 'TemplateStandard' (the default) but we haven't built it yet, 
-    // we can temporarily force it to use 'TemplateEstateStandard' for testing, 
-    // OR just let it fall through to the "Template Not Found" warning.
+    // 1. Destructure 'data' from Axios
+    const response = await apiClient.get(`/${route.params.productSlug}/cases/${route.params.id}`);
     
-    // For now, let's allow the "Template Not Found" warning to show if it doesn't match,
-    // so you know your DB logic is working.
-    const templateName = data.fileType?.workspaceTemplate || 
-                         data.fileType?.workspace_template || 
-                         'TemplateStandard';
+    // 2. Extract the actual case object from the Laravel 'data' wrapper
+    // If your controller returns ['data' => $caseFile], we need response.data.data
+    const caseData = response.data.data || response.data;
+    caseFile.value = caseData;
 
-    console.log("Detected Template:", templateName); // Debug log
+    console.log("Full Case Object Received:", caseData);
+
+    // 3. Extract the template name (checking all casing possibilities)
+    const templateName = caseData.fileType?.workspaceTemplate || 
+                         caseData.fileType?.workspace_template || 
+                         caseData.file_type?.workspace_template ||
+                         'TemplateEstateStandard';
+
+    console.log("Targeting Template:", templateName);
     
     if (templateMap[templateName]) {
       currentTemplateComponent.value = templateMap[templateName];
     } else {
-      console.warn(`Template "${templateName}" requested but not found in map.`);
-      currentTemplateComponent.value = null; // Triggers the Yellow Warning Box
+      console.error(`Template "${templateName}" not found in templateMap.`);
+      // Optional: fallback to TemplateEstateStandard if something is wrong
+      currentTemplateComponent.value = TemplateEstateStandard; 
     }
 
   } catch (err) {

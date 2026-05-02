@@ -25,6 +25,7 @@
           <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="nav-link" active-class="nav-active">Casefile Types</router-link>
           <router-link :to="{ name: 'admin.product.workflows', params: { slug } }" class="nav-link" active-class="nav-active">Workflows</router-link>
           <router-link :to="{ name: 'admin.product.document-packs', params: { slug } }" class="nav-link" active-class="nav-active">Document Packs</router-link>
+          <router-link :to="{ name: 'admin.subscriber.entity-dna' }" class="nav-link" active-class="nav-active">Entity DNA</router-link>
           <router-link :to="{ name: 'admin.product.participant-roles', params: { slug } }" class="nav-link" active-class="nav-active">Participant Roles</router-link>
           <router-link :to="{ name: 'admin.product.communication', params: { slug } }" class="nav-link" active-class="nav-active">System Mails</router-link>
           <router-link :to="{ name: 'admin.product.option-lists', params: { slug } }" class="nav-link" active-class="nav-active">Option Lists</router-link>

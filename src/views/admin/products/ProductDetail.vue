@@ -26,7 +26,7 @@
         </router-link>
 
         <router-link :to="{ name: 'admin.product.roles', params: { slug: slug } }" class="nav-item">
-            Participant Roles
+            Role-player Roles
         </router-link>
 
         <p class="text-[10px] font-bold text-gray-600 uppercase mt-8 mb-2 px-4">The Business</p>

@@ -1,5 +1,6 @@
 <template>
   <div class="mb-6">
+    <!-- This is the frame that holds the header on the Casefile Workspace containing the buttons and the Participant fields and Quickview form-->
     
     <!-- 1. TOP ROW: Title & Actions -->
     <div class="flex justify-between items-center mb-4">

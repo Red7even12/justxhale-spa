@@ -424,8 +424,8 @@ const openRequestModal = async () => {
             requestPayload.participantId = primary.id;
         }
     } catch (error) {
-        console.error("Failed to load participants", error);
-        alert("Could not load contacts. Please ensure participants are added to the case.");
+        console.error("Failed to load role-players", error);
+        alert("Could not load contacts. Please ensure role-players are added to the case.");
     } finally {
         isLoadingParticipants.value = false;
     }
