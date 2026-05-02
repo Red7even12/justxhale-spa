@@ -153,7 +153,7 @@ const fetchProduct = async () => {
 
 const fetchAllSubscribers = async () => {
   try {
-    const { data } = await apiClient.get('subscribers?all=true');
+    const { data } = await apiClient.get('admin/subscribers?all=true');
     allSubscribers.value = data; 
   } catch (error) {
     console.error('Failed to fetch subscribers:', error);

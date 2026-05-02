@@ -54,7 +54,7 @@ const allSubscribers = ref([]);
 const linkForm = ref({ subscriberId: '', displayName: '' });
 
 const fetchSubscribers = async () => {
-    const { data } = await apiClient.get('subscribers?all=true');
+    const { data } = await apiClient.get('admin/subscribers?all=true');
     allSubscribers.value = data;
 };
 

@@ -54,7 +54,7 @@ export default {
         return apiClient.get('admin/products');
     },
     getSubscribers() {
-        return apiClient.get('subscribers?all=true');
+        return apiClient.get('admin/subscribers?all=true');
     },
     saveFileType(slug, data) {
         const method = data.id ? 'put' : 'post';

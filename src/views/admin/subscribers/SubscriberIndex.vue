@@ -79,7 +79,7 @@ const formatDate = (dateString) => {
   return `${year}/${month}/${day}`;
 };
 
-const fetchSubscribers = async (url = '/subscribers') => {
+const fetchSubscribers = async (url = '/admin/subscribers') => {
   loading.value = true;
   error.value = null;
   try {

@@ -57,7 +57,7 @@ export default {
         return apiClient.get('admin/products');
     },
     getSubscribers() {
-        return apiClient.get('subscribers?all=true');
+        return apiClient.get('admin/subscribers?all=true');
     },
     saveFileType(data) {
         if (data.id) return apiClient.put(`admin/file-types/${data.id}`, data);

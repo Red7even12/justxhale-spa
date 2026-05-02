@@ -265,7 +265,7 @@ const assignNewAdmin = async (newUser) => {
   saveError.value = null;
   try {
     const subscriberId = props.user.subscriberId;
-    const response = await apiClient.put(`/subscribers/${subscriberId}/assign-admin/${newUser.id}`);
+    const response = await apiClient.put(`/admin/subscribers/${subscriberId}/assign-admin/${newUser.id}`);
     emit('user-updated', response); // It should not be response.data, if it is not a success
     emit('close');
   } catch (err) {
@@ -286,7 +286,7 @@ const createNewAdmin = async () => {
 
   try {
     const subscriberId = props.user.subscriberId;
-    const response = await apiClient.post(`/subscribers/${subscriberId}/users`, {
+    const response = await apiClient.post(`/admin/subscribers/${subscriberId}/users`, {
       name: newAdminData.name,
       first_name: newAdminData.firstName,
       last_name: newAdminData.lastName,

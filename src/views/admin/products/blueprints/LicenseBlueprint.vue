@@ -43,8 +43,8 @@
           <tr v-for="sub in product.subscribers" :key="sub.id" class="hover:bg-gray-50 transition-colors">
             <td class="px-6 py-4 font-bold text-gray-900">{{ sub.name }}</td>
             <td class="px-6 py-4 text-sm">
-              <span v-if="sub.pivot.display_name" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 font-medium">
-                {{ sub.pivot.display_name }}
+              <span v-if="sub.pivot && sub.pivot.displayName" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 font-medium">
+                {{ sub.pivot.displayName }}
               </span>
               <span v-else class="text-gray-400 italic">Standard</span>
             </td>
