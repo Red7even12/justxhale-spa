@@ -2,7 +2,7 @@
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-black text-gray-900 tracking-tight">Entity Registry</h1>
-      <button @click="openModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl shadow-lg shadow-indigo-100 font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all">
+      <button @click="openModal()" class="bg-brand-primary text-white px-6 py-2 rounded-xl shadow-lg shadow-indigo-100 font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all">
         + Add New Entity
       </button>
     </div>
@@ -60,7 +60,7 @@
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
-        <div class="bg-indigo-600 p-6 text-white flex justify-between items-center">
+        <div class="bg-brand-primary p-6 text-white flex justify-between items-center">
             <h2 class="text-xl font-black uppercase tracking-tight">{{ isEditing ? 'Edit Entity' : 'Add New Entity' }}</h2>
             <button @click="showModal = false" class="text-white/50 hover:text-white">✕</button>
         </div>
@@ -138,7 +138,7 @@
              </div>
              <div class="flex gap-3">
                 <button type="button" @click="showModal = false" class="text-sm font-black text-gray-400 uppercase tracking-widest px-4">Cancel</button>
-                <button type="submit" class="bg-indigo-600 px-8 py-3 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                <button type="submit" class="bg-brand-primary px-8 py-3 rounded-xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:opacity-90 transition-all">
                   {{ isEditing ? 'Update Entity' : 'Save Entity' }}
                 </button>
              </div>

@@ -6,7 +6,7 @@
     <div class="flex justify-between items-start border-b border-gray-200 pb-6">
       <div>
         <div class="flex items-center gap-3 mb-2">
-          <span class="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
+          <span class="bg-brand-primary text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
             {{ caseFile.fileType?.name }}
           </span>
           <h1 class="text-3xl font-black text-gray-900 tracking-tight">{{ caseFile.fileName }}</h1>
@@ -31,7 +31,7 @@
       <button 
         v-for="tab in tabs" :key="tab.id"
         @click="activeTab = tab.id"
-        :class="['pb-4 text-sm font-black transition-all border-b-2 px-1 uppercase tracking-widest', activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600']">
+        :class="['pb-4 text-sm font-black transition-all border-b-2 px-1 uppercase tracking-widest', activeTab === tab.id ? 'border-brand-PRIMARY text-brand-PRIMARY' : 'border-transparent text-gray-400 hover:text-gray-600']">
         {{ tab.label }}
       </button>
     </div>
@@ -44,7 +44,8 @@
         <form @submit.prevent="saveMetadata" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <div class="flex justify-between items-center mb-8">
              <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight">Case Information</h3>
-             <button type="submit" class="bg-indigo-600 text-white px-8 py-2 rounded-xl text-sm font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+
+             <button type="submit" class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                Save Details
              </button>
           </div>
@@ -77,7 +78,7 @@
       <div v-if="activeTab === 'participants'" class="space-y-6">
         <div class="flex justify-between items-center">
           <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight">Assigned Entities</h3>
-          <button @click="openAssignModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl shadow-lg shadow-indigo-100 font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all">
+          <button @click="openAssignModal()" class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             + Assign Role-player
           </button>
         </div>

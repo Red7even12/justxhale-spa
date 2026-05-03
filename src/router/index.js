@@ -133,7 +133,13 @@ const routes = [
         name: 'admin.non-working-days',
         component: () => import('@/views/admin/NonWorkingDays.vue'),
         meta: { requiresAuth: true, isAdmin: true, displayName: 'Non-Working Days' }
-      },    
+      },  
+      {
+        path: '/admin/permissions',
+        name: 'admin.permissions',
+        component: () => import('@/views/admin/PermissionMatrix.vue'),
+        meta: { displayName: 'Authorization Matrix', requiresAuth: true, role: 'System Admin' }
+      },  
 
       // --- Billing routes  // 
       {

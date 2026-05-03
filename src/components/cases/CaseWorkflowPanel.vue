@@ -111,11 +111,16 @@
 
     <div class="p-6">
       <NotesPanel 
-          :initial-notes="currentNotes"
           :noteable-type="currentNoteContext.type"
           :noteable-id="currentNoteContext.id"
           :context-url="`${route.params.productSlug}/cases/${props.caseId}`" 
-          @note-added="(n) => currentNotes.unshift(n)"
+          @note-added="(n) => {
+              // Ensure currentNotes is an array before calling unshift
+              if (!Array.isArray(currentNotes)) {
+                  currentNotes = [];
+              }
+              currentNotes.unshift(n);
+          }"
           @cancel="showNotesModal = false"
       />
     </div>

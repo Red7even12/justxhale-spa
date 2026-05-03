@@ -49,6 +49,7 @@
             <template v-if="authStore.hasRole('System Admin')">
               <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">System Setup</div>
               <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
+              <router-link @click="closeMobileMenu" to="/admin/permissions" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/permissions') }">Authorization Matrix</router-link>
             </template>
           </template>
 
@@ -128,6 +129,7 @@
                 <div v-if="isSystemMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
                     <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>
+                    <router-link to="/admin/permissions" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Authorization Matrix</router-link>
                   </div>
                 </div>
               </div>

@@ -170,37 +170,37 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-for="batch in history" :key="batch.batchId" class="hover:bg-gray-50">
-                  <!-- Date: Keep nowrap because dates are short -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {{ batch.createdAt }}
-                  </td>
+                <!-- Date: Keep nowrap because dates are short -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ batch.createdAt }}
+                </td>
 
-                  <!-- File Name: ALLOW WRAP + BREAK LONG WORDS -->
-                  <td class="px-6 py-4 text-sm text-gray-500 max-w-xs break-all">
-                      {{ batch.fileName }}
-                  </td>
+                <!-- File Name: ALLOW WRAP + BREAK LONG WORDS -->
+                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs break-all">
+                    {{ batch.fileName }}
+                </td>
 
-                  <!-- Team / Type: ALLOW WRAP -->
-                  <td class="px-6 py-4 text-sm text-gray-500 max-w-xs">
-                      {{ batch.teamName }} <br>
-                      <span class="text-xs text-gray-400">{{ batch.fileTypeName }}</span>
-                  </td>
+                <!-- Team / Type: ALLOW WRAP -->
+                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                    {{ batch.teamName }} <br>
+                    <span class="text-xs text-gray-400">{{ batch.fileTypeName }}</span>
+                </td>
 
-                  <!-- Count: Keep small -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-center">
-                      {{ batch.caseCount }}
-                  </td>
+                <!-- Count: Keep small -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-center">
+                    {{ batch.caseCount }}
+                </td>
 
-                  <!-- Action: Keep nowrap so the button stays on one line -->
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                          @click="rollbackBatch(batch.batchId)" 
-                          class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded-md border border-red-200 font-bold uppercase text-xs transition-colors"
-                      >
-                          Rollback
-                      </button>
-                  </td>
-              </tr>
+                <!-- Action: Keep nowrap so the button stays on one line -->
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                        @click="rollbackBatch(batch.batchId)" 
+                        class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded-md border border-red-200 font-bold uppercase text-xs transition-colors"
+                    >
+                        Rollback
+                    </button>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>
