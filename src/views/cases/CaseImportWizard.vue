@@ -12,7 +12,7 @@
 
       <!-- STEP 1: CONTEXT -->
       <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Step 1: Select Case Type</h2>
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Step 1: Select Case File Type</h2>
         <div class="w-full sm:w-1/2">
           <label class="block text-sm font-medium text-gray-700">Case File Type</label>
           <select 
@@ -246,7 +246,8 @@ onMounted(async () => {
     } catch (error) {
         console.error("Failed to fetch file types:", error);
         // Fallback for testing if standard endpoint doesn't exist
-        fileTypes.value = [{ id: 1, name: 'Deceased Estate' }]; 
+        //fileTypes.value = [{ id: 1, name: 'Deceased Estate' }]; 
+        error.value = "Configuration Error: Could not load File Types for this Product for your Subscriber.";
     }
     
     // Fetch Teams
