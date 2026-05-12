@@ -169,30 +169,34 @@
 
   <!-- FILES MODAL -->
   <Modal :show="showFilesModal" @close="showFilesModal = false">
-    <template #title>
-        <span class="text-gray-800 font-bold">Files: {{ activeFileReq?.documentType?.label }}</span>
-    </template>
-    <div class="p-6">
-        
-        <!-- Upload Section -->
-        <div class="mb-6 p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 text-center hover:bg-gray-100 transition-colors relative group">
-            <input 
-                type="file" 
-                ref="fileInput"
-                @change="handleFileUpload"
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                :disabled="isUploading"
-            >
-            <div v-if="isUploading" class="text-brand-primary font-bold animate-pulse text-lg">
-                Uploading...
-            </div>
-            <div v-else>
-                <p class="text-base font-bold text-gray-700 group-hover:text-brand-primary transition-colors">Click or Drag to Upload File</p>
-                <p class="text-sm text-gray-500 mt-2 font-medium">PDF, Word, Excel, Images, Zip (Max 25MB)</p>
-            </div>
+    <div class="mb-6 space-y-4">
+        <!-- Mobile-First Action Grid (This is the Android 14 Fix) -->
+        <div class="grid grid-cols-3 gap-3">
+            <button @click="triggerInput('scan')" class="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm">
+                <span class="text-xl mb-1">📷</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase">Scan Doc</span>
+            </button>
+            <button @click="triggerInput('selfie')" class="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm">
+                <span class="text-xl mb-1">👤</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase">Selfie/ID</span>
+            </button>
+            <button @click="triggerInput('gallery')" class="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm">
+                <span class="text-xl mb-1">📁</span>
+                <span class="text-[10px] font-bold text-gray-600 uppercase">Gallery</span>
+            </button>
         </div>
 
-<!-- File List -->
+        <!-- Hidden Inputs with different capture intents -->
+        <input type="file" ref="galleryInput" class="hidden" @change="handleFileUpload" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
+        <input type="file" ref="scanInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="environment">
+        <input type="file" ref="selfieInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="user">
+
+        <!-- Loading indicator -->
+        <div v-if="isUploading" class="text-center p-2 text-brand-primary font-bold animate-pulse">
+            Uploading to JustXhale...
+        </div>
+
+        <!-- File List -->
         <div v-if="activeFileReq?.files?.length > 0" class="space-y-3">
             <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1">Uploaded Files</h4>
             <div v-for="file in activeFileReq.files" :key="file.id" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -374,7 +378,14 @@ const currentNotes = ref([]);
 const showFilesModal = ref(false);
 const activeFileReq = ref(null);
 const isUploading = ref(false);
-const fileInput = ref(null);
+const galleryInput = ref(null);
+const scanInput = ref(null);
+const selfieInput = ref(null);
+const triggerInput = (type) => {
+    if (type === 'scan') scanInput.value.click();
+    else if (type === 'selfie') selfieInput.value.click();
+    else galleryInput.value.click();
+};
 
 // --- FILE HELPERS ---
 const openFiles = (req) => {
@@ -497,30 +508,33 @@ const handleFileUpload = async (event) => {
 
     isUploading.value = true;
     const formData = new FormData();
-    formData.append('file', file);
+    // ... (keep your filename logic here) ...
+    formData.append('file', file, fileName);
 
     try {
-        await apiClient.post(`requirements/${activeFileReq.value.id}/files`, formData, {
+        // 1. Capture the response from the server
+        const { data } = await apiClient.post(`requirements/${activeFileReq.value.id}/files`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
 
-        // Refresh Data
-        await fetchRequirements();
-        
-        // Update the active modal view
-        activeFileReq.value = requirements.value.find(r => r.id === activeFileReq.value.id);
-
-        showAlert('Success', 'File uploaded successfully');
-    } catch (err) {
-        console.error("Upload failed", err);
-        let msg = 'File upload failed';
-        if (err.response?.status === 422) {
-             msg = err.response.data.message || 'Invalid file type or size.';
+        // 2. Instead of fetchRequirements(), update the local array
+        // We find the requirement in our list and push the NEW file into its files array
+        const reqIndex = requirements.value.findIndex(r => r.id === activeFileReq.value.id);
+        if (reqIndex !== -1) {
+            // Ensure the files array exists, then add the new file data
+            if (!requirements.value[reqIndex].files) requirements.value[reqIndex].files = [];
+            requirements.value[reqIndex].files.push(data.file); 
+            
+            // Sync the modal view too
+            activeFileReq.value = requirements.value[reqIndex];
         }
-        showAlert('Error', msg);
+
+        showAlert('Success', 'File uploaded');
+    } catch (err) {
+        showAlert('Error', 'Upload failed');
     } finally {
         isUploading.value = false;
-        if (fileInput.value) fileInput.value.value = ''; // Reset input
+        // reset inputs...
     }
 };
 

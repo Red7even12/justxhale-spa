@@ -34,7 +34,7 @@
                     <ul class="list-disc list-inside text-gray-500 text-sm pl-2 space-y-1 mt-1">
                         <!-- Loop through each tier and display its details -->
                         <li v-for="tier in plan.pricingTiers" :key="tier.id">
-                            {{ tier.minEstates }} - {{ tier.maxEstates || '&#8734;' }} estates @ R{{ tier.ratePerEstate }} each/month
+                            {{ tier.minCasefiles }} - {{ tier.maxCasefiles || '&#8734;' }} case files @ R{{ tier.ratePerCasefile }} each/month
                         </li>
                     </ul>
                 </div>
