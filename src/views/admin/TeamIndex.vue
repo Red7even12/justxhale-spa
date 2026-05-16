@@ -138,9 +138,9 @@ onUnmounted(() => {
 // Add this helper function to your script
 const testDownloadTemplate = async () => {
     try {
-        // We will hardcode 'vizabiliti' and 'file_type_id=1' (Deceased Estate) for this test.
+        // We will hardcode 'justxhale' and 'file_type_id=1' (Deceased Estate) for this test.
         // Adjust these if your DB IDs are different!
-        const response = await apiClient.get('/vizabiliti/import/download-template', {
+        const response = await apiClient.get('/justxhale/import/download-template', {
             params: { file_type_id: 1 },
             responseType: 'blob' // CRITICAL for Excel downloads
         });

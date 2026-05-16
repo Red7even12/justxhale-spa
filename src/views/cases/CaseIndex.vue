@@ -156,7 +156,7 @@ const createCase = async () => {
   }
 };
 
-// If the user switches tabs (Vizabiliti -> EduFund), refresh the data
+// If the user switches tabs (JustXhale -> EduFund), refresh the data
 watch(productSlug, () => {
   fetchCases();
 });

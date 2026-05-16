@@ -3,11 +3,11 @@ import api from './api';
 const noteService = {
   /**
    * Creates a new note.
-   * V2: Requires 'contextUrl' (e.g., 'vizabiliti/cases/1') to hit the correct endpoint.
+   * V2: Requires 'contextUrl' (e.g., 'justxhale/cases/1') to hit the correct endpoint.
    */
   createNote(payload, contextUrl = null) {
     if (contextUrl) {
-      // V2 Path: /vizabiliti/cases/1/notes
+      // V2 Path: /justxhale/cases/1/notes
       return api.post(`/${contextUrl}/notes`, payload);
     } else {
       // V1 Legacy Path: /notes
@@ -21,7 +21,7 @@ const noteService = {
    */
   getNotes(noteableType, noteableId, contextUrl = null) {
     if (contextUrl) {
-      // V2 Path: /vizabiliti/cases/1/notes?noteable_type=...&noteable_id=...
+      // V2 Path: /justxhale/cases/1/notes?noteable_type=...&noteable_id=...
       return api.get(`/${contextUrl}/notes`, {
         params: { noteable_type: noteableType, noteable_id: noteableId }
       });

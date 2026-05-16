@@ -179,8 +179,8 @@ const form = ref({
 const fetchDefinitions = async () => {
     try {
         // We pass the product slug from the current URL to get the right DNA
-        // Assuming your URL is something like /vizabiliti/registry
-        const productSlug = route.params.productSlug || 'vizabiliti'; 
+        // Assuming your URL is something like /justxhale/registry
+        const productSlug = route.params.productSlug || 'justxhale'; 
         
         const response = await apiClient.get(`/entity-field-definitions?product_slug=${productSlug}`);
         entityFieldDefinitions.value = response.data.data || [];

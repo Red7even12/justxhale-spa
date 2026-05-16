@@ -17,7 +17,7 @@ export default {
     // Fetch the specific file types (Niches) available for this product
     // used to populate the "Add Case" dropdown
     getFileTypes(productSlug) {
-        return apiClient.get(`products/${productSlug}/file-types`);
+        return apiClient.get(`${productSlug}/file-types`);
     },
 
     createCase(productSlug, data) {
