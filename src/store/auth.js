@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', {
     token: localStorage.getItem('token') || null,
     roles: JSON.parse(localStorage.getItem('roles')) || [],
     permissions: JSON.parse(localStorage.getItem('permissions')) || [],
+    appVersion: localStorage.getItem('appVersion') || '0.0.0',
   }),
   getters: {
     isAuthenticated: (state) => !!state.token,
@@ -49,6 +50,7 @@ export const useAuthStore = defineStore('auth', {
       // The `||` makes it robust; it works if the key is `accessToken` or `access_token`.
       const token = loginData.accessToken || loginData.access_token;
       const user = loginData.user;
+      const appVersion = loginData.appVersion || loginData.app_version || '0.0.0';
       
       // 2. Extract roles and permissions. They come as objects, so we extract the names.
       const roles = user.roles ? user.roles.map(r => (typeof r === 'string' ? r : r.name).trim()) : [];
@@ -62,12 +64,14 @@ export const useAuthStore = defineStore('auth', {
       this.user = user;
       this.roles = roles;
       this.permissions = permissions;
+      this.appVersion = appVersion;
 
       // 5. Save everything to localStorage for persistence.
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('roles', JSON.stringify(roles));
       localStorage.setItem('permissions', JSON.stringify(permissions));
+      localStorage.setItem('appVersion', appVersion);
     },
     // --- END OF NEW ACTION ---
 
@@ -79,8 +83,8 @@ async login(credentials) {
         };
         const response = await api.post('/login', loginData);
         
-        // 1. Set Token
-        const token = response.data.accessToken;
+        // 1. Set Token (Resilient to snake_case or camelCase)
+        const token = response.data.accessToken || response.data.access_token;
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         // 2. Fetch User Details & Roles
@@ -107,6 +111,7 @@ async login(credentials) {
         // The /user endpoint gives user, roles, and permissions at the top level.
         this.token = token;
         this.user = response.data.user;
+        this.appVersion = response.data.appVersion || response.data.app_version || '0.0.0';
         
         // Ensure roles and permissions are arrays of strings (names) and trimmed
         this.roles = (response.data.roles || []).map(r => (typeof r === 'string' ? r : r.name).trim());
@@ -116,6 +121,7 @@ async login(credentials) {
         localStorage.setItem('user', JSON.stringify(this.user));
         localStorage.setItem('roles', JSON.stringify(this.roles));
         localStorage.setItem('permissions', JSON.stringify(this.permissions));
+        localStorage.setItem('appVersion', this.appVersion);
 
       } catch (error) {
         //console.error('Failed to fetch user:', error);
@@ -136,10 +142,12 @@ async login(credentials) {
       this.token = null;
       this.roles = [];
       this.permissions = [];
+      this.appVersion = '0.0.0';
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('roles');
       localStorage.removeItem('permissions');
+      localStorage.removeItem('appVersion');
       delete api.defaults.headers.common['Authorization']; // Clean up the API client
       router.push({ name: 'Login' });
     },

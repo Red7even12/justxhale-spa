@@ -193,7 +193,8 @@ watch(() => props.reminderId, async (newId) => {
     
     try {
       const response = await apiClient.get(`/${productSlug.value}/reminders/${newId}`);
-      reminder.value = response.data.data;
+      // V2 Resiliency: Support both wrapped and unwrapped responses
+      reminder.value = response.data.data || response.data;
       resetForm(formatDateForInput(reminder.value.dueDate)); 
     } catch (err) {
       error.value = "Failed to load task details.";

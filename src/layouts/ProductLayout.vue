@@ -62,12 +62,13 @@
           <router-link @click="isMobileMenuOpen = false" to="/my-profile" class="mobile-nav-link">
             My Profile
           </router-link>
-          <button @click="handleLogout(); isMobileMenuOpen = false;" class="mobile-nav-link text-red-400 w-full text-left">
-            Logout
-          </button>
-        </nav>
-
-        <!-- Context Footer -->
+          <div class="px-4 py-3">
+            <button @click="handleLogout(); isMobileMenuOpen = false;" class="mobile-nav-link text-red-400 w-full text-left p-0">
+              Logout
+            </button>
+            <div class="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">v{{ authStore.appVersion }}</div>
+          </div>
+          </nav>
         <div class="p-4 border-t border-white/10 bg-black/10">
           <div class="text-[10px] uppercase tracking-widest text-white/60 font-bold leading-none mb-1">Active Context</div>
           <div class="text-xs text-white font-black uppercase">{{ productSlug }}</div>
@@ -167,12 +168,15 @@
             </router-link>
 
             <!-- Logout Button -->
-            <button 
-              @click="handleLogout" 
-              class="px-3 py-1.5 text-[10px] font-bold text-white bg-red-500/80 hover:bg-red-600 rounded-md transition-all uppercase tracking-wider shadow-sm border border-red-400/50 hidden sm:block"
-            >
-              Logout
-            </button>
+            <div class="hidden sm:flex flex-col items-end gap-1">
+              <button 
+                @click="handleLogout" 
+                class="px-3 py-1.5 text-[10px] font-bold text-white bg-red-500/80 hover:bg-red-600 rounded-md transition-all uppercase tracking-wider shadow-sm border border-red-400/50"
+              >
+                Logout
+              </button>
+              <span class="text-[10px] text-white/50 font-bold uppercase tracking-widest leading-none">v{{ authStore.appVersion }}</span>
+            </div>
           </div>
         </div>
       </div>

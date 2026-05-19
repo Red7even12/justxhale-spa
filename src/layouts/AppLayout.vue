@@ -58,7 +58,10 @@
           
           <!-- User Actions -->
           <router-link @click="closeMobileMenu" to="/my-profile" class="mobile-nav-link">My Profile</router-link>
-          <button @click="logout(); closeMobileMenu();" class="mobile-nav-link text-red-400 w-full text-left">Logout</button>
+          <div class="px-4 py-2">
+            <button @click="logout(); closeMobileMenu();" class="mobile-nav-link text-red-400 w-full text-left p-0">Logout</button>
+            <div class="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">v{{ authStore.appVersion }}</div>
+          </div>
         </nav>
       </div>
     </div>
@@ -147,10 +150,13 @@
               </svg>
             </router-link>
             <div>
-                <div v-if="authStore.user && authStore.user.subscriber" class="text-sm font-light text-right">{{ authStore.user.subscriber.name }}</div>
-                <div v-if="authStore.user" class="text-sm font-semibold text-right">{{ authStore.user.name }}</div>
+              <div v-if="authStore.user && authStore.user.subscriber" class="text-sm font-light text-right">{{ authStore.user.subscriber.name }}</div>
+              <div v-if="authStore.user" class="text-sm font-semibold text-right">{{ authStore.user.name }}</div>
             </div>
-            <button @click="logout" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Logout</button>
+            <div class="flex flex-col items-end gap-1">
+              <button @click="logout" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Logout</button>
+              <span class="text-[10px] text-white/50 font-bold uppercase tracking-widest leading-none">v{{ authStore.appVersion }}</span>
+            </div>
           </div>
         </div>
       </div>

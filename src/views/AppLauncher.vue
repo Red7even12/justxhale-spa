@@ -8,9 +8,12 @@
             <div class="text-sm font-bold text-gray-900">{{ authStore.user?.name }}</div>
             <div class="text-xs text-gray-500">{{ authStore.user?.email }}</div>
         </div>
-        <button @click="authStore.logout()" class="px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-bold text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
-          Logout
-        </button>
+        <div class="flex flex-col items-end gap-1">
+          <button @click="authStore.logout()" class="px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-bold text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+            Logout
+          </button>
+          <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">v{{ authStore.appVersion }}</span>
+        </div>
       </div>
     </div>
 
