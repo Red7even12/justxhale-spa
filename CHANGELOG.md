@@ -29,3 +29,15 @@ Create New Case File logic that broke due to audit logs
 ### Fixed
 - Resolved bug on Manage Reminder on Reminders Index: "Failed to load task details."
 - Save Reference number correctly on Notes  
+
+## [2.1.3] - 2026-05-20
+### Added
+- Local document path handling on Case File documents modal
+
+### Changed
+- 
+- 
+
+### Fixed
+- 
+-   

@@ -59,7 +59,7 @@ const fetchCaseAndLoadTemplate = async () => {
     const caseData = response.data.data || response.data;
     caseFile.value = caseData;
 
-    console.log("Full Case Object Received:", caseData);
+    //console.log("Full Case Object Received:", caseData);
 
     // 3. Extract the template name (checking all casing possibilities)
     const templateName = caseData.fileType?.workspaceTemplate || 
@@ -67,7 +67,7 @@ const fetchCaseAndLoadTemplate = async () => {
                          caseData.file_type?.workspace_template ||
                          'TemplateEstateStandard';
 
-    console.log("Targeting Template:", templateName);
+    //console.log("Targeting Template:", templateName);
     
     if (templateMap[templateName]) {
       currentTemplateComponent.value = templateMap[templateName];
@@ -78,7 +78,7 @@ const fetchCaseAndLoadTemplate = async () => {
     }
 
   } catch (err) {
-    console.error("Failed to load workspace", err);
+    //console.error("Failed to load workspace", err);
     error.value = err.response?.data?.message || "Failed to load the case details.";
   } finally {
     loading.value = false;

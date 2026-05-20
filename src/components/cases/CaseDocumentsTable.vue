@@ -169,98 +169,204 @@
 
   <!-- FILES MODAL -->
   <Modal :show="showFilesModal" @close="showFilesModal = false">
-    <div class="mb-6 space-y-4">
-        <!-- Mobile-First Action Grid (This is the Android 14 Fix) -->
-        <div class="grid grid-cols-3 gap-3">
-            <button @click="triggerInput('scan')" class="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm">
-                <span class="text-xl mb-1">📷</span>
-                <span class="text-[10px] font-bold text-gray-600 uppercase">Scan Doc</span>
-            </button>
-            <button @click="triggerInput('selfie')" class="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm">
-                <span class="text-xl mb-1">👤</span>
-                <span class="text-[10px] font-bold text-gray-600 uppercase">Selfie/ID</span>
-            </button>
-            <button @click="triggerInput('gallery')" class="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm">
-                <span class="text-xl mb-1">📁</span>
-                <span class="text-[10px] font-bold text-gray-600 uppercase">Gallery</span>
-            </button>
-        </div>
+    <template #title>
+      <span class="text-brand-primary font-bold">Manage Documents: {{ activeFileReq?.documentType?.label }}</span>
+    </template>
 
-        <!-- Hidden Inputs with different capture intents -->
-        <input type="file" ref="galleryInput" class="hidden" @change="handleFileUpload" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
-        <input type="file" ref="scanInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="environment">
-        <input type="file" ref="selfieInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="user">
+    <div class="p-6">
+      <div class="mb-6 space-y-4">
+          
+          <!-- Action Grid (Added the 4th option: Universal Path) -->
+          <div class="grid grid-cols-4 gap-2">
+              <button @click="triggerInput('scan')" class="flex flex-col items-center justify-center p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm transition-colors">
+                  <span class="text-xl mb-1">📷</span>
+                  <span class="text-[10px] font-bold text-gray-600 uppercase text-center leading-tight">Scan</span>
+              </button>
+              <button @click="triggerInput('selfie')" class="flex flex-col items-center justify-center p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm transition-colors">
+                  <span class="text-xl mb-1">👤</span>
+                  <span class="text-[10px] font-bold text-gray-600 uppercase text-center leading-tight">ID</span>
+              </button>
+              <button @click="triggerInput('gallery')" class="flex flex-col items-center justify-center p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm transition-colors">
+                  <span class="text-xl mb-1">📁</span>
+                  <span class="text-[10px] font-bold text-gray-600 uppercase text-center leading-tight">File</span>
+              </button>
+              <!-- NEW: Link Path Button -->
+              <button @click="showLinkInput = !showLinkInput" :class="showLinkInput ? 'bg-blue-50 border-brand-primary' : 'bg-white border-gray-200'" class="flex flex-col items-center justify-center p-2 border rounded-lg hover:bg-blue-50 shadow-sm transition-colors">
+                  <span class="text-xl mb-1">🔗</span>
+                  <span class="text-[10px] font-bold text-brand-primary uppercase text-center leading-tight">Link</span>
+              </button>
+          </div>
 
-        <!-- Loading indicator -->
-        <div v-if="isUploading" class="text-center p-2 text-brand-primary font-bold animate-pulse">
-            Uploading to JustXhale...
-        </div>
+          <!-- External Link Input UI (Conditionally rendered) -->
+          <transition
+              enter-active-class="transition ease-out duration-200"
+              enter-from-class="opacity-0 translate-y-1"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition ease-in duration-150"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 translate-y-1"
+          >
+              <div v-if="showLinkInput" class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner space-y-3">
+                  <div class="flex items-center justify-between">
+                      <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          Universal Document Path
+                      </label>
+                      <button @click="showLinkInput = false" class="text-gray-400 hover:text-gray-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                      </button>
+                  </div>
 
-        <!-- File List -->
-        <div v-if="activeFileReq?.files?.length > 0" class="space-y-3">
-            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1">Uploaded Files</h4>
-            <div v-for="file in activeFileReq.files" :key="file.id" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="bg-gray-100 p-2 rounded text-gray-600">
-                        <!-- Icon based on type (simplified) -->
-                        <svg v-if="file.mime_type?.includes('pdf')" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        <svg v-else-if="file.mime_type?.includes('image')" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <div class="min-w-0">
-                        <!-- PREVIEW LINK (New Tab) -->
-                        <a 
-                            :href="getFileUrl(file, 'preview')" 
-                            target="_blank" 
-                            class="text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline truncate block"
-                            title="Preview File"
-                        >
-                            {{ file.file_name || file.fileName }}
-                        </a>
-                        <div class="text-xs text-gray-500 font-medium mt-0.5">
-                            {{ formatSize(file.size_kb || file.sizeKb) }} • {{ formatDate(file.created_at || file.createdAt) }}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-1">
-                    <!-- DOWNLOAD BUTTON -->
-                    <a 
-                        :href="getFileUrl(file, 'download')" 
-                        class="text-gray-400 hover:text-brand-primary p-2 transition-colors rounded hover:bg-gray-50"
-                        title="Download File"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                    </a>
+                  <div class="flex gap-2">
+                      <div class="relative flex-1">
+                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span class="text-gray-400 text-sm">🔗</span>
+                          </div>
+                          <input 
+                              v-model="externalLinkPath" 
+                              type="text" 
+                              placeholder="Paste SharePoint URL or Local Drive Path..." 
+                              class="block w-full pl-9 pr-3 py-2.5 border-gray-300 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary shadow-sm"
+                              @keyup.enter="submitExternalLink"
+                          >
+                      </div>
+                      <button 
+                          @click="submitExternalLink" 
+                          :disabled="!externalLinkPath || isUploading"
+                          class="bg-brand-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2"
+                      >
+                          <span v-if="!isUploading">Save Link</span>
+                          <span v-else class="animate-spin text-xs">🌀</span>
+                      </button>
+                  </div>
+                  
+                  <div class="flex items-start gap-2 px-1">
+                      <svg class="h-4 w-4 text-brand-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p class="text-[10px] text-gray-500 leading-normal">
+                          Use this for files stored on your organization's SharePoint, OneDrive, or internal network drives (Z:\). 
+                          JustXhale will record the location for process tracking without copying the actual file.
+                      </p>
+                  </div>
+              </div>
+          </transition>
 
-                    <!-- DELETE BUTTON -->
-                    <button 
-                        @click="deleteFile(file.id)" 
-                        class="text-gray-400 hover:text-red-500 p-2 transition-colors rounded hover:bg-red-50"
-                        title="Delete File"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div v-else class="text-center py-6 text-gray-500 text-sm italic bg-gray-50 rounded border border-gray-100">
-            No files uploaded yet.
-        </div>
+          <!-- Hidden Inputs with different capture intents -->
+          <input type="file" ref="galleryInput" class="hidden" @change="handleFileUpload" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
+          <input type="file" ref="scanInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="environment">
+          <input type="file" ref="selfieInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="user">
 
-        <div class="mt-6 flex justify-end">
-            <button @click="showFilesModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded font-bold hover:bg-gray-200">Close</button>
-        </div>
+          <!-- Loading indicator -->
+          <div v-if="isUploading" class="text-center p-2 text-brand-primary font-bold animate-pulse">
+              Processing Document...
+          </div>
+
+          <!-- File List -->
+          <div v-if="activeFileReq?.files?.length > 0" class="space-y-3">
+              <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1">Attached Documents</h4>
+              <div v-for="file in activeFileReq.files" :key="file.id" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                  <div class="flex items-center gap-3 overflow-hidden">
+                      <div class="bg-gray-100 p-2 rounded text-gray-600">
+                          
+                          <!-- ICON LOGIC UPDATED -->
+                          <svg v-if="file.is_external_path || file.isExternalPath" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          <svg v-else-if="file.mime_type?.includes('pdf')" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <svg v-else-if="file.mime_type?.includes('image')" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                      </div>
+
+                      <div class="min-w-0">
+                          <!-- LINK LOGIC UPDATED -->
+                          <!-- If External Link & starts with http, open in new tab -->
+                          <a v-if="(file.is_external_path || file.isExternalPath) && (file.file_path?.startsWith('http') || file.filePath?.startsWith('http'))" 
+                              :href="file.file_path || file.filePath" 
+                              target="_blank" 
+                              class="text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline truncate block"
+                              title="Open External Cloud Link"
+                          >
+                              {{ file.file_name || file.fileName }}
+                          </a>
+                          <!-- If External Link (Local drive Z:\ etc), just show text -->
+                          <span v-else-if="(file.is_external_path || file.isExternalPath)" 
+                              class="text-sm font-bold text-gray-900 truncate block"
+                              title="Local Network Path"
+                          >
+                              {{ file.file_name || file.fileName }}
+                          </span>
+                          <!-- If Physical File, use Preview endpoint -->
+                          <a v-else
+                              :href="getFileUrl(file, 'preview')" 
+                              target="_blank" 
+                              class="text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline truncate block"
+                              title="Preview File"
+                          >
+                              {{ file.file_name || file.fileName }}
+                          </a>
+
+                          <div class="text-[10px] text-gray-500 font-medium mt-0.5">
+                              <span v-if="file.is_external_path || file.isExternalPath" class="uppercase text-brand-primary border border-brand-primary/20 bg-blue-50 px-1 py-0.5 rounded mr-1">External Path</span>
+                              <span v-else>{{ formatSize(file.size_kb || file.sizeKb) }} • </span>
+                              {{ formatDate(file.created_at || file.createdAt) }}
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div class="flex items-center gap-1">
+                      <!-- ACTION BUTTONS LOGIC UPDATED -->
+                      
+                      <!-- Copy Path Button (For External Links) -->
+                      <button v-if="file.is_external_path || file.isExternalPath"
+                          @click="copyToClipboard(file.file_path || file.filePath)" 
+                          class="text-gray-400 hover:text-brand-primary p-2 transition-colors rounded hover:bg-gray-50"
+                          title="Copy Path to Clipboard"
+                      >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                      </button>
+
+                      <!-- Download Button (For Physical Files Only) -->
+                      <a v-else
+                          :href="getFileUrl(file, 'download')" 
+                          class="text-gray-400 hover:text-brand-primary p-2 transition-colors rounded hover:bg-gray-50"
+                          title="Download File"
+                      >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                      </a>
+
+                      <!-- DELETE BUTTON (Always available) -->
+                      <button 
+                          @click="deleteFile(file.id)" 
+                          class="text-gray-400 hover:text-red-500 p-2 transition-colors rounded hover:bg-red-50"
+                          title="Remove Record"
+                      >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                      </button>
+                  </div>
+              </div>
+          </div>
+          <div v-else class="text-center py-6 text-gray-500 text-sm italic bg-gray-50 rounded border border-gray-100">
+              No files or paths linked yet.
+          </div>
+
+          <div class="mt-6 flex justify-end">
+              <button @click="showFilesModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded font-bold hover:bg-gray-200">Close</button>
+          </div>
+      </div>
     </div>
   </Modal>
 
@@ -392,6 +498,10 @@ const openFiles = (req) => {
     activeFileReq.value = req;
     showFilesModal.value = true;
 };
+
+// REFS
+const showLinkInput = ref(false);
+const externalLinkPath = ref('');
 
 // Document Request Modal State
 const isRequestModalOpen = ref(false);
@@ -553,6 +663,46 @@ const deleteFile = async (fileId) => {
         console.error("Delete failed", err);
         showAlert('Error', 'Failed to delete file');
     }
+};
+
+/**
+ * Handle External Path Submission
+ */
+const submitExternalLink = async () => {
+    if (!externalLinkPath.value || isUploading.value) return;
+
+    isUploading.value = true;
+    try {
+        // We POST to the same store endpoint, but sending a JSON object instead of FormData
+        const { data } = await apiClient.post(`requirements/${activeFileReq.value.id}/files`, {
+            external_path: externalLinkPath.value
+        });
+
+        // Add to local state (Surgical update)
+        activeFileReq.value.files.push(data);
+        
+        // Reset and Close
+        externalLinkPath.value = '';
+        showLinkInput.value = false;
+        
+    } catch (error) {
+        alert("Failed to link path. Ensure the string is valid.");
+        console.error(error);
+    } finally {
+        isUploading.value = false;
+    }
+};
+
+/**
+ * Utility to Copy Path to Clipboard
+ */
+const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        // Optional: Trigger a small toast notification here
+        alert("Path copied to clipboard!");
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+    });
 };
 
 // --- NOTES LOGIC ---

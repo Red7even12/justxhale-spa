@@ -81,7 +81,7 @@
             <!-- 1. STANDARD SUBSCRIBER MENU (V1) -->
             <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
               <router-link to="/launcher" class="nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
-              <router-link to="/estates" class="nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
+              <!-- <router-link to="/estates" class="nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link> -->
               <router-link to="/entities" class="nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Registry</router-link>
             </template>
             
@@ -168,19 +168,8 @@
           <h1 class="text-xl font-semibold text-[#242E2C] mt-2">{{ $route.meta.displayName || $route.name }}</h1>
         </div>
 
-        <div class="flex items-center space-x-4 mt-3 md:mt-0">
-            <div class="flex items-center relative w-64">
-              <label for="search" class="text-sm font-medium text-gray-700 mr-2">Find Case Number(CN)</label>
-              <div class="relative flex-grow">
-                <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.817-4.817A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                </div>
-                <input id="search" name="search" class="block w-full bg-white border border-gray-300 rounded-md py-2 pl-10 pr-3 text-sm" placeholder="Case Number" type="search" v-model="searchTerm" @keyup.enter="executeSearch" />
-              </div>
-            </div>
-            <div class="flex items-center space-x-2">
-              <button v-for="(action, index) in uiStore.headerActions" :key="index" @click="action.onClick" class="px-4 py-2 text-sm font-medium text-white bg-[#74958D] rounded-lg hover:bg-[#58726A]">{{ action.label }}</button>
-            </div>
+        <div class="flex items-center space-x-2 mt-3 md:mt-0">
+          <button v-for="(action, index) in uiStore.headerActions" :key="index" @click="action.onClick" class="px-4 py-2 text-sm font-medium text-white bg-[#74958D] rounded-lg hover:bg-[#58726A]">{{ action.label }}</button>
         </div>
       </div>
     </header>
@@ -234,16 +223,6 @@ const logout = () => { authStore.logout(); };
 const isMobileMenuOpen = ref(false);
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false;
-};
-
-const searchTerm = ref('');
-const executeSearch = () => {
-  if (!searchTerm.value.trim()) return; 
-  router.push({ 
-    name: 'search.results', 
-    query: { case_number: searchTerm.value }
-  });
-  searchTerm.value = '';
 };
 
 const { showModal, modalTitle, modalMessage, modalMode, onConfirm, onCancel } = useAlerts();

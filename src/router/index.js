@@ -7,9 +7,9 @@ import Login from '../views/Login.vue';
 //import Dashboard from '../views/Dashboard.vue';
 import Dashboard from '../views/RemindersDashboard.vue';
 // V1 Legacy Imports
-import EstatesIndex from '../views/estates/EstatesIndex.vue'; 
-import EstateEditor from '../views/estates/EstateEditor.vue'; 
-import EstateForm from '../views/estates/EstateForm.vue';
+// import EstatesIndex from '../views/estates/EstatesIndex.vue'; 
+// import EstateEditor from '../views/estates/EstateEditor.vue'; 
+// import EstateForm from '../views/estates/EstateForm.vue';
 
 // Admin Imports
 import TeamIndex from '../views/admin/TeamIndex.vue';
@@ -210,6 +210,7 @@ const routes = [
         meta: { displayName: 'Product Detail' }
       },
 
+      /* 
       // 3. V1 LEGACY ROUTES (Estates)
       { 
          path: 'estates', 
@@ -238,6 +239,7 @@ const routes = [
         props: true,
         meta: { displayName: 'Estate Workspace' }
       },
+      */
 
       // 4. GLOBAL REGISTRY (Shared)
       {
