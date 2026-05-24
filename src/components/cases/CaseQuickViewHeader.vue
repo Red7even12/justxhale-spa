@@ -6,7 +6,7 @@
     <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-gray-50 border-b border-gray-200">
       
       <div v-for="part in orderedParticipants" :key="part.id" class="p-4 flex flex-col justify-center min-h-[80px]">
-        <div class="text-[10px] uppercase tracking-widest font-black text-indigo-600 mb-1">
+        <div class="text-[10px] uppercase tracking-widest font-black text-gray-600 mb-1">
           {{ part.roleKey || part.role_key }}
         </div>
         

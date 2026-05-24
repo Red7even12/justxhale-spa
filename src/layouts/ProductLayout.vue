@@ -32,26 +32,50 @@
         <!-- Mobile Links -->
         <nav class="flex-1 flex flex-col px-2 py-4 space-y-1 overflow-y-auto">
           <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/dashboard`" class="mobile-nav-link" active-class="mobile-nav-active">
-            Dashboard
+            Reminders
           </router-link>
           <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/cases`" class="mobile-nav-link" active-class="mobile-nav-active">
             Case Files
           </router-link>
           <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/registry`" class="mobile-nav-link" active-class="mobile-nav-active">
-            Registry
+            People
           </router-link>
           
+          <!-- Mobile Reports Node -->
+          <div>
+            <button @click="isMobileReportsOpen = !isMobileReportsOpen" class="w-full mobile-nav-link flex justify-between items-center text-left">
+              <span>Reports</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200 text-white/60" :class="{ 'rotate-180': isMobileReportsOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div v-show="isMobileReportsOpen" class="pl-4 space-y-1 bg-black/10 rounded-lg py-1 mt-1">
+              <div class="px-4 py-2 text-[10px] text-white/50 uppercase font-black tracking-widest">Available Reports</div>
+              <div class="px-4 py-2 text-xs text-white/40 italic">No reports configured yet. Reports will appear here once built.</div>
+            </div>
+          </div>
+
+          <!-- Mobile Admin Node -->
           <template v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')">
-            <div class="pt-4 pb-2 px-4 text-[10px] font-bold text-white/40 uppercase tracking-widest">Administration</div>
-            <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/import`" class="mobile-nav-link" active-class="mobile-nav-active">
-              Take-on
-            </router-link>
-            <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/users`" class="mobile-nav-link" active-class="mobile-nav-active">
-              Users
-            </router-link>
-            <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/teams`" class="mobile-nav-link" active-class="mobile-nav-active">
-              Teams
-            </router-link>
+            <div class="pt-2">
+              <button @click="isMobileAdminOpen = !isMobileAdminOpen" class="w-full mobile-nav-link flex justify-between items-center text-left">
+                <span>Admin</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200 text-white/60" :class="{ 'rotate-180': isMobileAdminOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div v-show="isMobileAdminOpen" class="pl-4 space-y-1 bg-black/10 rounded-lg py-1 mt-1">
+                <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/import`" class="mobile-sub-nav-link" active-class="mobile-sub-nav-active">
+                  Take-on
+                </router-link>
+                <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/users`" class="mobile-sub-nav-link" active-class="mobile-sub-nav-active">
+                  Users
+                </router-link>
+                <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/teams`" class="mobile-sub-nav-link" active-class="mobile-sub-nav-active">
+                  Teams
+                </router-link>
+              </div>
+            </div>
           </template>
 
           <div class="border-t border-white/10 my-4 pt-4"></div>
@@ -106,25 +130,57 @@
           <!-- Product Horizontal Menu (Desktop) -->
           <nav class="hidden xl:flex items-center gap-2">
             <router-link :to="`/${productSlug}/dashboard`" class="top-nav-link" active-class="top-nav-active">
-              Dashboard
+              Reminders
             </router-link>
             <router-link :to="`/${productSlug}/cases`" class="top-nav-link" active-class="top-nav-active">
               Case Files
             </router-link>
             <router-link :to="`/${productSlug}/registry`" class="top-nav-link" active-class="top-nav-active">
-              Registry
+              Contacts
             </router-link>
-            <template v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')">
-              <router-link :to="`/${productSlug}/import`" class="top-nav-link" active-class="top-nav-active">
-                Take-on
-              </router-link>
-              <router-link :to="`/${productSlug}/users`" class="top-nav-link" active-class="top-nav-active">
-                Users
-              </router-link>
-              <router-link :to="`/${productSlug}/teams`" class="top-nav-link" active-class="top-nav-active">
-                Teams
-              </router-link>
-            </template>
+
+            <!-- Reports Dropdown Node -->
+            <div class="relative">
+              <button @click="toggleReportsDropdown" 
+                      @blur="closeReportsWithDelay"
+                      class="top-nav-link flex items-center gap-1.5 focus:outline-none transition-all"
+                      :class="{ 'top-nav-active': isReportsActive, 'bg-white/10': isReportsOpen }">
+                <span>Reports</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform duration-200 opacity-80" :class="{ 'rotate-180': isReportsOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div v-show="isReportsOpen" 
+                   class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-left transition-all duration-200">
+                <div class="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-1">Available Reports</div>
+                <div class="px-4 py-3 text-xs text-gray-400 italic">No reports configured yet. Reports will appear here once built.</div>
+              </div>
+            </div>
+
+            <!-- Admin Dropdown Node -->
+            <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')" class="relative">
+              <button @click="toggleAdminDropdown" 
+                      @blur="closeAdminWithDelay"
+                      class="top-nav-link flex items-center gap-1.5 focus:outline-none transition-all"
+                      :class="{ 'top-nav-active': isAdminActive, 'bg-white/10': isAdminOpen }">
+                <span>Admin</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform duration-200 opacity-80" :class="{ 'rotate-180': isAdminOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div v-show="isAdminOpen" 
+                   class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-right transition-all duration-200">
+                <router-link :to="`/${productSlug}/import`" class="dropdown-item" active-class="dropdown-active">
+                  Take-on
+                </router-link>
+                <router-link :to="`/${productSlug}/users`" class="dropdown-item" active-class="dropdown-active">
+                  Users
+                </router-link>
+                <router-link :to="`/${productSlug}/teams`" class="dropdown-item" active-class="dropdown-active">
+                  Teams
+                </router-link>
+              </div>
+            </div>
           </nav>
         </div>
 
@@ -203,6 +259,59 @@ const product = ref(null);
 const isMobileMenuOpen = ref(false); // Added for mobile navigation
 const productSlug = computed(() => route.params.productSlug);
 
+// --- Dropdown States & Toggles ---
+const isAdminOpen = ref(false);
+const isReportsOpen = ref(false);
+const isMobileAdminOpen = ref(false);
+const isMobileReportsOpen = ref(false);
+
+const toggleAdminDropdown = () => {
+  isAdminOpen.value = !isAdminOpen.value;
+  if (isAdminOpen.value) isReportsOpen.value = false;
+};
+
+const toggleReportsDropdown = () => {
+  isReportsOpen.value = !isReportsOpen.value;
+  if (isReportsOpen.value) isAdminOpen.value = false;
+};
+
+const closeAdminWithDelay = () => {
+  setTimeout(() => {
+    isAdminOpen.value = false;
+  }, 200);
+};
+
+const closeReportsWithDelay = () => {
+  setTimeout(() => {
+    isReportsOpen.value = false;
+  }, 200);
+};
+
+// --- Active Node Highlights ---
+const isAdminActive = computed(() => {
+  if (!productSlug.value) return false;
+  const paths = [
+    `/${productSlug.value}/import`,
+    `/${productSlug.value}/users`,
+    `/${productSlug.value}/teams`
+  ];
+  return paths.some(p => route.path.startsWith(p));
+});
+
+const isReportsActive = computed(() => {
+  if (!productSlug.value) return false;
+  const paths = [
+    `/${productSlug.value}/reports`
+  ];
+  return paths.some(p => route.path.startsWith(p));
+});
+
+// Close dropdowns on route change
+watch(() => route.path, () => {
+  isAdminOpen.value = false;
+  isReportsOpen.value = false;
+});
+
 const userInitials = computed(() => {
   if (!authStore.user?.name) return 'U';
   return authStore.user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
@@ -248,11 +357,27 @@ onMounted(fetchBranding);
   @apply text-white font-semibold border-b-2 border-white;
 }
 
+.dropdown-item {
+  @apply block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-bold transition-colors;
+}
+
+.dropdown-active {
+  @apply bg-gray-50 text-gray-900 font-black border-l-4 border-brand-primary;
+}
+
 .mobile-nav-link {
   @apply flex items-center px-4 py-3 rounded-md text-white/80 hover:bg-black/10 hover:text-white transition-all text-sm font-bold uppercase tracking-wide;
 }
 
 .mobile-nav-active {
   @apply bg-black/20 text-white border-l-4 border-white;
+}
+
+.mobile-sub-nav-link {
+  @apply flex items-center px-4 py-2 rounded-md text-white/70 hover:bg-white/5 hover:text-white transition-all text-xs font-bold uppercase tracking-wide;
+}
+
+.mobile-sub-nav-active {
+  @apply bg-white/10 text-white border-l-2 border-white;
 }
 </style>

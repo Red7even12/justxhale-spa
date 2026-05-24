@@ -4,10 +4,14 @@
 
     <!-- Filter Controls Panel -->
     <div class="bg-white shadow-md rounded-lg p-4 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="filter-group">
-          <label for="search" class="block text-sm font-medium text-gray-700">Search Case File/Task Keyword</label>
-          <input id="search" type="text" v-model="filters.search" placeholder="e.g., Williams H or Coded" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          <label for="case_search" class="block text-sm font-medium text-gray-700">Search Case File</label>
+          <input id="case_search" type="text" v-model="filters.case_search" placeholder="e.g., Williams H" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+        </div>
+        <div class="filter-group">
+          <label for="task_search" class="block text-sm font-medium text-gray-700">Task Keyword</label>
+          <input id="task_search" type="text" v-model="filters.task_search" placeholder="e.g., Coded" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
         </div>
         <div class="filter-group">
           <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -16,15 +20,18 @@
             <option value="overdue">Overdue</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
+            <option value="all" :disabled="!canShowAll">
+                {{ canShowAll ? 'Show All (Disregard Dates)' : 'Show All (Search Case First)' }}
+            </option>
           </select>
         </div>
-        <div class="filter-group">
+        <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
               <label for="from_date" class="block text-sm font-medium text-gray-700">From</label>
-              <input id="from_date" type="date" v-model="filters.from_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+              <input id="from_date" type="date" v-model="filters.from_date" :disabled="filters.status === 'all'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
             </div>
-            <div class="filter-group">
+            <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
               <label for="to_date" class="block text-sm font-medium text-gray-700">To</label>
-              <input id="to_date" type="date" v-model="filters.to_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+              <input id="to_date" type="date" v-model="filters.to_date" :disabled="filters.status === 'all'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
             </div>
           </div>
         </div>
@@ -177,7 +184,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted, computed, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
 import reminderService from '@/services/reminderService';
 import { debounce } from 'lodash-es';
@@ -200,7 +207,8 @@ const isManageModalOpen = ref(false);
 const selectedReminderId = ref(null);
 
 const filters = reactive({
-  search: '',
+  case_search: '',
+  task_search: '',
   status: '', 
   from_date: '',
   to_date: '',
@@ -208,6 +216,16 @@ const filters = reactive({
   sort_dir: 'asc', 
   page: 1,
   per_page: 15 // Default value
+});
+
+// Guard: Only allow "Show All" if a Case File search term is provided (prevents DB overload)
+const canShowAll = computed(() => filters.case_search.trim().length >= 2);
+
+// Watch for Case search clearing while in "Show All" mode
+watch(() => filters.case_search, (newSearch) => {
+    if (!newSearch.trim() && filters.status === 'all') {
+        filters.status = ''; // Reset to "All Open" to prevent broad queries
+    }
 });
 
 const isNotesModalOpen = ref(false);
@@ -223,8 +241,14 @@ const fetchReminders = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const queryParams = { ...filters };
+    const queryParams = { ...toRaw(filters) };
     
+    // If status is 'all', disregard dates as requested
+    if (queryParams.status === 'all') {
+      delete queryParams.from_date;
+      delete queryParams.to_date;
+    }
+
     // Clean empty filters
     for (const key in queryParams) {
       if (queryParams[key] === '' || queryParams[key] === null) {
@@ -258,34 +282,34 @@ onMounted(async () => {
   }
 });
 
-// This handles all data fetching automatically.
-watch(filters, (newValues, oldValues) => {
-    // If any filter other than the page or sort order has changed, reset to page 1.
-    const hasFilterChanged = 
-        newValues.search !== oldValues.search ||
-        newValues.status !== oldValues.status ||
-        newValues.from_date !== oldValues.from_date ||
-        newValues.to_date !== oldValues.to_date ||
-        newValues.per_page !== oldValues.per_page;
-
-    if (hasFilterChanged) {
-        // Avoid an infinite loop if we are already on page 1.
-        // If we change the page to 1, the watcher will be re-triggered and will then fetch the data.
-        if (filters.page !== 1) {
-            filters.page = 1;
-        } else {
-            // If already on page 1, the page number doesn't change, so we must trigger the fetch manually.
-            debounceFetch();
-        }
-    } else {
-        // If only page or sort order changed, just fetch the new data.
-        debounceFetch();
-    }
-}, { deep: true });
-
 const debounceFetch = debounce(() => {
     fetchReminders();
 }, 300);
+
+// 1. Reset page to 1 when filters change
+watch([
+  () => filters.case_search,
+  () => filters.task_search,
+  () => filters.status,
+  () => filters.from_date,
+  () => filters.to_date,
+  () => filters.per_page
+], () => {
+    if (filters.page !== 1) {
+        filters.page = 1;
+    } else {
+        debounceFetch();
+    }
+});
+
+// 2. Just fetch when page or sorting changes
+watch([
+  () => filters.page,
+  () => filters.sort_by,
+  () => filters.sort_dir
+], () => {
+    debounceFetch();
+});
 
 
  const getStatusLabel = (reminder) => {

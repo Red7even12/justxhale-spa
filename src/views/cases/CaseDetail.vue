@@ -13,7 +13,7 @@
         </div>
         <p class="text-sm text-gray-500 font-medium">
           Ref: <span class="font-mono font-bold text-gray-700">{{ caseFile.fileReference || caseFile.file_reference }}</span> | 
-          Status: <span class="uppercase font-black text-indigo-600">{{ caseFile.status }}</span>
+          Status: <span class="uppercase font-black text-gray-800">{{ caseFile.status }}</span>
         </p>
       </div>
 
@@ -31,7 +31,7 @@
       <button 
         v-for="tab in tabs" :key="tab.id"
         @click="activeTab = tab.id"
-        :class="['pb-4 text-sm font-black transition-all border-b-2 px-1 uppercase tracking-widest', activeTab === tab.id ? 'border-brand-PRIMARY text-brand-PRIMARY' : 'border-transparent text-gray-400 hover:text-gray-600']">
+        :class="['pb-4 text-sm font-black transition-all border-b-2 px-1 uppercase tracking-widest', activeTab === tab.id ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-400 hover:text-gray-600']">
         {{ tab.label }}
       </button>
     </div>
@@ -52,11 +52,11 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File Reference</label>
-              <input v-model="detailsForm.file_reference" type="text" class="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-bold text-gray-700">
+              <input v-model="detailsForm.file_reference" type="text" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary font-bold text-gray-700">
             </div>
             <div class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Assigned Team</label>
-              <select v-model="detailsForm.current_team_id" class="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm font-bold text-gray-700">
+              <select v-model="detailsForm.current_team_id" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm font-bold text-gray-700">
                 <option :value="null">-- Unassigned --</option>
                 <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
               </select>
@@ -64,11 +64,11 @@
             <div v-for="field in caseFields.filter(f => !f.participantRoleId)" :key="field.id" class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                 {{ field.label }} 
-                <span v-if="field.showInQuickView" class="text-indigo-500 ml-1">★</span>
+                <span v-if="field.showInQuickView" class="text-brand-primary ml-1">★</span>
               </label>
               <input v-model="detailsForm.meta_data[field.key]" 
                      :type="field.fieldType === 'date' ? 'date' : (field.fieldType === 'number' ? 'number' : 'text')" 
-                     class="w-full border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                     class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm">
             </div>
           </div>
         </form>
@@ -101,7 +101,7 @@
                   <div class="text-[10px] text-gray-400 uppercase font-bold">{{ part.entity?.email }}</div>
                 </td>
                 <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-indigo-50 text-indigo-700 uppercase tracking-tighter">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-gray-100 text-gray-700 uppercase tracking-tighter">
                     {{ part.roleKey || part.role_key }}
                   </span>
                 </td>
@@ -109,7 +109,7 @@
                   {{ part.referenceNumber || part.reference_number || '-' }}
                 </td>
                 <td class="px-6 py-4 text-right">
-                  <button @click="openAssignModal(part)" class="text-indigo-600 hover:text-indigo-900 font-black text-xs uppercase tracking-widest">Edit</button>
+                  <button @click="openAssignModal(part)" class="text-brand-primary hover:text-brand-secondary font-black text-xs uppercase tracking-widest">Edit</button>
                 </td>
               </tr>
             </tbody>
@@ -122,7 +122,7 @@
     <div v-if="showAssignModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
-        <div class="bg-indigo-600 p-6 text-white shrink-0">
+        <div class="bg-brand-primary p-6 text-white shrink-0">
           <h2 class="text-xl font-black uppercase tracking-tight">{{ isEditingParticipant ? 'Update Participant' : 'Assign Participant' }}</h2>
           <p class="text-[10px] opacity-70 uppercase tracking-widest font-bold mt-1">Niche: {{ caseFile.fileType?.name }}</p>
         </div>
@@ -132,19 +132,19 @@
           <!-- 1. Entity Selection -->
           <div v-if="!selectedEntity">
             <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Search Global Registry</label>
-            <input v-model="searchQuery" @input="handleSearch" type="text" class="w-full p-3 border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Type name or email...">
+            <input v-model="searchQuery" @input="handleSearch" type="text" class="w-full p-3 border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm" placeholder="Type name or email...">
             <ul v-if="searchResults.length > 0" class="mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto">
-              <li v-for="entity in searchResults" :key="entity.id" @click="selectEntity(entity)" class="p-3 border-b border-gray-50 hover:bg-indigo-50 cursor-pointer text-sm font-bold text-gray-700">
+              <li v-for="entity in searchResults" :key="entity.id" @click="selectEntity(entity)" class="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer text-sm font-bold text-gray-700">
                 {{ entity.name }} <span class="text-[10px] text-gray-400 font-normal ml-2">{{ entity.email }}</span>
               </li>
             </ul>
           </div>
-          <div v-else class="flex items-center justify-between p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <div v-else class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
             <div>
-              <div class="text-sm font-black text-indigo-900">{{ selectedEntity.name }}</div>
-              <div class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{{ selectedEntity.email }}</div>
+              <div class="text-sm font-black text-gray-900">{{ selectedEntity.name }}</div>
+              <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{{ selectedEntity.email }}</div>
             </div>
-            <button v-if="!isEditingParticipant" type="button" @click="clearSelection" class="text-indigo-600 font-black text-[10px] uppercase underline">Change</button>
+            <button v-if="!isEditingParticipant" type="button" @click="clearSelection" class="text-brand-primary font-black text-[10px] uppercase underline hover:text-brand-secondary">Change</button>
           </div>
 
           <!-- 2. Role & Link Settings -->
@@ -164,7 +164,7 @@
 
           <!-- 3. DYNAMIC ROLE METADATA -->
           <div v-if="activeRoleFields.length > 0" class="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
-              <div class="text-[10px] font-black text-indigo-600 uppercase tracking-widest border-b border-indigo-100 pb-2">
+              <div class="text-[10px] font-black text-black-600 uppercase tracking-widest border-b border-gray-200 pb-2">
                   Metadata for Character: {{ participantForm.role_key }}
               </div>
               
@@ -199,7 +199,7 @@
           <!-- Actions -->
           <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
             <button type="button" @click="closeModal" class="text-sm font-black text-gray-400 uppercase tracking-widest px-4">Cancel</button>
-            <button type="submit" :disabled="isSubmitting" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-50 transition-all">
+            <button type="submit" :disabled="isSubmitting" class="bg-brand-primary text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-gray-200 hover:bg-brand-secondary disabled:opacity-50 transition-all">
               {{ isSubmitting ? 'Saving...' : 'Save Participant' }}
             </button>
           </div>

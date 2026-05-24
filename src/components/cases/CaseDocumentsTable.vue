@@ -4,7 +4,7 @@
     <!-- Header -->
 
     <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 shrink-0">
-      <h3 class="text-lg font-bold text-gray-800 uppercase tracking-tight">Document Checklist</h3>
+      <h3 class="text-lg font-bold text-gray-800 uppercase tracking-tight">Checklist</h3>
       <div class="flex items-center gap-2">
         <button 
           @click="openRequestModal" 

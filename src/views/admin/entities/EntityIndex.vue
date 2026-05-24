@@ -1,7 +1,7 @@
 <template>
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Entity Registry</h1>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Contacts & Companies Registry</h1>
       <button @click="openModal()" class="bg-brand-primary text-white px-6 py-2 rounded-xl shadow-lg shadow-indigo-100 font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all">
         + Add New Entity
       </button>

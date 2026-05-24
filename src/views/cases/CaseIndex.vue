@@ -285,6 +285,11 @@ const pagination = ref({
   to: 0
 });
 
+// 3. Computed check for "Primary" searches (Identity vs Browsing)
+const isPrimarySearchActive = computed(() => {
+  return !!filters.value.search_participant || !!filters.value.search_external_ref;
+});
+
 const form = ref({ fileTypeId: '', currentTeamId: '', fileName: '', fileReference: '' });
 let searchTimeout = null;
 
@@ -332,7 +337,7 @@ const fetchCases = async () => {
 };
 
 // Debounce search input to prevent spamming the database
-const handleSearchInput = () => {
+const handleSearchInput = (type) => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     applyFilters();

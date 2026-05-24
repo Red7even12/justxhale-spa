@@ -186,11 +186,8 @@ const saveStep = async (process, isCheckbox = false) => {
             payload
         );
 
-        // Optimistic Update (Instant Feedback)
-        process.status = 'completed';
-        // If it was a checkbox ('1'), show the label instead of '1'
-        process.dataValue = (valueToSend === '1') ? (process.workflowStep?.actionLabelCompleted || 'Done') : valueToSend; 
-        process.isActionable = false;
+        // Refetch the full workflow to capture downstream activations/completions
+        await fetchProcesses();
         
         showAlert('Success', 'Step completed!');
     } catch (err) {

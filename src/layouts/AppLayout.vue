@@ -19,7 +19,7 @@
           <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
             <router-link @click="closeMobileMenu" to="/launcher" class="mobile-nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
             <router-link @click="closeMobileMenu" to="/estates" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-            <router-link @click="closeMobileMenu" to="/entities" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Registry</router-link>
+            <router-link @click="closeMobileMenu" to="/entities" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Contacts</router-link>
           </template>
 
           <!-- Divider -->
@@ -82,7 +82,7 @@
             <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
               <router-link to="/launcher" class="nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
               <!-- <router-link to="/estates" class="nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link> -->
-              <router-link to="/entities" class="nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Registry</router-link>
+              <router-link to="/entities" class="nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Contacts</router-link>
             </template>
             
             <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="border-l border-gray-500 h-6 mx-3"></div>

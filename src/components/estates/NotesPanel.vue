@@ -1,6 +1,6 @@
 <template>
   <div class="notes-panel">
-    <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Notes & History</h3>
+    <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Notes & History XX</h3>
 
     <div class="mb-4">
       <textarea

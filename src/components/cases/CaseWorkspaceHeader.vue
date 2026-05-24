@@ -33,9 +33,12 @@
         </button>
 
         <!-- Timeline -->
-        <button @click="goToTimeline" 
-                class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-gray-50 uppercase tracking-wide flex items-center gap-2 transition-colors">
-          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button @click="toggleTimeline" 
+                :class="[
+                  showTimeline ? 'bg-brand-primary text-white border-brand-primary' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
+                  'px-4 py-2 rounded-lg text-xs font-bold shadow-sm uppercase tracking-wide flex items-center gap-2 transition-colors border'
+                ]">
+          <svg :class="showTimeline ? 'text-white' : 'text-gray-400'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Timeline
@@ -52,7 +55,12 @@
     <!-- 2. QUICK VIEW (Embedded here so it's standard too) -->
     <CaseQuickViewHeader :case-file="caseFile" />
 
-    <!-- 3. SHARED MODALS (Notes) -->
+    <!-- 3. TIMELINE (Embedded here to keep QuickView visible) -->
+    <div v-if="showTimeline" class="mt-6">
+       <CaseTimeline :case-id="caseFile.id" :case-file="caseFile" @close="showTimeline = false" />
+    </div>
+
+    <!-- 4. SHARED MODALS (Notes) -->
     <Modal :show="showNotesModal" @close="showNotesModal = false">
       <template #title>
         <span class="text-brand-primary font-bold">Case File Notes</span>
@@ -76,6 +84,7 @@
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CaseQuickViewHeader from '@/components/cases/CaseQuickViewHeader.vue';
+import CaseTimeline from '@/components/cases/CaseTimeline.vue';
 import Modal from '@/components/common/Modal.vue';
 import NotesPanel from '@/components/estates/NotesPanel.vue';
 import noteService from '@/services/noteService';
@@ -86,6 +95,8 @@ const props = defineProps({
 
 const route = useRoute();
 const router = useRouter();
+
+const showTimeline = ref(false);
 
 // --- UI HELPERS ---
 const statusBadgeClass = computed(() => {
@@ -105,11 +116,8 @@ const goToSetup = () => {
     });
 };
 
-const goToTimeline = () => {
-    router.push({ 
-        name: 'CaseTimelineReport', 
-        params: { productSlug: route.params.productSlug, id: props.caseFile.id } 
-    });
+const toggleTimeline = () => {
+    showTimeline.value = !showTimeline.value;
 };
 
 // --- NOTES LOGIC ---
