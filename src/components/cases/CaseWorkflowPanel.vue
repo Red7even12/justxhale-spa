@@ -18,7 +18,7 @@
     <div v-else class="flex-1 overflow-auto border border-gray-200 rounded-lg bg-white relative">
       <table class="min-w-full divide-y divide-gray-200 workflow-table-override">
         <tbody class="divide-y divide-gray-100">
-          <tr v-for="process in processes" :key="process.id" class="hover:bg-gray-50 transition-colors group">
+          <tr v-for="process in visibleProcesses" :key="process.id" class="hover:bg-gray-50 transition-colors group">
             
             <!-- Column 1: Step Name & Status -->
             <td class="px-3 py-3 w-1/3 align-middle bg-white group-hover:bg-gray-50">
@@ -46,8 +46,8 @@
               <!-- STATE: ACTIVE / ACTIONABLE -->
               <div v-else-if="process.isActionable" class="flex items-center gap-2 w-full">
                 
-                <!-- Input Type: DATE -->
-                <div v-if="process.workflowStep?.dataType === 'date'" class="flex w-full gap-2 items-center">
+                <!-- Input Type: DATE / TIMESTAMP -->
+                <div v-if="['date', 'timestamptz'].includes(process.workflowStep?.dataType)" class="flex w-full gap-2 items-center">
                   <input 
                     type="date" 
                     v-model="inputData[process.id]" 
@@ -128,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
@@ -149,8 +149,12 @@ const loading = ref(true);
 const error = ref(null);
 const inputData = reactive({}); // Stores temp input for each row
 
-const fetchProcesses = async () => {
-  loading.value = true;
+const visibleProcesses = computed(() => {
+  return processes.value.filter(p => p.workflowStep?.isUserFacing);
+});
+
+const fetchProcesses = async (silent = false) => {
+  if (!silent) loading.value = true;
   try {
     const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${props.caseId}/workflow`);
     processes.value = data;
@@ -159,14 +163,16 @@ const fetchProcesses = async () => {
     processes.value.forEach(p => {
         if (p.isActionable) {
             // Default to empty string to ensure reactivity
-            inputData[p.id] = ''; 
+            if (inputData[p.id] === undefined) {
+                inputData[p.id] = ''; 
+            }
         }
     });
   } catch (err) {
     error.value = 'Failed to load workflow.';
     console.error(err);
   } finally {
-    loading.value = false;
+    if (!silent) loading.value = false;
   }
 };
 
@@ -186,10 +192,16 @@ const saveStep = async (process, isCheckbox = false) => {
             payload
         );
 
-        // Refetch the full workflow to capture downstream activations/completions
-        await fetchProcesses();
+        // Optimistic Update (Instant Feedback)
+        process.status = 'completed';
+        // If it was a checkbox ('1'), show the label instead of '1'
+        process.dataValue = (valueToSend === '1') ? (process.workflowStep?.actionLabelCompleted || 'Done') : valueToSend; 
+        process.isActionable = false;
         
         showAlert('Success', 'Step completed!');
+        
+        // Refresh workflow checklist silently to show newly activated downstream steps
+        await fetchProcesses(true);
     } catch (err) {
         console.error("Complete failed", err);
         showAlert('Error', 'Failed to update step.');

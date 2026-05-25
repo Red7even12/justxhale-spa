@@ -3,8 +3,10 @@
     
     <!-- Tab Headers -->
     <div class="flex space-x-4 mb-6 border-b border-gray-200">
-        <button @click="activeTab = 'import'" :class="activeTab === 'import' ? 'border-brand-blue-500 text-brand-blue-600' : 'border-transparent text-gray-500'" class="pb-2 px-1 border-b-2 font-medium text-sm">New Import</button>
-        <button @click="fetchHistory" :class="activeTab === 'history' ? 'border-brand-blue-500 text-brand-blue-600' : 'border-transparent text-gray-500'" class="pb-2 px-1 border-b-2 font-medium text-sm">Import History & Rollback</button>
+        <button @click="activeTab = 'import'" :class="activeTab === 'import' ? 'border-brand-blue-500 text-brand-blue-600' : 'border-transparent text-gray-500'" 
+        class="pb-2 px-1 border-b-2 font-medium text-sm">New Import</button>
+        <button @click="fetchHistory" :class="activeTab === 'history' ? 'border-brand-blue-500 text-brand-blue-600' : 'border-transparent text-gray-500'" 
+        class="pb-2 px-1 border-b-2 font-medium text-sm">Import History & Rollback</button>
     </div>
 
     <!-- TAB 1: IMPORT WIZARD (Your existing code goes here inside a v-if) -->
@@ -35,9 +37,12 @@
         <button 
           @click="downloadTemplate" 
           :disabled="isDownloading"
-          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-brand-blue-700 bg-brand-blue-100 hover:bg-brand-blue-200 focus:outline-none disabled:opacity-50"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-brand-blue-700
+           bg-brand-blue-100 hover:bg-brand-blue-200 focus:outline-none disabled:opacity-50"
         >
-          <svg v-if="isDownloading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-brand-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <svg v-if="isDownloading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-brand-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" 
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
@@ -73,13 +78,15 @@
             ref="fileInputRef" 
             @change="handleFileChange" 
             accept=".xlsx, .csv"
-            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand-blue-50 file:text-brand-blue-700 hover:file:bg-brand-blue-100 cursor-pointer"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold
+             file:bg-brand-blue-50 file:text-brand-blue-700 hover:file:bg-brand-blue-100 cursor-pointer"
           />
           <!-- Disabled unless both file AND team are selected -->
           <button 
             @click="runDryRun" 
             :disabled="!selectedFile || !selectedTeamId || isUploading"
-            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-blue-600 hover:bg-brand-blue-700 focus:outline-none disabled:opacity-50 whitespace-nowrap"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-blue-600
+             hover:bg-brand-blue-700 focus:outline-none disabled:opacity-50 whitespace-nowrap"
           >
             {{ isUploading ? 'Validating...' : 'Run Validator' }}
           </button>
@@ -138,9 +145,12 @@
           <button 
             @click="commitImport"
             :disabled="isCommitting"
-            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50"
+            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white
+             bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50"
           >
-            <svg v-if="isCommitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <svg v-if="isCommitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+              </circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             {{ isCommitting ? 'Importing to Database...' : 'Commit Import' }}
           </button>
           <div v-if="successBatchId" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -156,54 +166,85 @@
       </div>
     </div>
   
-    <!-- TAB 2: HISTORY & ROLLBACK -->
-    <div v-if="activeTab === 'history'" class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">File Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Team / Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Count</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="batch in history" :key="batch.batchId" class="hover:bg-gray-50">
-                <!-- Date: Keep nowrap because dates are short -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ batch.createdAt }}
-                </td>
-
-                <!-- File Name: ALLOW WRAP + BREAK LONG WORDS -->
-                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs break-all">
-                    {{ batch.fileName }}
-                </td>
-
-                <!-- Team / Type: ALLOW WRAP -->
-                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs">
+<!-- TAB 2: HISTORY & ROLLBACK -->
+<div v-if="activeTab === 'history'" class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">File Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Team / Type</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Count</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="batch in history" :key="batch.batch_id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ batch.createdAt }}</td>
+                <td class="px-6 py-4 text-sm text-gray-500 max-w-xs break-all">{{ batch.fileName }}</td>
+                <td class="px-6 py-4 text-sm text-gray-500">
                     {{ batch.teamName }} <br>
                     <span class="text-xs text-gray-400">{{ batch.fileTypeName }}</span>
                 </td>
-
-                <!-- Count: Keep small -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-center">
-                    {{ batch.caseCount }}
-                </td>
-
-                <!-- Action: Keep nowrap so the button stays on one line -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-center">{{ batch.caseCount }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button 
-                        @click="rollbackBatch(batch.batchId)" 
-                        class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded-md border border-red-200 font-bold uppercase text-xs transition-colors"
+                        @click="openRollbackModal(batch)" 
+                        class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1 rounded-md border border-red-200 font-bold uppercase text-xs"
                     >
                         Rollback
                     </button>
                 </td>
             </tr>
-            </tbody>
-        </table>
+        </tbody>
+    </table>
+
+    <!-- ROLLBACK CONFIRMATION MODAL (Injected here) -->
+    <div v-if="showRollbackModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border-t-4 border-red-600">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Reverse Import?</h3>
+            <p class="text-gray-600 mb-4">
+                You are about to delete <strong>{{ selectedBatch.case_count }}</strong> cases created from 
+                <span class="font-mono text-xs bg-gray-100 px-1">{{ selectedBatch.file_name }}</span>.
+            </p>
+
+            <!-- THE DEEP CLEAN OPTION -->
+            <div class="bg-red-50 p-4 rounded-lg border border-red-100 mb-6">
+                <div class="flex items-start">
+                    <input 
+                        id="deep-clean" 
+                        type="checkbox" 
+                        v-model="rollbackOptions.deepClean" 
+                        class="mt-1 h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                    >
+                    <div class="ml-3">
+                        <label for="deep-clean" class="block text-sm font-bold text-red-800">Deep Clean (Include Entities)</label>
+                        <p class="text-xs text-red-700 mt-1 leading-relaxed">
+                            Also delete any <strong>new</strong> People/Companies created by this specific import. 
+                            Existing registry data will not be touched.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button 
+                    @click="executeRollback" 
+                    :disabled="isRollingBack"
+                    class="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50 transition"
+                >
+                    {{ isRollingBack ? 'Processing...' : 'Yes, Delete Data' }}
+                </button>
+                <button 
+                    @click="closeRollbackModal" 
+                    class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-200 transition"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
     </div>
+</div>
   </div>
 </template>
 
@@ -211,12 +252,15 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
+import { useAuthStore } from '@/store/auth';
+
+const route = useRoute();
+const productSlug = computed(() => route.params.productSlug);
 
 const activeTab = ref('import');
 const history = ref([]);
 
-const route = useRoute();
-const productSlug = computed(() => route.params.productSlug);
+
 
 // State
 const fileTypes = ref([]);
@@ -236,6 +280,49 @@ const invalidCount = computed(() => {
     if (!results.value) return 0;
     return results.value.summary.invalid_count || results.value.summary.invalidCount || 0;
 });
+
+const showRollbackModal = ref(false);
+const selectedBatch = ref(null);
+const isRollingBack = ref(false);
+const rollbackOptions = ref({
+    deepClean: false
+});
+
+// 1. Open the Modal
+const openRollbackModal = (batch) => {
+    selectedBatch.value = batch;
+    rollbackOptions.value.deepClean = false; // Reset checkbox state
+    showRollbackModal.value = true;
+};
+
+// 2. Close the Modal
+const closeRollbackModal = () => {
+    showRollbackModal.value = false;
+    selectedBatch.value = null;
+};
+
+// 3. Execute the API Call
+const executeRollback = async () => {
+    if (!selectedBatch.value) return;
+    
+    isRollingBack.value = true;
+    try {
+        // Most apiClient setups handle the 'api/v1' and 'Authorization' header automatically
+        await apiClient.post(`/${route.params.productSlug}/import/rollback`, {
+            batch_id: selectedBatch.value.batchId,
+            deep_clean: rollbackOptions.value.deepClean 
+        });
+
+        alert("Import successfully reversed.");
+        closeRollbackModal();
+        fetchHistory(); 
+    } catch (err) {
+        console.error("Rollback failed:", err.response?.data);
+        alert(err.response?.data?.message || "Rollback failed.");
+    } finally {
+        isRollingBack.value = false;
+    }
+};
 
 // 1. Fetch File Types on Load
 // (Assumes a generic endpoint exists to list active file types for this product)

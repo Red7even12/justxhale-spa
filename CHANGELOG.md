@@ -80,3 +80,13 @@ Create New Case File logic that broke due to audit logs
   • Reactive Binding: Bound it to a new  caseNumberFilter  reactive reference.
   • Debounced Auto-Search: Added the new filter ref to the watcher array. Typing into the Case Number filter now automatically triggers a debounced API query (after 500ms) to update the list live.
   • CSV Export & Clearing: Included the filter parameter in the CSV download action and updated the "Clear Filters" button to reset the case number search.
+
+## [2.1.5] - 2026-05-25
+### Added
+-  Import Roll back function to have option for deep delete to includ Entities. Confirmation modal for deep deletes.
+
+### Changed
+- 
+
+### Fixed
+- Workflow screen layout to react on template specs.
