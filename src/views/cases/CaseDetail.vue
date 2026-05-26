@@ -369,7 +369,7 @@ const openAssignModal = (part = null) => {
     selectedEntity.value = part.entity;
     const roleMeta = part.metaData || part.meta_data || {};
     participantForm.value = {
-        role_key: part.roleKey || part.role_key || '',
+        role_key: (part.roleKey || part.role_key || '').toLowerCase(),
         reference_number: part.referenceNumber || part.reference_number || '',
         notes: part.notes || '',
         is_active: !!(part.isActive || part.is_active),

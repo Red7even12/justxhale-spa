@@ -90,3 +90,22 @@ Create New Case File logic that broke due to audit logs
 
 ### Fixed
 - Workflow screen layout to react on template specs.
+
+## [2.1.6] - 2026-05-26
+### Added
+-  
+
+### Changed
+- 
+
+### Fixed
+- Role-Key Normalization (The "executor" vs "Executor" Fix) 
+	1. The Problem:  Users were entering capitalized roles in Excel. The system’s logic (filtering fields by character context) is case-sensitive and requires lowercase keys to match the database.
+	2. The Fix (Backend):  Updated `CaseImportController.php` in both `dryRun` and `commitImport`. We now wrap all incoming role keys in `strtolower(trim())`.
+	3. The Fix (Template):  Updated `CaseFileTemplateExport.php` to ensure the Excel dropdown selectors also provide lowercase values.  
+	4. Architectural Outcome:  Data is "sanitized on arrival." The database is now guaranteed to store `executor` instead of a mix of casing, preventing logic failures in the character-context engine.
+
+- Strict Match Correction (Edit Modal)
+    1. The Problem:  When opening the "Update Participant" modal, the Role dropdown appeared blank even though data existed. This was due to a Javascript syntax error where the normalization logic was only looking at an empty string fallback.
+    2.   The Fix:  Corrected the logic in `CaseDetail.vue` by wrapping the data chain in parentheses: `(part.roleKey || part.role_key || '').toLowerCase()`.
+    3.    Architectural Outcome:  The UI now correctly "selects" the existing role in the dropdown by ensuring the data loaded from the database exactly matches the options list.

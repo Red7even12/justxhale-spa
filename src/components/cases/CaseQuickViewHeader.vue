@@ -99,33 +99,45 @@ const orderedParticipants = computed(() => {
 
 // --- 2. METADATA RESOLUTION (The Tri-Layer Logic) ---
 const quickFields = computed(() => {
-  // Use the 'fields' relationship from FileType
   const definitions = props.caseFile.fileType?.fields || [];
   
-  // Standard Case Meta (Layer 1)
+  // Layers
   const metaData = props.caseFile.metaData || props.caseFile.meta_data || {};
-  
-  // Resolved Global DNA (Layer 3)
   const projectedMeta = props.caseFile.projectedMetaData || props.caseFile.projected_meta_data || {};
+  const participants = props.caseFile.participants || [];
 
   return definitions
     .filter(def => def.showInQuickView || def.show_in_quick_view)
     .map(def => {
-      // 1. Get the Raw Key
       const key = def.fieldKey || def.field_key;
-      
-      // 2. Generate camelCase fallback
+      // Robust camelCase generator
       const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
       
-      // 3. Bulletproof isProjected check
       const hasId = !!def.entityFieldDefinitionId || !!def.entity_field_definition_id;
       const isProjected = hasId || def.isProjected === true || def.is_projected === true;
       
-      // 4. Resolve Value using robust Fallbacks
       let value = null;
+
       if (isProjected) {
+          // A. Try the summarized 'projected_meta_data' object first
           value = projectedMeta[key] ?? projectedMeta[camelKey] ?? null;
+
+          // B. DEEP SEARCH FALLBACK: If the backend flattening failed, 
+          // look through participants manually.
+          if (value === null || value === undefined) {
+              // Find any participant whose entity has this metadata key
+              const foundPart = participants.find(p => {
+                  const entMeta = p.entity?.metaData || p.entity?.meta_data;
+                  return entMeta && (entMeta[key] !== undefined || entMeta[camelKey] !== undefined);
+              });
+
+              if (foundPart) {
+                  const targetMeta = foundPart.entity.metaData || foundPart.entity.meta_data;
+                  value = targetMeta[key] ?? targetMeta[camelKey];
+              }
+          }
       } else {
+          // Standard Case Meta resolution
           value = metaData[key] ?? metaData[camelKey] ?? null;
       }
 
@@ -137,6 +149,6 @@ const quickFields = computed(() => {
         sortOrder: def.sortOrder || def.sort_order || 0
       };
     })
-    .sort((a, b) => a.sortOrder - b.sortOrder); // Ensure fields display in expected order
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 });
 </script>
