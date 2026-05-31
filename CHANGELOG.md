@@ -122,3 +122,13 @@ Create New Case File logic that broke due to audit logs
 - CaseFieldDefinitionIndex.vue flag to only use snake_case.
 - Filtering of Document Checklist to exclude inactive document_types
 -  **Case-Agnostic Resolution:** Updated the **QuickView Header** with a robust "Deep Search" logic. It now checks for metadata using both snake_case and camelCase conventions, ensuring the UI is resilient to variations in backend JSON serialization on the VPS.
+
+## [2.1.8] - 2026-05-31 11:56
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
