@@ -64,8 +64,20 @@
                 <input v-model="form.field_label" type="text" required class="w-full border-gray-300 rounded-lg shadow-sm">
             </div>
             <div>
-                <label class="block text-xs font-black text-gray-400 uppercase mb-1">Field Key (System)</label>
-                <input v-model="form.field_key" type="text" required class="w-full border-gray-300 rounded-lg shadow-sm font-mono text-sm">
+                <label class="block text-xs font-black text-gray-400 mb-1">
+                    Field Key (System)
+                </label>
+                <input 
+                    v-model="form.field_key" 
+                    type="text" 
+                    required 
+                    @input="normalizeKey"
+                    placeholder="e.g. tax_no_executor"
+                    class="w-full border-gray-300 rounded-lg shadow-sm font-mono text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">
+                    Automatically normalized to snake_case
+                </p>
             </div>
             <div>
                 <label class="block text-xs font-black text-gray-400 uppercase mb-1">Input Type</label>
@@ -195,12 +207,32 @@ const openModal = (field = null) => {
   showModal.value = true;
 };
 
+
+// --- NEW: Key Normalizer ---
+// This ensures that even if they copy-paste a messy string, we clean it up.
+const normalizeKey = () => {
+    form.field_key = form.field_key
+        .toLowerCase()                   // Force lowercase
+        .trim()                          // Remove outer spaces
+        .replace(/[\s-]/g, '_')          // Replace spaces and hyphens with underscores
+        .replace(/[^a-z0-9_]/g, '');     // Strip any other weird characters (like @, #, etc)
+};
+
 const save = async () => {
+    // 1. Final normalization before validation
+    normalizeKey();
+
+    // 2. Strict Regex Check: Only lowercase letters, numbers, and underscores allowed
+    const snakeRegex = /^[a-z0-9_]+$/;
+    if (!snakeRegex.test(form.field_key)) {
+        showAlert('Invalid Key', 'The Field Key must only contain lowercase letters, numbers, and underscores (no spaces or hyphens).');
+        return;
+    }
+
     try {
         const url = `admin/products/${props.slug}/file-types/${props.fileTypeId}/fields${form.id ? '/' + form.id : ''}`;
         const method = form.id ? 'put' : 'post';
         
-        // Ensure role is chosen if projection is selected
         if (form.entity_field_definition_id && !form.participant_role_id) {
             showAlert('Error', 'Projection mapping requires a Participant Role.');
             return;
@@ -210,7 +242,9 @@ const save = async () => {
         showModal.value = false;
         load();
         showAlert('Success', 'DNA Field synchronized.');
-    } catch (e) { showAlert('Error', 'Save failed.'); }
+    } catch (e) { 
+        showAlert('Error', e.response?.data?.message || 'Save failed.'); 
+    }
 };
 
 const confirmDelete = async (field) => {

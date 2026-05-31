@@ -41,7 +41,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="req in requirements" :key="req.id">
+          <tr v-for="req in activeRequirements" :key="req.id">
             
             <!-- Document Name & Note -->
             <td class="px-3 py-2 whitespace-nowrap align-top">
@@ -514,9 +514,20 @@ const requestPayload = reactive({
     documentIds: []
 });
 
+const activeRequirements = computed(() => {
+    return requirements.value.filter(req => {
+        const docType = req.documentType || req.document_type;
+        if (!docType) return false;
+        
+        // Handle potential naming variations and type differences (boolean/int/string)
+        const active = docType.is_active !== undefined ? docType.is_active : docType.isActive;
+        return active === true || active === 1 || active === '1';
+    });
+});
+
 const pendingDocuments = computed(() => {
     // Only show documents that are 'pending' (or 'stale') and are actually required
-    return requirements.value.filter(doc => 
+    return activeRequirements.value.filter(doc => 
         (doc.currentStatus === 'pending' || 
             doc.currentStatus === 'stale' || 
             doc.currentStatus === 'requested' 

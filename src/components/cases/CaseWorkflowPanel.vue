@@ -71,14 +71,16 @@
                   </button>
                 </div>
 
-                <!-- Input Type: BOOLEAN / NONE (Button Style) -->
-                <div v-else>
-                   <button 
-                      @click="saveStep(process, true)" 
-                      class="bg-brand-primary text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase shadow hover:opacity-90 transition-transform active:scale-95"
+                <!-- Input Type: BOOLEAN / NONE (Checkbox Style) -->
+                <div v-else class="flex items-center gap-2">
+                   <input 
+                      type="checkbox" 
+                      @change="saveStep(process, true)"
+                      class="w-4 h-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary cursor-pointer"
                    >
-                      {{ process.workflowStep?.actionLabelActive || 'Mark as Done' }}
-                   </button>
+                   <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      {{ process.workflowStep?.actionLabelActive || 'Yes / Done' }}
+                   </span>
                 </div>
 
               </div>

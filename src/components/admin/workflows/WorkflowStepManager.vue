@@ -23,8 +23,15 @@
         <button @click="handleImport" class="bg-white border border-indigo-200 text-indigo-600 px-4 py-1 rounded text-xs font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm" :disabled="!importFile || isImporting">
           {{ isImporting ? 'Processing...' : 'Upload & Sync Steps' }}
         </button>
-      </div>
-      
+
+        <button 
+            @click="syncWorkflow" 
+            class="bg-amber-500 text-white px-4 py-1 rounded text-xs font-black uppercase tracking-widest shadow-sm hover:bg-amber-600 transition-all"
+            >
+            Sync to Existing Cases
+        </button>
+        </div>
+
       <!-- Feedback -->
       <div v-if="importSuccessMessage" class="mt-2 text-[10px] text-green-600 font-bold uppercase">{{ importSuccessMessage }}</div>
       <div v-if="importErrors.length > 0" class="mt-2 p-2 bg-red-50 rounded border border-red-100 max-h-24 overflow-y-auto">
@@ -145,6 +152,17 @@ const handleImport = async () => {
         }
     }
     isImporting.value = false;
+};
+
+const syncWorkflow = async () => {
+    if (!confirm("This will add any missing steps to all active cases for this niche. Proceed?")) return;
+    
+    try {
+        const res = await apiClient.post(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/sync`);
+        alert(res.data.message);
+    } catch (e) {
+        alert("Sync failed.");
+    }
 };
 
 watch(() => props.definition?.id, fetchSteps, { immediate: true });

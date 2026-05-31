@@ -109,3 +109,16 @@ Create New Case File logic that broke due to audit logs
     1. The Problem:  When opening the "Update Participant" modal, the Role dropdown appeared blank even though data existed. This was due to a Javascript syntax error where the normalization logic was only looking at an empty string fallback.
     2.   The Fix:  Corrected the logic in `CaseDetail.vue` by wrapping the data chain in parentheses: `(part.roleKey || part.role_key || '').toLowerCase()`.
     3.    Architectural Outcome:  The UI now correctly "selects" the existing role in the dropdown by ensuring the data loaded from the database exactly matches the options list.
+
+
+## [2.1.7] - 2026-05-31
+### Added
+- 
+
+### Changed
+- Display on Workflow screen changed to use Tickboxes for Boolean rather than Named buttons - the button naming was not contextually correct in most instances.
+
+### Fixed
+- CaseFieldDefinitionIndex.vue flag to only use snake_case.
+- Filtering of Document Checklist to exclude inactive document_types
+-  **Case-Agnostic Resolution:** Updated the **QuickView Header** with a robust "Deep Search" logic. It now checks for metadata using both snake_case and camelCase conventions, ensuring the UI is resilient to variations in backend JSON serialization on the VPS.
