@@ -72,6 +72,7 @@
            noteable-type="case_file"
            :noteable-id="caseFile.id"
            :context-url="`${route.params.productSlug}/cases/${caseFile.id}`" 
+           :current-team-id="caseFile.current_team_id || caseFile.currentTeamId"
            @cancel="showNotesModal = false"
         />
       </div>

@@ -1,6 +1,6 @@
 <template>
   <div class="notes-panel">
-    <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Notes & History XX</h3>
+    <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Notes & History</h3>
 
     <div class="mb-4">
       <textarea
@@ -11,13 +11,23 @@
         style="min-height: 80px;"
         @input="autoResize"
       ></textarea>
-        <div class="mt-2">
+        <div class="mt-2 flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           v-model="newCaseNumber"
-          class="form-input w-full sm:w-1/2"
+          class="form-input flex-1"
           placeholder="Case Number (optional)"
         >
+        <select 
+          v-if="teamMembers.length"
+          v-model="taggedUserId" 
+          class="form-input flex-1"
+        >
+          <option :value="null">Tag Team Member (optional)</option>
+          <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+            Tag: {{ member.firstName || member.first_name }} {{ member.lastName || member.last_name }}
+          </option>
+        </select>
       </div>
       <div v-if="error" class="text-sm text-red-600 mt-1">{{ error }}</div>
       
@@ -65,6 +75,14 @@
         <template v-if="note.type !== 'email'">
             <p class="text-gray-800 whitespace-pre-wrap mb-2">{{ note.content }}</p>
             
+            <!-- Tagged User -->
+            <div v-if="note.taggedUser || note.tagged_user" class="mb-2 text-xs font-bold text-orange-600 bg-orange-50 inline-block px-2 py-1 rounded border border-orange-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Tagged: {{ (note.taggedUser || note.tagged_user).firstName || (note.taggedUser || note.tagged_user).first_name }} {{ (note.taggedUser || note.tagged_user).lastName || (note.taggedUser || note.tagged_user).last_name }}
+            </div>
+
             <!-- Case Number (Data Style) -->
             <div v-if="note.caseNumber || note.case_number" class="mb-2 text-sm text-brand-blue-600 bg-brand-blue-50 inline-block px-2 py-1 rounded">
                 <strong>CN:</strong> {{ note.caseNumber || note.case_number }}
@@ -140,7 +158,8 @@ import apiClient from '@/services/api';
 const props = defineProps({
   noteableType: { type: String, required: true },
   noteableId: { type: [Number, String], required: true }, 
-  contextUrl: { type: String, required: true } 
+  contextUrl: { type: String, required: true },
+  currentTeamId: { type: [Number, String], default: null }
 });
 
 const emit = defineEmits(['note-added', 'cancel']);
@@ -148,8 +167,29 @@ const emit = defineEmits(['note-added', 'cancel']);
 const notes = ref([]);
 const newNoteContent = ref('');
 const newCaseNumber = ref('');
+const taggedUserId = ref(null);
+const teamMembers = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
+
+// Fetch team members if a team ID is provided
+const fetchTeamMembers = async () => {
+    if (!props.currentTeamId) return;
+    try {
+        const response = await apiClient.get(`/teams/${props.currentTeamId}`);
+        // Robust extraction: check for users directly or inside a data wrapper
+        const data = response.data?.data || response.data;
+        teamMembers.value = data.users || [];
+    } catch (err) {
+        console.error("Failed to fetch team members", err);
+    }
+};
+
+onMounted(() => {
+    if (props.currentTeamId) {
+        fetchTeamMembers();
+    }
+});
 
 // Pagination State
 const currentPage = ref(1);
@@ -258,6 +298,8 @@ const submitNote = async () => {
     noteable_id: Number(props.noteableId), // Force Integer for Laravel Validation
     content: newNoteContent.value,
     case_number: newCaseNumber.value || null,
+    tagged_user_id: taggedUserId.value,
+    due_date: (showReminderInput.value && reminderDate.value) ? reminderDate.value : null
   };
 
   try {
@@ -267,25 +309,10 @@ const submitNote = async () => {
     // Instantly add the new note to the TOP of the array
     notes.value.unshift(savedNote);
     
-    // Handle Reminder
-    if (showReminderInput.value && reminderDate.value) {
-        try {
-            const reminderPayload = {
-                due_date: reminderDate.value,
-                notes: newNoteContent.value,
-                note_id: savedNote.id, 
-                case_workflow_process_id: props.noteableType === 'case_workflow_process' ? Number(props.noteableId) : null,
-                case_document_requirement_id: props.noteableType === 'case_document_requirement' ? Number(props.noteableId) : null
-            };
-            await apiClient.post(`/${props.contextUrl}/reminders`, reminderPayload);
-        } catch (remErr) {
-            console.error("Failed to create reminder", remErr);
-        }
-    }
-
     // Reset Form
     newNoteContent.value = ''; 
     newCaseNumber.value = '';
+    taggedUserId.value = null;
     reminderDate.value = '';
     showReminderInput.value = false;
     nextTick(autoResize);

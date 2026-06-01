@@ -131,4 +131,19 @@ Create New Case File logic that broke due to audit logs
 - 
 
 ### Fixed
-- 
+- 405 Not Allowed error on Server after 2.1.7
+   1. Internalizing the proxying in the frontend container, removing the dependency on the external **Nginx Proxy Manager (NPM)** being perfectly configured for sub-paths. The Frontend now manages its own API traffic for a Dockerized SPA.
+- **"Double-Gated" Architecture**:
+    1.  **Gate 1 (NPM):** Handles SSL and the initial split.
+    2.  **Gate 2 (Frontend Nginx):** Acts as a safety net to ensure API and Storage requests always find their way home. 
+
+## [3.0.0] - 2026-06-01
+### Added
+- RemindersDashboard.vue:
+    * Added the "Tagged For" header before the "Status" column.
+    * Added the corresponding data cell in the table body.
+    * Used robust logic to handle both taggedUser and tagged_user keys, displaying the member's first name in a styled orange badge.
+### Changed
+- Removed all legacy code of V1 - all objects referring to "estate" that was replaced with the "case file" objects.
+
+### Fixed

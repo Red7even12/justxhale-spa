@@ -155,6 +155,7 @@
           :noteable-type="currentNoteContext.type"
           :noteable-id="currentNoteContext.id"
           :context-url="`${route.params.productSlug}/cases/${props.caseId}`" 
+          :current-team-id="props.currentTeamId"
           @note-added="(n) => {
               // Ensure currentNotes is an array before calling unshift
               if (!Array.isArray(currentNotes)) {
@@ -461,7 +462,10 @@ import { useAuthStore } from '@/store/auth';
 import Modal from '@/components/common/Modal.vue';
 import NotesPanel from '@/components/estates/NotesPanel.vue';
 
-const props = defineProps({ caseId: { type: [String, Number], required: true } });
+const props = defineProps({ 
+  caseId: { type: [String, Number], required: true },
+  currentTeamId: { type: [String, Number], default: null }
+});
 const route = useRoute();
 const productSlug = computed(() => route.params.productSlug);
 const caseId = computed(() => route.params.id);

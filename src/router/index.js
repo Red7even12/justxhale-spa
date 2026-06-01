@@ -6,10 +6,6 @@ import AppLayout from '../layouts/AppLayout.vue';
 import Login from '../views/Login.vue';
 //import Dashboard from '../views/Dashboard.vue';
 import Dashboard from '../views/RemindersDashboard.vue';
-// V1 Legacy Imports
-// import EstatesIndex from '../views/estates/EstatesIndex.vue'; 
-// import EstateEditor from '../views/estates/EstateEditor.vue'; 
-// import EstateForm from '../views/estates/EstateForm.vue';
 
 // Admin Imports
 import TeamIndex from '../views/admin/TeamIndex.vue';
@@ -210,38 +206,7 @@ const routes = [
         meta: { displayName: 'Product Detail' }
       },
 
-      /* 
-      // 3. V1 LEGACY ROUTES (Estates)
-      { 
-         path: 'estates', 
-         name: 'estates.index',
-         component: EstatesIndex,
-         meta: { displayName: 'Estates Management' } 
-      },
-      {
-        path: 'estates/create',
-        name: 'estates.create',
-        component: EstateForm,
-        meta: { displayName: 'Create Estate' }
-      },
-      {
-        path: 'estates/:id/edit',
-        name: 'estates.form.edit',
-        component: EstateForm,
-        props: true,
-        meta: { displayName: 'Edit Estate' }
-      },
-      {
-        // Legacy Editor (V1)
-        path: 'estates/:id',
-        name: 'estates.edit',
-        component: EstateEditor,
-        props: true,
-        meta: { displayName: 'Estate Workspace' }
-      },
-      */
-
-      // 4. GLOBAL REGISTRY (Shared)
+       // 4. GLOBAL REGISTRY (Shared)
       {
         path: 'entities',
         name: 'entities.index',

@@ -33,6 +33,12 @@
               <label for="to_date" class="block text-sm font-medium text-gray-700">To</label>
               <input id="to_date" type="date" v-model="filters.to_date" :disabled="filters.status === 'all'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
             </div>
+            <div class="filter-group flex items-end">
+              <div class="flex items-center h-10">
+                <input id="my_tagged_only" type="checkbox" v-model="filters.my_tagged_only" class="h-4 w-4 text-brand-blue-600 focus:ring-brand-blue-500 border-gray-300 rounded" />
+                <label for="my_tagged_only" class="ml-2 block text-sm text-gray-900 font-medium">My Tagged Only</label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -48,6 +54,7 @@
               <th scope="col" @click="handleSort('due_date')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-20">Due Date ⇅</th>
               <th scope="col" @click="handleSort('case_name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">Case File ⇅</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Tagged For</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Status</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Actions</th>
             </tr>
@@ -61,6 +68,12 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {{ reminder.taskContext || reminder.task_context }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                <span v-if="reminder.taggedUser || reminder.tagged_user" class="text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                  {{ (reminder.taggedUser || reminder.tagged_user).firstName || (reminder.taggedUser || reminder.tagged_user).first_name }}
+                </span>
+                <span v-else class="text-gray-300 italic">-</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <span :class="getStatusClass(reminder)">
@@ -168,6 +181,7 @@
         :noteable-type="notesContext.noteableType"
         :noteable-id="notesContext.noteableId"
         :context-url="notesContext.contextUrl" 
+        :current-team-id="notesContext.currentTeamId"
         @note-added="isNotesModalOpen = false"
         @cancel="isNotesModalOpen = false"
       />
@@ -212,6 +226,7 @@ const filters = reactive({
   status: '', 
   from_date: '',
   to_date: '',
+  my_tagged_only: false,
   sort_by: 'due_date',
   sort_dir: 'asc', 
   page: 1,
@@ -234,6 +249,7 @@ const notesContext = reactive({
   noteableType: null,
   noteableId: null,
   contextUrl: '', 
+  currentTeamId: null,
   initialNotes: [],
 });
 
@@ -293,7 +309,8 @@ watch([
   () => filters.status,
   () => filters.from_date,
   () => filters.to_date,
-  () => filters.per_page
+  () => filters.per_page,
+  () => filters.my_tagged_only
 ], () => {
     if (filters.page !== 1) {
         filters.page = 1;
@@ -439,6 +456,7 @@ const addNote = async (reminder) => {
   notesContext.noteableType = noteableType;
   notesContext.noteableId = noteableId;
   notesContext.contextUrl = `${route.params.productSlug}/cases/${caseId}`;
+  notesContext.currentTeamId = reminder.case_current_team_id || reminder.caseCurrentTeamId || reminder.teams_id || reminder.teamsId;
   
   // 6. Open the Modal (The NotesPanel component will auto-fetch the data now)
   isNotesModalOpen.value = true;

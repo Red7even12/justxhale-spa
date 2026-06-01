@@ -18,14 +18,14 @@
       <!-- Column 1: Documents (6 wide) -->
       <div class="lg:col-span-6 bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
         <div class="p-6 h-full overflow-hidden">
-           <CaseDocumentsTable :case-id="caseFile.id" />
+           <CaseDocumentsTable :case-id="caseFile.id" :current-team-id="caseFile.current_team_id || caseFile.currentTeamId" />
         </div>
       </div>
       
       <!-- Column 2: Workflow (4 wide) -->
       <div class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
         <div class="p-6 h-full overflow-hidden">
-           <CaseWorkflowPanel :case-id="caseFile.id" />
+           <CaseWorkflowPanel :case-id="caseFile.id" :current-team-id="caseFile.current_team_id || caseFile.currentTeamId" />
         </div>
       </div>
 
