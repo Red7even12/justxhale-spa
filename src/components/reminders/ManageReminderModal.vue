@@ -92,7 +92,24 @@
             </div>
           </div>
 
-          <!-- Action 2: Snooze Reminder -->
+          <!-- Action 2: Change Status -->
+          <div class="mb-6 border-t pt-4">
+            <label for="reminder_status" class="form-label">Change Status</label>
+            <p class="text-xs text-gray-500 mb-2">
+              Update the progress or status of this task.
+            </p>
+            <div class="flex items-center space-x-2">
+              <select id="reminder_status" v-model="form.statusId" class="form-input flex-grow bg-white">
+                <option :value="1">Pending</option>
+                <option :value="2">Completed</option>
+                <option :value="3">Cancelled</option>
+                <option :value="4">Escalated</option>
+              </select>
+              <button @click="updateStatus" class="btn-primary" :disabled="!form.statusId || form.statusId === reminder.reminder_status_id">Update</button>
+            </div>
+          </div>
+
+          <!-- Action 3: Snooze Reminder -->
           <div class="border-t pt-4">
             <label class="form-label">Snooze Task</label>
             <p class="text-xs text-gray-500 mb-2">
@@ -154,6 +171,7 @@ const form = reactive({
   newDueDate: '',
   snoozeDueDate: '',
   snoozeDays: 1, 
+  statusId: null,
 });
 
 const formatDateForInput = (dateString) => {
@@ -195,7 +213,7 @@ watch(() => props.reminderId, async (newId) => {
       const response = await apiClient.get(`/${productSlug.value}/reminders/${newId}`);
       // V2 Resiliency: Support both wrapped and unwrapped responses
       reminder.value = response.data.data || response.data;
-      resetForm(formatDateForInput(reminder.value.dueDate)); 
+      resetForm(formatDateForInput(reminder.value.dueDate), reminder.value.reminder_status_id); 
     } catch (err) {
       error.value = "Failed to load task details.";
       console.error(err);
@@ -273,6 +291,14 @@ const updateDueDate = async () => {
   } catch (err) { alert("Failed to update due date."); }
 };
 
+const updateStatus = async () => {
+  try {
+    await apiClient.put(`/${productSlug.value}/reminders/${props.reminderId}`, { reminder_status_id: form.statusId });
+    emit('reminder-updated');
+    emit('close');
+  } catch (err) { alert("Failed to update status."); }
+};
+
 const snoozeReminder = async () => {
   try {
     await apiClient.post(`/${productSlug.value}/reminders/${props.reminderId}/snooze`, { due_date: form.snoozeDueDate });
@@ -290,10 +316,11 @@ const snoozeByDays = async () => {
   } catch (err) { alert("Failed to snooze task."); }
 };
 
-const resetForm = (baseDate) => {
+const resetForm = (baseDate, statusId = null) => {
   form.newDueDate = baseDate || '';
   form.snoozeDueDate = '';
   form.snoozeDays = 1;
+  form.statusId = statusId;
 };
 </script>
 

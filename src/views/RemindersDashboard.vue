@@ -15,11 +15,13 @@
         </div>
         <div class="filter-group">
           <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-          <select id="status" v-model="filters.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm">
+          <select id="status" v-model="filters.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm bg-white">
             <option value="">All Open</option>
             <option value="overdue">Overdue</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="1">Pending</option>
+            <option value="2">Completed</option>
+            <option value="3">Cancelled</option>
+            <option value="4">Escalated</option>
             <option value="all" :disabled="!canShowAll">
                 {{ canShowAll ? 'Show All (Disregard Dates)' : 'Show All (Search Case First)' }}
             </option>
@@ -61,7 +63,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="reminder in reminders.data" :key="reminder.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ formatDate(reminder.dueDate || reminder.due_date) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm" :class="getDateStatusClass(reminder)">{{ formatDate(reminder.dueDate || reminder.due_date) }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <span class="font-medium text-gray-900">{{ reminder.caseName || reminder.case_name }}</span>
                 <div class="text-xs text-gray-400">{{ reminder.caseReference || reminder.case_reference }}</div>
@@ -70,14 +72,15 @@
                 {{ reminder.taskContext || reminder.task_context }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                <span v-if="reminder.taggedUser || reminder.tagged_user" class="text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                <span v-if="reminder.taggedUser || reminder.tagged_user" class="text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
                   {{ (reminder.taggedUser || reminder.tagged_user).firstName || (reminder.taggedUser || reminder.tagged_user).first_name }}
+                  {{ (reminder.taggedUser || reminder.tagged_user).lastName || (reminder.taggedUser || reminder.tagged_user).last_name }}
                 </span>
                 <span v-else class="text-gray-300 italic">-</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span :class="getStatusClass(reminder)">
-                  {{ getStatusLabel(reminder) }}
+                <span :class="getBusinessStatusClass(reminder)">
+                  {{ getBusinessStatusLabel(reminder) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -329,17 +332,48 @@ watch([
 });
 
 
- const getStatusLabel = (reminder) => {
-  const name = reminder.statusName || reminder.status_name;
-  if (name) return name;
+const getBusinessStatusLabel = (reminder) => {
+  if (reminder.status?.name) return reminder.status.name;
+  if (reminder.statusName) return reminder.statusName;
+  if (reminder.status_name) return reminder.status_name;
 
   const statusId = reminder.reminderStatusId || reminder.reminder_status_id;
+  if (statusId === 1) return 'Pending';
+  if (statusId === 2) return 'Completed';
   if (statusId === 3) return 'Cancelled';
+  if (statusId === 4) return 'Escalated';
 
   if (reminder.completedAt || reminder.completed_at) return 'Completed';
 
+  return 'Pending';
+};
+
+const getBusinessStatusClass = (reminder) => {
+  const baseClasses = 'px-2 py-0.5 inline-flex items-center text-[10px] uppercase tracking-wider font-bold rounded';
+  const label = getBusinessStatusLabel(reminder).toLowerCase();
+  switch (label) {
+    case 'completed':
+      return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
+    case 'cancelled':
+      return `${baseClasses} bg-gray-100 text-gray-500 border border-gray-200`;
+    case 'escalated':
+      return `${baseClasses} bg-amber-100 text-orange-800 border border-amber-200`;
+    case 'pending':
+    default:
+      return `${baseClasses} bg-blue-100 text-blue-800 border border-blue-200`;
+  }
+};
+
+const getDateStatusClass = (reminder) => {
+  const status = getBusinessStatusLabel(reminder).toLowerCase();
+  
+  // If the reminder is already Completed or Cancelled, temporal urgency is no longer active
+  if (status === 'completed' || status === 'cancelled') {
+    return 'text-gray-400 font-medium';
+  }
+
   const rawDueDate = reminder.dueDate || reminder.due_date;
-  if (!rawDueDate) return 'Pending';
+  if (!rawDueDate) return 'text-gray-500 font-medium';
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -353,34 +387,13 @@ watch([
   }
   dueDate.setHours(0, 0, 0, 0);
 
-  if (dueDate < today) return 'Overdue';
-  if (dueDate.getTime() === today.getTime()) return 'Due Today';
-  return 'Pending';
-};
-
- const getStatusClass = (reminder) => {
-  const baseClasses = 'px-2 py-0.5 inline-flex items-center text-[10px] uppercase tracking-wider font-bold rounded';
-  
-  // Normalized status name or derived status
-  const label = getStatusLabel(reminder).toLowerCase();
-
-  // Completed or Cancelled status (Gray pill)
-  if (label === 'completed' || label === 'cancelled') {
-    return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
+  if (dueDate < today) {
+    return 'text-red-600 font-bold'; // Overdue (Red)
+  } else if (dueDate.getTime() === today.getTime()) {
+    return 'text-green-600 font-bold'; // Due Today (Green)
+  } else {
+    return 'text-brand-blue-600 font-semibold'; // Due in Future (Blue)
   }
-
-  // Overdue status (Red pill)
-  if (label === 'overdue') {
-    return `${baseClasses} bg-red-100 text-red-800 border border-red-200`;
-  }
-
-  // Due Today status (Green pill)
-  if (label === 'due today') {
-    return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
-  }
-  
-  // Future reminders (Pending)
-  return `${baseClasses} bg-blue-100 text-blue-800 border border-blue-200`; 
 };
 
 const handleSort = (field) => {

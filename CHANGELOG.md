@@ -147,3 +147,30 @@ Create New Case File logic that broke due to audit logs
 - Removed all legacy code of V1 - all objects referring to "estate" that was replaced with the "case file" objects.
 
 ### Fixed
+
+## [3.0.1] - 2026-06-01
+### Added
+- 
+
+### Changed
+- Show only active team members on Reminder Tagging
+- Show both Firstname and Lastname on tagged reminders in reminder dashboard.
+
+### Fixed
+
+## [3.0.2] - 2026-06-06
+### Added
+- Update the status of opened Reminder
+    1. Implement frontend status dropdown filter options in `RemindersDashboard.vue`
+    2. Add date status highlighting class helper in `RemindersDashboard.vue`
+    3. Add business status badge helpers in `RemindersDashboard.vue`
+    4. Update table cells in `RemindersDashboard.vue` to render styled due dates and statuses
+
+### Changed
+- Show only active team members on Reminder Tagging
+- Show both Firstname and Lastname on tagged reminders in reminder dashboard.
+
+### Fixed
+-   Repair workflow step sort order.
+    1. Refactored the  index()  query to fetch the processes eager-loaded with  workflowStep , and then sort them in-memory by their  sort_order  using the Eloquent Collection  sortBy()  helper.
+    2. Chained  ->values()  to guarantee the serialized JSON response is an ordered, zero-indexed list.

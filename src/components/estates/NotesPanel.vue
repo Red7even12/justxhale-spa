@@ -179,7 +179,14 @@ const fetchTeamMembers = async () => {
         const response = await apiClient.get(`/teams/${props.currentTeamId}`);
         // Robust extraction: check for users directly or inside a data wrapper
         const data = response.data?.data || response.data;
-        teamMembers.value = data.users || [];
+        const allMembers = data.users || [];
+        
+        // Filter: Only include active team members
+        teamMembers.value = allMembers.filter(member => {
+            const pivot = member.pivot || {};
+            const isActive = pivot.isActive !== undefined ? pivot.isActive : pivot.is_active;
+            return isActive === true || isActive === 1 || isActive === '1';
+        });
     } catch (err) {
         console.error("Failed to fetch team members", err);
     }

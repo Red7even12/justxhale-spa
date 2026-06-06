@@ -55,12 +55,6 @@
 
   </div>
 
-  <button 
-    @click="testDownloadTemplate" 
-    class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150"
->
-    Test Download Import Template
-</button>
 </template>
 
 <script setup>
@@ -135,42 +129,5 @@ onUnmounted(() => {
   uiStore.clearHeaderActions();
 });
 
-// Add this helper function to your script
-const testDownloadTemplate = async () => {
-    try {
-        // We will hardcode 'justxhale' and 'file_type_id=1' (Deceased Estate) for this test.
-        // Adjust these if your DB IDs are different!
-        const response = await apiClient.get('/justxhale/import/download-template', {
-            params: { file_type_id: 1 },
-            responseType: 'blob' // CRITICAL for Excel downloads
-        });
 
-        // Create a temporary link to force the browser to download the blob
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Extract filename from headers if possible, otherwise use a default
-        const contentDisposition = response.headers['content-disposition'];
-        let fileName = 'import_template.xlsx';
-        if (contentDisposition) {
-            const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
-            if (fileNameMatch && fileNameMatch.length === 2) {
-                fileName = fileNameMatch[1];
-            }
-        }
-        
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        
-    } catch (error) {
-        console.error("Download failed:", error);
-        alert("Failed to download template. Check console.");
-    }
-};
 </script>
