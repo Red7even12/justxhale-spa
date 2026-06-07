@@ -158,19 +158,35 @@ Create New Case File logic that broke due to audit logs
 
 ### Fixed
 
-## [3.0.2] - 2026-06-06
+## [3.0.3] - 2026-06-06
 ### Added
 - Update the status of opened Reminder
     1. Implement frontend status dropdown filter options in `RemindersDashboard.vue`
     2. Add date status highlighting class helper in `RemindersDashboard.vue`
     3. Add business status badge helpers in `RemindersDashboard.vue`
     4. Update table cells in `RemindersDashboard.vue` to render styled due dates and statuses
+- Workflow visualizer on Superadmin Workflow setup screen.
+    1. Parent-to-Child Prop Pipeline: Updated WorkflowBlueprint.vue to explicitly pass down the standard  :product="product"  object into the  WorkflowStepManager  child component.
+    2. Double-Insured Title Fallback: Inside WorkflowStepManager.vue, declared the optional  product  prop and added a computed property  formattedProductName  that:
+        • Uses  props.product.name  if passed down.
+        • Automatically splits and transforms the route's kebab-case  slug  (e.g.  justxhale-co-op  into a beautiful Title Case fallback like  Justxhale Co Op ) if the product object is ever missing, guaranteeing it never breaks.
+    3. Pristine Document Title layout: I updated the modal header's title block to dynamically render:
+        [Product Name] — [Workflow Definition Name] 
+        (e.g., "Justxhale — Standard Estate Liquidation" or "Funeral Co-op — Default Workflow")
+    4. SVG Print Decoupling: I added the  no-print  helper class to the indigo flow chart icon in the title, keeping the final printable PDF clean and text-focused.
 
 ### Changed
 - Show only active team members on Reminder Tagging
 - Show both Firstname and Lastname on tagged reminders in reminder dashboard.
+- Added Company to the Participant on Quickview bar. 
+- Improved Partcicipant Selector on the Modal screen to a dropdown driven by first letter selection filter.
+- Applied Participant role sort order to the quick view bar.
+- Supply "Company" as part of the select string where you select Participants.
+- Added Company to the participant cards above the quick view bar.
 
 ### Fixed
 -   Repair workflow step sort order.
     1. Refactored the  index()  query to fetch the processes eager-loaded with  workflowStep , and then sort them in-memory by their  sort_order  using the Eloquent Collection  sortBy()  helper.
     2. Chained  ->values()  to guarantee the serialized JSON response is an ordered, zero-indexed list.
+
+## [3.0.4] - 2026-06-xx

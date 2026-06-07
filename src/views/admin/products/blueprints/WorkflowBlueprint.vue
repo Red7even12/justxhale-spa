@@ -64,6 +64,7 @@
               <WorkflowStepManager 
                   :definition="selectedDefinition" 
                   :slug="slug" 
+                  :product="product"
               />
           </div>
         </div>

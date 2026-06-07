@@ -12,13 +12,18 @@
         
         <div v-if="part.entity">
           <div class="text-sm font-bold text-gray-900 truncate" :title="part.entity.name">
-            {{ part.entity.name }}
+            <span v-if="part.entity?.entity_type === 'company' || part.entity?.entityType === 'company'" class="text-gray-500 font-normal">Co: </span>{{ part.entity.name }}
           </div>
-          <div class="text-[12px] text-gray-800 mt-0.5 truncate flex items-center gap-2">
-            <span v-if="part.referenceNumber || part.reference_number" class="font-mono rounded text-[12px]">
-              {{ part.referenceNumber || part.reference_number }}
-            </span>
-            <span class="truncate opacity-90">{{ part.entity.email }}</span>
+          <div v-if="part.entity?.parent" class="text-[11px] text-brand-primary font-black uppercase tracking-wider truncate mt-0.5" :title="'Co: ' + part.entity.parent.name">
+            Co: {{ part.entity.parent.name }}
+          </div>
+          <!-- Reference # -->
+          <div v-if="part.referenceNumber || part.reference_number" class="text-[11px] text-gray-600 font-mono truncate mt-0.5" :title="'Ref: ' + (part.referenceNumber || part.reference_number)">
+            Ref: {{ part.referenceNumber || part.reference_number }}
+          </div>
+          <!-- Email Address -->
+          <div v-if="part.entity.email" class="text-[11px] text-gray-500 truncate mt-0.5" :title="part.entity.email">
+            {{ part.entity.email }}
           </div>
         </div>
         <div v-else class="text-xs text-gray-400 italic">Not Assigned</div>
@@ -82,18 +87,24 @@ const props = defineProps({
 });
 
 // --- 1. PARTICIPANT ORDERING ---
-const ROLE_PRIORITY = ['executor', 'attorney', 'agent', 'master', 'sars'];
-
 const orderedParticipants = computed(() => {
   if (!props.caseFile.participants) return [];
   const activeParts = props.caseFile.participants.filter(p => p.isActive || p.is_active);
 
   return activeParts.sort((a, b) => {
+    const roleA = a.participantRole || a.participant_role;
+    const roleB = b.participantRole || b.participant_role;
+
+    const orderA = roleA ? (roleA.sortOrder ?? roleA.sort_order ?? 0) : 999;
+    const orderB = roleB ? (roleB.sortOrder ?? roleB.sort_order ?? 0) : 999;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
     const keyA = (a.roleKey || a.role_key || '').toLowerCase();
     const keyB = (b.roleKey || b.role_key || '').toLowerCase();
-    const indexA = ROLE_PRIORITY.indexOf(keyA);
-    const indexB = ROLE_PRIORITY.indexOf(keyB);
-    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    return keyA.localeCompare(keyB);
   });
 });
 

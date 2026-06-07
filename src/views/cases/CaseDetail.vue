@@ -95,8 +95,9 @@
             <tbody class="bg-white divide-y divide-gray-100">
               <tr v-for="part in caseFile.participants" :key="part.id" class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <div class="text-sm font-bold text-gray-900">{{ part.entity?.name }}</div>
+                  <div class="text-sm font-bold text-gray-900">
+                    <span v-if="part.entity?.entity_type === 'company' || part.entity?.entityType === 'company'" class="text-gray-500 font-normal">Co: </span>{{ part.entity?.name }}
+                    <span v-if="part.entity?.parent" class="text-xs text-brand-primary font-bold ml-1">— Co: {{ part.entity.parent.name }}</span>
                   </div>
                   <div class="text-[10px] text-gray-400 uppercase font-bold">{{ part.entity?.email }}</div>
                 </td>
@@ -130,19 +131,54 @@
         <form @submit.prevent="saveParticipant" class="p-8 space-y-6 overflow-y-auto">
           
           <!-- 1. Entity Selection -->
-          <div v-if="!selectedEntity">
-            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Search Global Registry</label>
-            <input v-model="searchQuery" @input="handleSearch" type="text" class="w-full p-3 border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm" placeholder="Type name or email...">
-            <ul v-if="searchResults.length > 0" class="mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-40 overflow-y-auto">
-              <li v-for="entity in searchResults" :key="entity.id" @click="selectEntity(entity)" class="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer text-sm font-bold text-gray-700">
-                {{ entity.name }} <span class="text-[10px] text-gray-400 font-normal ml-2">{{ entity.email }}</span>
+          <div v-if="!selectedEntity" class="space-y-4">
+            <div>
+              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Search Global Registry</label>
+              
+              <!-- Alpha Jump Bar (Double Row Grid) -->
+              <div class="grid gap-1 mb-3" style="grid-template-columns: repeat(14, minmax(0, 1fr));">
+                <button 
+                  type="button"
+                  @click="clearAlphaFilter"
+                  :class="['h-7 flex items-center justify-center rounded-lg text-[10px] font-black tracking-wider uppercase transition-all', !selectedLetter ? 'bg-brand-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+                >
+                  All
+                </button>
+                <button 
+                  v-for="letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')" 
+                  :key="letter"
+                  type="button"
+                  @click="filterByLetter(letter)"
+                  :class="['h-7 flex items-center justify-center rounded-lg text-xs font-black transition-all', selectedLetter === letter ? 'bg-brand-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+                >
+                  {{ letter }}
+                </button>
+              </div>
+
+              <input v-model="searchQuery" @input="handleSearch" type="text" class="w-full p-3 border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm shadow-sm" placeholder="Type name or email...">
+            </div>
+
+            <!-- Rich Results Dropdown -->
+            <ul v-if="searchResults.length > 0" class="mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-gray-50">
+              <li v-for="entity in searchResults" :key="entity.id" @click="selectEntity(entity)" class="p-3 hover:bg-gray-50 cursor-pointer text-sm font-bold text-gray-700 flex justify-between items-center transition-colors">
+                <div>
+                  <span v-if="entity.entity_type === 'company' || entity.entityType === 'company'" class="text-gray-500 font-normal">Co: </span><span class="text-gray-950 font-black">{{ entity.name }}</span>
+                  <span v-if="entity.parent" class="text-xs text-brand-primary font-bold ml-1.5">— Co: {{ entity.parent.name }}</span>
+                  <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">{{ entity.email || 'No Email' }}</div>
+                </div>
+                <span :class="['text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border shrink-0', entity.entity_type === 'company' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-gray-50 text-gray-600 border-gray-100']">
+                  {{ entity.entity_type }}
+                </span>
               </li>
             </ul>
           </div>
-          <div v-else class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
+          <div v-else class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
             <div>
-              <div class="text-sm font-black text-gray-900">{{ selectedEntity.name }}</div>
-              <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{{ selectedEntity.email }}</div>
+              <div class="text-sm font-black text-gray-900">
+                <span v-if="selectedEntity.entity_type === 'company' || selectedEntity.entityType === 'company'" class="text-gray-500 font-normal">Co: </span>{{ selectedEntity.name }}
+                <span v-if="selectedEntity.parent" class="text-xs text-brand-primary font-bold ml-1">— Co: {{ selectedEntity.parent.name }}</span>
+              </div>
+              <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">{{ selectedEntity.email }}</div>
             </div>
             <button v-if="!isEditingParticipant" type="button" @click="clearSelection" class="text-brand-primary font-black text-[10px] uppercase underline hover:text-brand-secondary">Change</button>
           </div>
@@ -226,6 +262,7 @@ const teams = ref([]);
 const participantRoles = ref([]);
 const activeTab = ref('details');
 const tabs = [{ id: 'details', label: 'Details' }, { id: 'participants', label: 'Participants' }];
+const selectedLetter = ref('');
 
 // --- FORMS ---
 const detailsForm = reactive({ file_reference: '', current_team_id: null, meta_data: {} });
@@ -363,6 +400,10 @@ const saveParticipant = async () => {
 
 // --- MODAL HELPERS ---
 const openAssignModal = (part = null) => {
+  selectedLetter.value = '';
+  searchResults.value = [];
+  searchQuery.value = '';
+
   if (part) {
     isEditingParticipant.value = true;
     editingParticipantId.value = part.id;
@@ -394,10 +435,42 @@ const openAssignModal = (part = null) => {
   showAssignModal.value = true;
 };
 
-const handleSearch = async () => {
-    if (searchQuery.value.length < 2) return;
-    const { data } = await apiClient.get(`/entities?search=${encodeURIComponent(searchQuery.value)}`);
-    searchResults.value = data.data || [];
+let searchTimeout = null;
+const handleSearch = () => {
+    selectedLetter.value = ''; // Reset alpha filter if user starts typing manually
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    if (searchQuery.value.length < 2) {
+        searchResults.value = [];
+        return;
+    }
+    
+    searchTimeout = setTimeout(async () => {
+        try {
+            const { data } = await apiClient.get(`/entities?search=${encodeURIComponent(searchQuery.value)}`);
+            searchResults.value = data.data || [];
+        } catch (e) {
+            console.error("Search error:", e);
+        }
+    }, 300);
+};
+
+const filterByLetter = async (letter) => {
+    selectedLetter.value = letter;
+    searchQuery.value = ''; // Clear manual query text
+    if (searchTimeout) clearTimeout(searchTimeout);
+    try {
+        const { data } = await apiClient.get(`/entities?prefix=${letter}`);
+        searchResults.value = data.data || [];
+    } catch (e) {
+        console.error("Alpha filter error:", e);
+    }
+};
+
+const clearAlphaFilter = () => {
+    selectedLetter.value = '';
+    searchResults.value = [];
+    searchQuery.value = '';
 };
 
 const selectEntity = (entity) => {
