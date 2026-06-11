@@ -50,8 +50,18 @@
               </svg>
             </button>
             <div v-show="isMobileReportsOpen" class="pl-4 space-y-1 bg-black/10 rounded-lg py-1 mt-1">
-              <div class="px-4 py-2 text-[10px] text-white/50 uppercase font-black tracking-widest">Available Reports</div>
-              <div class="px-4 py-2 text-xs text-white/40 italic">No reports configured yet. Reports will appear here once built.</div>
+              <!-- Main Library Link -->
+              <router-link 
+                :to="{ name: 'ProductReport', params: { productSlug: $route.params.productSlug } }" 
+                class="block px-4 py-2 text-sm text-white/80 hover:text-white"
+                @click="isMobileMenuOpen = false"
+              >
+                Reports Library
+              </router-link>
+              
+              <div class="px-4 py-2 text-xs text-white/40 italic border-t border-white/5 mt-1">
+                Custom reports available in library...
+              </div>
             </div>
           </div>
 
@@ -150,10 +160,28 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+              
               <div v-show="isReportsOpen" 
-                   class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-left transition-all duration-200">
-                <div class="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-1">Available Reports</div>
-                <div class="px-4 py-3 text-xs text-gray-400 italic">No reports configured yet. Reports will appear here once built.</div>
+                  class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-left transition-all duration-200">
+                <div class="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-1">
+                  Reporting Hub
+                </div>
+                
+                <!-- Link to the Dashboard -->
+                <router-link 
+                  :to="{ name: 'ProductReport', params: { productSlug: $route.params.productSlug } }" 
+                  class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-medium"
+                  @click="isReportsOpen = false"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="material-icons text-lg opacity-50">analytics</span>
+                    Open Report Library
+                  </div>
+                </router-link>
+
+                <div class="px-4 py-3 text-[10px] text-gray-400 italic leading-tight bg-gray-50/50 mt-1">
+                  Access standard and custom operational reports.
+                </div>
               </div>
             </div>
 

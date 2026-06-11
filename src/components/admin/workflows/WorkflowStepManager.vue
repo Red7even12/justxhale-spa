@@ -58,6 +58,7 @@
                     <th @click="sortBy('id')" class="px-6 py-3 text-left cursor-pointer hover:text-indigo-600">ID</th>
                     <th @click="sortBy('name')" class="px-6 py-3 text-left cursor-pointer hover:text-indigo-600">Step Name</th>
                     <th class="px-6 py-3 text-left">Automation Logic</th>
+                    <th class="px-6 py-3 text-center">Milestone</th>
                     <th class="px-6 py-3 text-center">Active</th>
                 </tr>
             </thead>
@@ -72,6 +73,14 @@
                                 {{ step.reminderMaxCycles || 0 }} Cycles / {{ step.reminderIntervalDays || 0 }} Days
                             </span>
                         </div>
+                    </td>
+                    <td class="px-6 py-3 text-center">
+                        <span v-if="step.is_milestone || step.isMilestone" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-700">
+                            Milestone
+                        </span>
+                        <span v-else class="text-gray-300">
+                            &mdash;
+                        </span>
                     </td>
                     <td class="px-6 py-3 text-center">
                         <span :class="step.isActive ? 'text-green-500' : 'text-red-400'">
@@ -221,6 +230,9 @@
                       <span v-else class="text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded text-[8px] font-black">
                         System Logic
                       </span>
+                      <span v-if="step.is_milestone || step.isMilestone" class="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded text-[8px] font-black border border-amber-200 ml-1">
+                        Milestone
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -290,6 +302,10 @@
             <div class="flex items-center gap-2">
               <span class="w-3.5 h-3.5 rounded border border-gray-400 border-dashed bg-slate-50 inline-block"></span>
               <span>Non User-Facing Step</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded border border-amber-300 bg-amber-50 inline-block"></span>
+              <span>Milestone Step</span>
             </div>
             <div class="flex items-center gap-1.5">
               <span class="inline-block text-emerald-500 font-mono font-black text-xs">──▶</span>

@@ -230,7 +230,7 @@ const routes = [
             component: CaseIndex,
             meta: { displayName: 'Case Files' }
           },
-          // --- NEW: THE BULK IMPORT WIZARD ---
+          // --- THE BULK IMPORT WIZARD ---
           {
             path: 'import',
             name: 'ProductCaseImport',
@@ -238,7 +238,7 @@ const routes = [
             meta: { displayName: 'Bulk Case Import' }
           },
           // -----------------------------------
-          // The NEW Case Workspace (Grid)
+          // The Case Workspace (Grid)
           {
             path: 'cases/:id',
             name: 'ProductCaseWorkspace',
@@ -246,7 +246,7 @@ const routes = [
             props: true,
             meta: { displayName: 'Case Workspace' }
           },
-          // The OLD Case Detail (Tabs - now "Setup")
+          //  "Setup"
           {
             path: 'cases/:id/setup',
             name: 'ProductCaseSetup',
@@ -278,6 +278,14 @@ const routes = [
             component: () => import('@/views/reports/CaseTimelineReport.vue'),
             meta: { displayName: 'Timeline Report' }
           },
+          // Subscriber Workspace Context for Reports
+          {
+              path: 'reports/:reportSlug?', 
+              name: 'ProductReport', // Subscriber-only route name
+              component: () => import('@/views/reports/ReportsDashboard.vue'),
+              props: true,
+              meta: { displayName: 'Reporting' }
+          }
         ]
       },
 
@@ -347,7 +355,6 @@ const routes = [
                   meta: { displayName: 'Entity Global DNA' }
               },
 
-              // --- NEW NODES TO REFACTOR NEXT ---
               { 
                   path: 'communication', 
                   name: 'admin.product.communication', 
@@ -357,7 +364,34 @@ const routes = [
                   path: 'option-lists', 
                   name: 'admin.product.option-lists', 
                   component: () => import('@/views/admin/OptionListsManager.vue') // Placeholder for refactor
+              },
+              // Admin Factory Context
+              {
+                  path: 'reports-builder',
+                  name: 'admin.product.report-builder',
+                  component: () => import('@/components/reports/ReportBuilder.vue'),
+                  props: route => ({ productSlug: route.params.slug }), 
+                  meta: { displayName: 'Report Builder' }
+              },
+              {
+                  path: 'reports-preview/:reportSlug',
+                  name: 'admin.product.report-preview',
+                  component: () => import('@/components/reports/ReportViewer.vue'),
+                  // Force the mapping of the parent ':slug' to the component's 'productSlug' prop
+                  props: route => ({ 
+                      productSlug: route.params.slug,
+                      reportSlug: route.params.reportSlug,
+                      isAdminPreview: true 
+                  }),
+                  meta: { displayName: 'Report Preview' }
+              },
+              {
+                  path: 'view-creator',
+                  name: 'admin.product.view-creator',
+                  component: () => import('@/components/reports/CustomViewCreator.vue'),
+                  props: route => ({ productSlug: route.params.slug })
               }
+
           ]
       }
 

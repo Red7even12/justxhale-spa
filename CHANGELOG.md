@@ -189,4 +189,20 @@ Create New Case File logic that broke due to audit logs
     1. Refactored the  index()  query to fetch the processes eager-loaded with  workflowStep , and then sort them in-memory by their  sort_order  using the Eloquent Collection  sortBy()  helper.
     2. Chained  ->values()  to guarantee the serialized JSON response is an ordered, zero-indexed list.
 
-## [3.0.4] - 2026-06-xx
+## [3.1.0] - 2026-06-xx
+### Added
+- Added is_milestone to workflow steps
+   1. Steps Table: Added a new Milestone column that displays a distinct amber badge for steps marked as milestones, making them easy to identify in the list.
+   2. Flow Chart Visualization:
+       * Card Updates: Added a "Milestone" indicator inside the step cards within the flow visualizer.
+       * Legend: Updated the flow chart legend to include a "Milestone Step" entry with its corresponding styling.
+       * Data Handling: Ensured the frontend correctly handles both snake_case (`is_milestone) and potential camelCase (isMilestone`) properties from the API.
+- Reporting engine
+    The frontend introduces a **two-stage administrative workflow** that decouples data engineering from UI design.
+    1 **Stage 1 (View Creator):** A high-density SQL Console for System Admins to deploy relational PostgreSQL views (`rp_`) directly to the VPS. It supports complex joins and JSONB extraction (promoting niche-specific data to first-class columns).
+    2 **Stage 2 (Report Builder):** A metadata-driven interface to define user-facing reports. It utilizes dynamic "introspection" to discover columns from any `rp_` view and allows Admins to "tag" columns as dynamic filters or grouping keys.
+    3 **Consumption (Viewer & Dashboard):** A generic, high-density table component that renders any report by interpreting JSON metadata, providing subscribers with real-time filtering, grouping, and memory-efficient CSV exports.
+
+### Changed
+
+### Fixed
