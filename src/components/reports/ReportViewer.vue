@@ -83,10 +83,25 @@
         <!-- Data Grid -->
         <div v-else class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+                <thead class="bg-gray-100 border-b">
                     <tr>
-                        <th v-for="col in definition?.columns" :key="col.field" class="px-6 py-3 font-bold border-b border-gray-200">
-                            {{ col.label }}
+                        <th v-for="col in definition.columns" :key="col.field" 
+                            @click="handleSort(col.field)"
+                            class="p-4 font-semibold cursor-pointer hover:bg-gray-200 transition group"
+                        >
+                            <div class="flex items-center gap-2">
+                                {{ col.label }}
+                                
+                                <!-- Sort Icons -->
+                                <span class="text-[10px]">
+                                    <template v-if="sortField === col.field">
+                                        {{ sortDir === 'asc' ? '▲' : '▼' }}
+                                    </template>
+                                    <template v-else>
+                                        <span class="opacity-20 group-hover:opacity-100">⇅</span>
+                                    </template>
+                                </span>
+                            </div>
                         </th>
                     </tr>
                 </thead>
@@ -127,15 +142,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import apiClient from '../../services/api'; 
+import apiClient from '../../services/api'; // Ensure this path is correct
 
-// 1. Interfaces (Internal blueprints)
+// 1. Interfaces (Strictly Typed)
 interface ColumnDefinition {
     field: string;
     label: string;
     type: string;
+    isFilter?: boolean;
 }
 
 interface UiConfig {
@@ -153,59 +169,97 @@ interface ReportDefinition {
 
 interface ReportMeta {
     filters?: Record<string, { label: string, options: string[] }>;
-    availableStatuses?: string[];
-    availableAttorneys?: string[];
 }
 
-// 2. Props aligned with your router: props: route => ({ reportSlug: route.params.reportSlug })
+// 2. Props (Positioned at top for clarity)
 const props = defineProps<{
     productSlug: string;
     reportSlug: string;
-    isAdminPreview?: boolean; // Prop to allow System Admin in preview mode to select a Subscriber to feed report.
+    isAdminPreview?: boolean;
 }>();
 
 const route = useRoute();
 const router = useRouter();
-const testSubscriberId = ref<string>((route.query.preview_subscriber_id as string) || ''); // For Admin Preview only
-const activeFilters = ref<Record<string, string>>({});
-const meta = ref<ReportMeta>({});
+
+// 3. Reactive State
 const definition = ref<ReportDefinition | null>(null);
 const reportData = ref<any[]>([]);
+const meta = ref<ReportMeta>({ filters: {} });
 const loading = ref<boolean>(true);
 const error = ref<string | null>(null);
 
-// 3. Fetch Logic
+// Filtering & Sorting State
+const activeFilters = ref<Record<string, string>>({});
+const sortField = ref<string | null>(null);
+const sortDir = ref<'asc' | 'desc'>('asc');
+const testSubscriberId = ref<string>((route.query.preview_subscriber_id as string) || '');
+
+// 4. Core Fetch Logic (Unified)
+/**
+ * Fetches report definition and data from the V2 Engine.
+ * Handles sorting, filtering, and admin preview overrides.
+ */
 const fetchReport = async () => {
+    const pSlug = props.productSlug || (route.params.slug as string);
+    const rSlug = props.reportSlug || (route.params.reportSlug as string);
+
+    // Guard: Prevent 'undefined' calls during route transitions
+    if (!pSlug || !rSlug || rSlug === 'undefined') {
+        return;
+    }
+
     loading.value = true;
     error.value = null;
 
-    const pSlug = props.productSlug || route.params.slug || route.params.productSlug;
-    const rSlug = props.reportSlug || route.params.reportSlug;
+    // Prepare Query Parameters
+    const params: any = { 
+        ...activeFilters.value,
+        sortBy: sortField.value,
+        sortDir: sortDir.value
+    };
 
-    // Only include the preview ID if it has a value
-    const params: any = { ...activeFilters.value };
+    // Include Admin Test ID if applicable
     if (props.isAdminPreview && testSubscriberId.value) {
         params.preview_subscriber_id = testSubscriberId.value;
     }
 
     try {
+        // Path construction: Relative to apiClient baseURL (which usually contains /api/v1)
         const response = await apiClient.get(`/${pSlug}/reports/${rSlug}`, { params });
+        
         definition.value = response.data.definition;
         reportData.value = response.data.data;
         meta.value = response.data.meta;
+
+        // Sync local sort state with default settings from the definition if not already set
+        if (!sortField.value && definition.value?.uiConfig?.defaultSort) {
+            sortField.value = definition.value.uiConfig.defaultSort;
+        }
     } catch (err: any) {
         error.value = err.response?.data?.message || "Failed to load report data.";
+        console.error("Report Engine Error:", err);
     } finally {
         loading.value = false;
     }
 };
 
-const handleFilterChange = () => {
+// 5. Event Handlers
+const handleSort = (field: string) => {
+    if (sortField.value === field) {
+        sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortField.value = field;
+        sortDir.value = 'asc';
+    }
     fetchReport();
 };
 
+const handleFilterChange = () => fetchReport();
+
 const resetFilters = () => {
     activeFilters.value = {};
+    sortField.value = null;
+    sortDir.value = 'asc';
     fetchReport();
 };
 
@@ -217,7 +271,58 @@ const goBackToBuilder = () => {
     });
 };
 
-// 4. Grouping Logic
+const downloadCsv = async () => {
+    const pSlug = props.productSlug || (route.params.slug as string);
+    const rSlug = props.reportSlug || (route.params.reportSlug as string);
+
+    try {
+        const params: any = { 
+            ...activeFilters.value,
+            sortBy: sortField.value,
+            sortDir: sortDir.value
+        };
+        
+        if (props.isAdminPreview && testSubscriberId.value) {
+            params.preview_subscriber_id = testSubscriberId.value;
+        }
+
+        const response = await apiClient.get(`/${pSlug}/reports/${rSlug}/export`, {
+            params,
+            responseType: 'blob'
+        });
+        
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        
+        link.href = url;
+        link.setAttribute('download', `${rSlug}-${date}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+        alert("Failed to export CSV. Please check your permissions.");
+    }
+};
+
+// 6. Watchers & Lifecycle
+// Watch for slug changes (important when switching reports in the same view)
+watch(() => props.reportSlug, () => {
+    fetchReport();
+});
+
+// Watch for Test ID changes in Admin Preview mode
+watch(testSubscriberId, () => {
+    if (props.isAdminPreview) fetchReport();
+});
+
+onMounted(() => {
+    fetchReport();
+});
+
+// 7. Computed Logic
 const groupedData = computed(() => {
     const groupByField = definition.value?.uiConfig?.defaultGroupBy;
     if (!groupByField || !reportData.value.length) return null;
@@ -229,49 +334,6 @@ const groupedData = computed(() => {
         return groups;
     }, {});
 });
-
-onMounted(() => fetchReport());
-
-const downloadCsv = async () => {
-    const pSlug = props.productSlug || route.params.slug || route.params.productSlug;
-    const rSlug = props.reportSlug || route.params.reportSlug;
-
-    try {
-        /**
-         * FIX: We only provide the relative path. 
-         * Axios will automatically prepend the 'api/v1' from your baseURL.
-         * We also pass the filters directly to the 'params' object.
-         */
-        const params: any = { ...activeFilters.value };
-        if (props.isAdminPreview && testSubscriberId.value) {
-            params.preview_subscriber_id = testSubscriberId.value;
-        }
-
-        const response = await apiClient.get(`/${pSlug}/reports/${rSlug}/export`, {
-            params: params, 
-            responseType: 'blob'         // Required for file downloads
-        });
-        
-        // Create the download link
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Generate filename: e.g., cases-by-milestone-status-2025-06-08.csv
-        const date = new Date().toISOString().split('T')[0];
-        link.setAttribute('download', `${rSlug}-${date}.csv`);
-        
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-        console.error("Export failed:", err);
-        alert("Failed to export CSV. Please check your network or permissions.");
-    }
-};
 </script>
 
 <style scoped>

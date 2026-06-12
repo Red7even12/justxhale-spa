@@ -114,6 +114,12 @@
         <div v-if="selectedColumns.length > 0" class="mb-8">
             <label class="block text-sm font-bold text-gray-700 mb-2">Configure Selected Columns & Filters</label>
             <div v-for="(col, index) in selectedColumns" :key="index" class="flex items-center gap-4 p-2 bg-white border mb-2 rounded shadow-sm">
+                <!-- Reorder Buttons -->
+                <div class="flex flex-col gap-1 mr-2">
+                    <button @click="moveColumn(index, -1)" :disabled="index === 0" class="text-[10px] hover:text-blue-600 disabled:opacity-20">▲</button>
+                    <button @click="moveColumn(index, 1)" :disabled="index === selectedColumns.length - 1" class="text-[10px] hover:text-blue-600 disabled:opacity-20">▼</button>
+                </div>
+
                 <span class="flex-grow font-medium text-sm">{{ col.label }}</span>
                 
                 <!-- New: Is Filter Toggle -->
@@ -300,6 +306,14 @@ const addColumn = (field: any) => {
 
 const removeColumn = (index: number) => {
     selectedColumns.value.splice(index, 1);
+};
+
+const moveColumn = (index: number, direction: number) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= selectedColumns.value.length) return;
+    
+    const element = selectedColumns.value.splice(index, 1)[0];
+    selectedColumns.value.splice(newIndex, 0, element);
 };
 
 onMounted(async () => {
