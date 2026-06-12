@@ -207,10 +207,18 @@ Create New Case File logic that broke due to audit logs
 
     ### Fixed
 
-## [3.1.1] - 2026-06-11
-    ### Added
-    - 
-    ### Changed
-    - Field and Column sort order on Report builder and Report viewer
+## [3.1.2] - 2026-06-11
+### Added
+- 
+### Changed
+- Field and Column sort order on Report builder and Report viewer
 
-    ### Fixed
+### Fixed
+
+## [3.1.3] - 2026-06-12
+### Added
+- 
+### Changed
+- Default sort order on reports.
+
+### Fixed
