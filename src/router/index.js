@@ -91,6 +91,13 @@ const routes = [
         meta: { displayName: 'System Administration' }
       },
       {
+        path: 'admin/products/:slug/report-builder',
+        name: 'admin.product.report-builder',
+        component: () => import('@/components/reports/ReportBuilder.vue'),
+        props: route => ({ productSlug: route.params.slug }),
+        meta: { displayName: 'Report Builder' }
+      },
+      {
          path: 'admin/subscribers',
          name: 'admin.subscribers.index',
          component: SubscriberIndex,
@@ -124,6 +131,8 @@ const routes = [
         component: () => import('@/views/admin/OptionListsManager.vue'),
         meta: { requiresAuth: true, isAdmin: true, displayName: 'Option Lists' }
       },
+      
+      // GLOBAL SYSTEM SETUP NODES
       {
         path: '/admin/non-working-days',
         name: 'admin.non-working-days',
@@ -136,6 +145,30 @@ const routes = [
         component: () => import('@/views/admin/PermissionMatrix.vue'),
         meta: { displayName: 'Authorization Matrix', requiresAuth: true, role: 'System Admin' }
       },  
+      {
+        path: 'report-factory',
+        name: 'admin.report-factory',
+        component: () => import('@/components/reports/ReportBuilder.vue'),
+        meta: { displayName: 'Report Factory' }
+      },
+      {
+        path: 'view-factory',
+        name: 'admin.view-factory',
+        component: () => import('@/components/reports/CustomViewCreator.vue'), 
+        meta: { displayName: 'View Factory' }
+      },
+      {
+        path: 'reports/:reportSlug/:productSlug?',
+        name: 'admin.report-preview',
+        component: () => import('@/components/reports/ReportViewer.vue'),
+        // CHANGE: Explicitly pass isAdminPreview as a prop
+        props: route => ({ 
+            reportSlug: route.params.reportSlug,
+            productSlug: route.params.productSlug,
+            isAdminPreview: true 
+        }),
+        meta: { displayName: 'Report Preview' }
+      },
 
       // --- Billing routes  // 
       {
@@ -280,11 +313,11 @@ const routes = [
           },
           // Subscriber Workspace Context for Reports
           {
-              path: 'reports/:reportSlug?', 
-              name: 'ProductReport', // Subscriber-only route name
-              component: () => import('@/views/reports/ReportsDashboard.vue'),
-              props: true,
-              meta: { displayName: 'Reporting' }
+            path: 'reports/:reportSlug?', 
+            name: 'ProductReport', // Subscriber-only route name
+            component: () => import('@/views/reports/ReportsDashboard.vue'),
+            props: true,
+            meta: { displayName: 'Reporting' }
           }
         ]
       },
@@ -365,33 +398,6 @@ const routes = [
                   name: 'admin.product.option-lists', 
                   component: () => import('@/views/admin/OptionListsManager.vue') // Placeholder for refactor
               },
-              // Admin Factory Context
-              {
-                  path: 'reports-builder',
-                  name: 'admin.product.report-builder',
-                  component: () => import('@/components/reports/ReportBuilder.vue'),
-                  props: route => ({ productSlug: route.params.slug }), 
-                  meta: { displayName: 'Report Builder' }
-              },
-              {
-                  path: 'reports-preview/:reportSlug',
-                  name: 'admin.product.report-preview',
-                  component: () => import('@/components/reports/ReportViewer.vue'),
-                  // Force the mapping of the parent ':slug' to the component's 'productSlug' prop
-                  props: route => ({ 
-                      productSlug: route.params.slug,
-                      reportSlug: route.params.reportSlug,
-                      isAdminPreview: true 
-                  }),
-                  meta: { displayName: 'Report Preview' }
-              },
-              {
-                  path: 'view-creator',
-                  name: 'admin.product.view-creator',
-                  component: () => import('@/components/reports/CustomViewCreator.vue'),
-                  props: route => ({ productSlug: route.params.slug })
-              }
-
           ]
       }
 

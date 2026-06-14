@@ -50,7 +50,9 @@
               <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">System Setup</div>
               <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
               <router-link @click="closeMobileMenu" to="/admin/permissions" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/permissions') }">Authorization Matrix</router-link>
-            </template>
+              <router-link @click="closeMobileMenu" :to="{ name: 'admin.report-factory' }" class="mobile-nav-link ml-2">Report Factory</router-link>
+              <router-link @click="closeMobileMenu" :to="{ name: 'admin.view-factory' }" class="mobile-nav-link ml-2">View Factory</router-link>
+              </template>
           </template>
 
           <!-- Divider -->
@@ -131,8 +133,17 @@
 
                 <div v-if="isSystemMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
-                    <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Non-Working Days</router-link>
-                    <router-link to="/admin/permissions" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Authorization Matrix</router-link>
+                    <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Non-Working Days</router-link>
+                    <router-link to="/admin/permissions" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Authorization Matrix</router-link>
+                    
+                    <!-- THE NEW FACTORY LINKS (V2 Protocol) -->
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <router-link :to="{ name: 'admin.report-factory' }" class="text-blue-700 font-bold block px-4 py-2 text-sm hover:bg-gray-100" @click="isSystemMenuOpen = false">
+                        Report Factory
+                    </router-link>
+                    <router-link :to="{ name: 'admin.view-factory' }" class="text-blue-700 font-bold block px-4 py-2 text-sm hover:bg-gray-100" @click="isSystemMenuOpen = false">
+                        View Factory
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -208,8 +219,21 @@ const route = useRoute();
 // PILLAR 6: Context Awareness
 // This identifies if we should hide the V1 header.
 const isV2Context = computed(() => {
-  // Hide V1 header if we are on the Launcher OR inside a Product slug
-  return route.name === 'AppLauncher' || !!route.params.productSlug;
+  // 1. App Launcher is always full-screen V2 context
+  if (route.name === 'AppLauncher') return true;
+
+  // 2. These are global admin tools - they MUST show the V1 AppLayout framework
+  // even if they are technically part of the V2 engine suite.
+  if (route.name === 'admin.report-factory' || 
+      route.name === 'admin.view-factory' || 
+      route.name === 'admin.report-preview' ||
+      route.name === 'admin.product.report-builder') {
+      return false;
+  }
+
+  // 3. Any route with productSlug (ProductLayout) or containing /blueprints/ (ProductBlueprintLayout)
+  // should hide the V1 header as they provide their own navigation.
+  return !!route.params.productSlug || route.path.includes('/blueprints/');    
 });
 
 const isSaaSMenuOpen = ref(false); 

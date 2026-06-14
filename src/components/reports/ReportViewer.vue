@@ -12,7 +12,10 @@
         </div>
 
         <!-- DYNAMIC FILTER BAR -->
-        <div v-if="Object.keys(meta.filters || {}).length > 0" class="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div v-if="meta?.filters && Object.keys(meta.filters).length > 0" 
+            class="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            
+            <!-- Use ?. here as well -->
             <div v-for="(filter, field) in meta.filters" :key="field" class="min-w-[200px]">
                 <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 leading-none">
                     Filter by {{ filter.label }}
@@ -28,6 +31,7 @@
                     </option>
                 </select>
             </div>
+        </div>
             
             <!-- Reset Button -->
             <div class="flex items-end">
@@ -39,7 +43,7 @@
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
             <div v-if="definition">
                 <div v-if="props.isAdminPreview" class="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">
-                    <router-link :to="{ name: 'admin.product.report-builder', params: { slug: props.productSlug || route.params.slug }, query: { edit: props.reportSlug } }" class="hover:text-blue-600 transition-colors">
+                    <router-link :to="builderLink" class="hover:text-blue-600 transition-colors">
                         Report Builder
                     </router-link>
                     <span class="material-icons text-[10px]">chevron_right</span>
@@ -138,7 +142,7 @@
                 No records found matching the report criteria.
             </div>
         </div>
-    </div>
+
 </template>
 
 <script setup lang="ts">
@@ -173,7 +177,7 @@ interface ReportMeta {
 
 // 2. Props (Positioned at top for clarity)
 const props = defineProps<{
-    productSlug: string;
+    productSlug?: string;
     reportSlug: string;
     isAdminPreview?: boolean;
 }>();
@@ -184,7 +188,7 @@ const router = useRouter();
 // 3. Reactive State
 const definition = ref<ReportDefinition | null>(null);
 const reportData = ref<any[]>([]);
-const meta = ref<ReportMeta>({ filters: {} });
+const meta = ref<ReportMeta>({ filters: {} }); // Ensure filters is an empty object, not missing
 const loading = ref<boolean>(true);
 const error = ref<string | null>(null);
 
@@ -200,44 +204,49 @@ const testSubscriberId = ref<string>((route.query.preview_subscriber_id as strin
  * Handles sorting, filtering, and admin preview overrides.
  */
 const fetchReport = async () => {
-    const pSlug = props.productSlug || (route.params.slug as string);
+    // 1. Resolve Slugs
     const rSlug = props.reportSlug || (route.params.reportSlug as string);
+    const pSlug = props.productSlug || (route.params.slug as string) || (route.params.productSlug as string);
 
-    // Guard: Prevent 'undefined' calls during route transitions
-    if (!pSlug || !rSlug || rSlug === 'undefined') {
-        return;
-    }
+    if (!rSlug || rSlug === 'undefined') return;
 
     loading.value = true;
     error.value = null;
 
-    // Prepare Query Parameters
     const params: any = { 
         ...activeFilters.value,
         sortBy: sortField.value,
         sortDir: sortDir.value
     };
 
-    // Include Admin Test ID if applicable
-    if (props.isAdminPreview && testSubscriberId.value) {
-        params.preview_subscriber_id = testSubscriberId.value;
+    // --- CONTEXT AWARE ROUTING ---
+    let apiPath = '';
+
+    if (props.isAdminPreview) {
+        // MATCHES: api/v1/admin/report-factory/reports/{slug}
+        apiPath = `/admin/report-factory/reports/${rSlug}`;
+        if (testSubscriberId.value) {
+            params.preview_subscriber_id = testSubscriberId.value;
+        }
+    } else {
+        // MATCHES: api/v1/{productSlug}/reports/{slug}
+        apiPath = `/${pSlug}/reports/${rSlug}`;
     }
 
     try {
-        // Path construction: Relative to apiClient baseURL (which usually contains /api/v1)
-        const response = await apiClient.get(`/${pSlug}/reports/${rSlug}`, { params });
+        const response = await apiClient.get(apiPath, { params });
         
-        definition.value = response.data.definition;
-        reportData.value = response.data.data;
-        meta.value = response.data.meta;
+        definition.value = response.data.definition || null;
+        reportData.value = response.data.data || [];
+        meta.value = response.data.meta || { filters: {} };
 
-        // Sync local sort state with default settings from the definition if not already set
         if (!sortField.value && definition.value?.uiConfig?.defaultSort) {
             sortField.value = definition.value.uiConfig.defaultSort;
         }
     } catch (err: any) {
-        error.value = err.response?.data?.message || "Failed to load report data.";
-        console.error("Report Engine Error:", err);
+        error.value = err.response?.status === 403 
+            ? "Access Denied: You do not have permission for this factory route."
+            : (err.response?.data?.message || "Failed to load report data.");
     } finally {
         loading.value = false;
     }
@@ -264,16 +273,29 @@ const resetFilters = () => {
 };
 
 const goBackToBuilder = () => {
-    router.push({
-        name: 'admin.product.report-builder',
-        params: { slug: props.productSlug || (route.params.slug as string) },
-        query: { edit: props.reportSlug }
-    });
+    const pSlug = props.productSlug || (route.params.slug as string);
+    const rSlug = props.reportSlug || (route.params.reportSlug as string);
+    
+    if (pSlug) {
+        router.push({
+            name: 'admin.product.report-builder',
+            params: { slug: pSlug },
+            query: { edit: rSlug }
+        });
+    } else {
+        router.push({
+            name: 'admin.report-factory',
+            query: { edit: rSlug }
+        });
+    }
 };
 
 const downloadCsv = async () => {
-    const pSlug = props.productSlug || (route.params.slug as string);
+    const pSlug = props.productSlug || (route.params.slug as string) || 'global';
     const rSlug = props.reportSlug || (route.params.reportSlug as string);
+    const exportPath = props.isAdminPreview 
+    ? `/admin/report-factory/reports/${rSlug}/export` 
+    : `/reports/${rSlug}/export`;
 
     try {
         const params: any = { 
@@ -286,7 +308,7 @@ const downloadCsv = async () => {
             params.preview_subscriber_id = testSubscriberId.value;
         }
 
-        const response = await apiClient.get(`/${pSlug}/reports/${rSlug}/export`, {
+        const response = await apiClient.get(exportPath, {
             params,
             responseType: 'blob'
         });
@@ -323,6 +345,22 @@ onMounted(() => {
 });
 
 // 7. Computed Logic
+const builderLink = computed(() => {
+    const pSlug = props.productSlug || (route.params.slug as string);
+    const rSlug = props.reportSlug || (route.params.reportSlug as string);
+    if (pSlug) {
+        return {
+            name: 'admin.product.report-builder',
+            params: { slug: pSlug },
+            query: { edit: rSlug }
+        };
+    }
+    return {
+        name: 'admin.report-factory',
+        query: { edit: rSlug }
+    };
+});
+
 const groupedData = computed(() => {
     const groupByField = definition.value?.uiConfig?.defaultGroupBy;
     if (!groupByField || !reportData.value.length) return null;

@@ -32,18 +32,6 @@
 
         <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Business</div>
           <router-link :to="{ name: 'admin.product.licensing', params: { slug } }" class="nav-link" active-class="nav-active">License Management</router-link>
-
-        <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Insights</div>
-          <router-link :to="{ name: 'admin.product.report-builder', params: { slug } }" 
-             class="nav-link" 
-             active-class="nav-active">
-              Report Builder
-          </router-link>
-          <router-link :to="{ name: 'admin.product.view-creator', params: { slug } }" 
-             class="nav-link" 
-             active-class="nav-active">
-              View Creator
-          </router-link>
       </nav>
 
       <div class="p-4 border-t border-white/10 bg-black/20 text-[10px] text-white/40 font-bold uppercase text-center tracking-tighter">

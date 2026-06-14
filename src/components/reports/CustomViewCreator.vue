@@ -1,71 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import apiClient from '../../services/api';
-
-const props = defineProps<{ productSlug: string }>();
-const router = useRouter();
-
-const loading = ref(false);
-const viewName = ref('');
-const reportName = ref('');
-const querySql = ref('');
-
-const saveAndDeploy = async () => {
-    if (!viewName.value || !querySql.value) return alert("Please provide both Name and SQL.");
-    
-    loading.value = true;
-    try {
-        const payload = {
-            name: reportName.value || viewName.value,
-            view_name: viewName.value.startsWith('rp_') ? viewName.value : 'rp_' + viewName.value,
-            query_sql: querySql.value
-        };
-
-        const saveRes = await apiClient.post(`/admin/products/${props.productSlug}/custom-views`, payload);
-        await apiClient.post(`/admin/products/${props.productSlug}/custom-views/${saveRes.data.id}/deploy`);
-
-        alert("SQL View Deployed to VPS successfully!");
-        router.push({ name: 'admin.product.report-builder', params: { slug: props.productSlug } });
-    } catch (err: any) {
-        alert("Deployment Error: " + (err.response?.data?.error || err.message));
-    } finally {
-        loading.value = false;
-    }
-};
-
-// Add state for the list of existing views
-const existingViews = ref<any[]>([]);
-
-// Fetch existing views
-const fetchExistingViews = async () => {
-    try {
-        const res = await apiClient.get(`/admin/products/${props.productSlug}/custom-views`);
-        existingViews.value = res.data;
-    } catch (err) {
-        console.error("Failed to load existing views", err);
-    }
-};
-
-// Delete a view
-const deleteView = async (id: number) => {
-    if (!confirm("Are you sure? This will drop the SQL view from the database immediately.")) return;
-    
-    try {
-        await apiClient.delete(`/admin/products/${props.productSlug}/custom-views/${id}`);
-        fetchExistingViews(); // Refresh the list
-        alert("View deleted successfully.");
-    } catch (err: any) {
-        alert("Delete Failed: " + (err.response?.data?.error || err.message));
-    }
-};
-
-// Add to onMounted
-onMounted(() => {
-    fetchExistingViews();
-});
-</script>
-
 <template>
     <div class="max-w-6xl mx-auto p-6">
         <div class="flex justify-between items-center mb-6">
@@ -170,3 +102,72 @@ onMounted(() => {
         </div>
     </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import apiClient from '../../services/api';
+
+const props = defineProps<{ productSlug: string }>();
+const router = useRouter();
+
+const loading = ref(false);
+const viewName = ref('');
+const reportName = ref('');
+const querySql = ref('');
+
+const saveAndDeploy = async () => {
+    if (!viewName.value || !querySql.value) return alert("Please provide both Name and SQL.");
+    
+    loading.value = true;
+    try {
+        const payload = {
+            name: reportName.value || viewName.value,
+            view_name: viewName.value.startsWith('rp_') ? viewName.value : 'rp_' + viewName.value,
+            query_sql: querySql.value
+        };
+
+        const saveRes = await apiClient.post(`/admin/products/${props.productSlug}/custom-views`, payload);
+        await apiClient.post(`/admin/products/${props.productSlug}/custom-views/${saveRes.data.id}/deploy`);
+
+        alert("SQL View Deployed to VPS successfully!");
+        router.push({ name: 'admin.product.report-builder', params: { slug: props.productSlug } });
+    } catch (err: any) {
+        alert("Deployment Error: " + (err.response?.data?.error || err.message));
+    } finally {
+        loading.value = false;
+    }
+};
+
+// Add state for the list of existing views
+const existingViews = ref<any[]>([]);
+
+// Fetch existing views
+const fetchExistingViews = async () => {
+    try {
+        const res = await apiClient.get(`/admin/products/${props.productSlug}/custom-views`);
+        existingViews.value = res.data;
+    } catch (err) {
+        console.error("Failed to load existing views", err);
+    }
+};
+
+// Delete a view
+const deleteView = async (id: number) => {
+    if (!confirm("Are you sure? This will drop the SQL view from the database immediately.")) return;
+    
+    try {
+        await apiClient.delete(`/admin/products/${props.productSlug}/custom-views/${id}`);
+        fetchExistingViews(); // Refresh the list
+        alert("View deleted successfully.");
+    } catch (err: any) {
+        alert("Delete Failed: " + (err.response?.data?.error || err.message));
+    }
+};
+
+// Add to onMounted
+onMounted(() => {
+    fetchExistingViews();
+});
+</script>
+

@@ -31,6 +31,16 @@ export default {
     getCompanies() {
         return apiClient.get('entities', { params: { type: 'company', per_page: 100 } });
     },
+    searchCompanies(query = '') {
+        return apiClient.get('entities', { 
+            params: { 
+                type: 'company', 
+                search: query,
+                format: 'mini',
+                limit: 15
+            } 
+        });
+    },
     createEntity(data) {
         return apiClient.post('entities', mapToSnakeCase(data));
     },

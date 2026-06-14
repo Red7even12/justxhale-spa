@@ -222,3 +222,11 @@ Create New Case File logic that broke due to audit logs
 - Default sort order on reports.
 
 ### Fixed
+
+## [3.1.4] - 2026-06-1
+### Added
+- 
+### Changed
+- 
+### Fixed
+- Moved Report cluster nodes to Main Menu on ProductBlueprintLayout.vue

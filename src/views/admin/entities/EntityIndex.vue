@@ -92,12 +92,43 @@
                 <input v-model="form.identificationNumber" type="text" class="w-full border-gray-200 rounded-xl font-mono">
             </div>
 
-            <div v-if="form.entityType === 'individual'">
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Linked Company</label>
-                <select v-model="form.parentId" class="w-full border-gray-200 rounded-xl text-sm font-bold">
-                    <option :value="null">None</option>
-                    <option v-for="co in companies" :key="co.id" :value="co.id">{{ co.name }}</option>
-                </select>
+            <div v-if="form.entityType === 'individual'" class="relative">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Linked Company (Start typing name...)</label>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        v-model="companySearch" 
+                        @input="handleCompanySearch"
+                        @focus="showCompanyDropdown = true"
+                        placeholder="Search for a company..."
+                        class="w-full border-gray-200 rounded-xl text-sm font-bold focus:ring-brand-primary pr-10"
+                    >
+                </div>
+
+                <!-- Autocomplete Dropdown -->
+                <div v-if="showCompanyDropdown && (companies.length > 0 || isSearchingCompanies)" 
+                     class="absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 shadow-2xl rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                    <div v-if="isSearchingCompanies" class="p-3 text-center text-xs text-gray-400">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Searching...
+                    </div>
+                    <template v-else>
+                        <div 
+                            @click="selectCompany(null)"
+                            class="p-3 text-xs font-bold text-red-500 hover:bg-gray-50 cursor-pointer border-b border-gray-50"
+                        >
+                            None (Clear Selection)
+                        </div>
+                        <div 
+                            v-for="co in companies" 
+                            :key="co.id"
+                            @click="selectCompany(co)"
+                            class="p-3 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                            :class="{ 'bg-indigo-50 text-indigo-700': form.parentId === co.id }"
+                        >
+                            {{ co.name }}
+                        </div>
+                    </template>
+                </div>
             </div>
 
             <div>
@@ -111,7 +142,7 @@
             </div>
 
             <!-- DYNAMIC GLOBAL METADATA (DNA) -->
-            <div v-if="entityFieldDefinitions.length > 0" class="col-span-2 mt-4 p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+            <div v-if="form.entityType === 'individual' && entityFieldDefinitions.length > 0" class="col-span-2 mt-4 p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
                 <div class="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4 border-b border-emerald-200 pb-2">Global Registry DNA (Shared across all cases)</div>
                 <div class="grid grid-cols-2 gap-4">
                     <div v-for="field in entityFieldDefinitions" :key="field.id">
@@ -163,6 +194,40 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const createAndStay = ref(false);
 const filters = ref({ search: '', type: '' });
+
+// --- Autocomplete State ---
+const companySearch = ref('');
+const isSearchingCompanies = ref(false);
+const showCompanyDropdown = ref(false);
+let searchTimeout = null;
+
+const handleCompanySearch = () => {
+    showCompanyDropdown.value = true;
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    searchTimeout = setTimeout(async () => {
+        isSearchingCompanies.value = true;
+        try {
+            const { data } = await entityService.searchCompanies(companySearch.value);
+            companies.value = data;
+        } catch (error) {
+            console.error("Search failed", error);
+        } finally {
+            isSearchingCompanies.value = false;
+        }
+    }, 300);
+};
+
+const selectCompany = (company) => {
+    if (company) {
+        form.value.parentId = company.id;
+        companySearch.value = company.name;
+    } else {
+        form.value.parentId = null;
+        companySearch.value = '';
+    }
+    showCompanyDropdown.value = false;
+};
 
 const form = ref({
   id: null,
@@ -238,10 +303,22 @@ const openModal = async (entity = null) => {
     });
 
     console.log("Entity Modal Opened. Form Meta Data:", form.value.meta_data);
+    
+    // Set initial company search text if parent is present
+    if (entity.parent) {
+        companySearch.value = entity.parent.name;
+    } else if (entity.parent_id || entity.parentId) {
+        // Fallback if name isn't loaded but ID is present
+        companySearch.value = `ID: ${entity.parent_id || entity.parentId}`;
+    } else {
+        companySearch.value = '';
+    }
 
   } else {
     // Create Mode
     isEditing.value = false;
+    companySearch.value = '';
+    showCompanyDropdown.value = false;
     form.value = { entityType: 'individual', name: '', identificationNumber: '', parentId: null, email: '', phonePrimary: '', isActive: true, meta_data: {} };
     // Initialize empty keys for new records
     entityFieldDefinitions.value.forEach(def => {
@@ -261,7 +338,8 @@ const saveEntity = async () => {
         phone_primary: form.value.phonePrimary,
         parent_id: form.value.parentId,
         is_active: form.value.isActive,
-        meta_data: form.value.meta_data
+        // satisfaction of NOT NULL constraint: use empty object for companies
+        meta_data: form.value.entityType === 'individual' ? form.value.meta_data : {}
     };
 
     if (isEditing.value) {
