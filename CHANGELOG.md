@@ -223,10 +223,21 @@ Create New Case File logic that broke due to audit logs
 
 ### Fixed
 
-## [3.1.4] - 2026-06-1
+## [3.1.4] - 2026-06-14
 ### Added
 - 
 ### Changed
-- 
-### Fixed
 - Moved Report cluster nodes to Main Menu on ProductBlueprintLayout.vue
+
+## Fixed
+- Company Dropdown on entity person create modal now do Dynamic select based on entered letters. 
+
+## [JX-3.1.5] - 2026-06-15
+### Added
+- New Sync Button to Document Pack Management
+
+### Changed
+-
+
+### Fixed
+- Repaired Document pack sync triggering when Workflows were synced.

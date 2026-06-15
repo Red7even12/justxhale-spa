@@ -2,16 +2,28 @@
   <div class="space-y-6">
     <!-- Context Header -->
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-      <div>
-        <router-link :to="{ name: 'admin.product.document-packs', params: { slug } }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
-            ← Back to Packs
-        </router-link>
-        <h2 class="text-xl font-bold text-gray-800">Pack Items Management</h2>
-        <p class="text-sm text-gray-500">Configure checklist behavior and data capture for this pack.</p>
-      </div>
-      <button @click="handleAddNew" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-indigo-700 transition-all">
-        + Add Pack Item
-      </button>
+        <div>
+            <router-link :to="{ name: 'admin.product.document-packs', params: { slug } }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
+                ← Back to Packs
+            </router-link>
+            <h2 class="text-xl font-bold text-gray-800">Pack Items Management</h2>
+            <p class="text-sm text-gray-500">Configure checklist behavior and data capture for this pack.</p>
+        </div>
+        <div class="flex gap-3">
+            <!-- NEW SYNC BUTTON -->
+            <button 
+            @click="handleSync" 
+            :disabled="isSyncing"
+            class="bg-amber-500 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+            <svg v-if="isSyncing" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            {{ isSyncing ? 'Syncing...' : 'Sync Pack to Cases' }}
+            </button>
+
+            <button @click="handleAddNew" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-indigo-700 transition-all">
+            + Add Pack Item
+            </button>
+        </div>
     </div>
 
     <div v-if="isLoading" class="text-center py-12 animate-pulse text-gray-400">Loading templates...</div>
@@ -157,6 +169,7 @@ const availableRecordsourceNames = ref([]);
 const isLoading = ref(true);
 const formObject = reactive({ data: null });
 const isCreatingNew = ref(false);
+const isSyncing = ref(false); 
 
 const sortedDocumentTypes = computed(() => {
   return [...documentTypes.value].sort((a, b) => (a.sortOrder || a.sort_order || 0) - (b.sortOrder || b.sort_order || 0));
@@ -247,6 +260,31 @@ const handleDelete = async () => {
         } catch (err) { showAlert('Error', 'Delete failed.'); }
     }
 }
+
+/**
+ * Trigger the surgical document sync
+ */
+const handleSync = async () => {
+    const confirmed = await showConfirm(
+        'Sync Document Pack', 
+        'This will add any missing document requirements from this pack to all active cases in this niche. Existing documents will not be affected. Proceed?'
+    );
+
+    if (!confirmed) return;
+
+    isSyncing.value = true;
+    try {
+        // Calls the new endpoint in DocumentPackController
+        const { data } = await apiClient.post(`admin/products/${props.slug}/document-packs/${props.packId}/sync`);
+        
+        showAlert('Success', data.message || 'Cases synchronized successfully.');
+    } catch (err) {
+        console.error(err);
+        showAlert('Error', err.response?.data?.message || 'Failed to sync pack items to cases.');
+    } finally {
+        isSyncing.value = false;
+    }
+};
 
 onMounted(() => {
     fetchDocumentTypes();
