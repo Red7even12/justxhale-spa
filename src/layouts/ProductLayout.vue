@@ -58,10 +58,15 @@
               >
                 Reports Library
               </router-link>
-              
-              <div class="px-4 py-2 text-xs text-white/40 italic border-t border-white/5 mt-1">
-                Custom reports available in library...
-              </div>
+              <router-link 
+                :to="{ name: 'operational.dashboard', params: { productSlug: $route.params.productSlug } }" 
+                class="block px-4 py-2 text-sm text-white/80 hover:text-white"
+                @click="isMobileMenuOpen = false"
+              >
+                Management Dashboard
+              </router-link>
+
+
             </div>
           </div>
 
@@ -111,7 +116,7 @@
     </div>
 
     <!-- CONSOLIDATED TOP NAVIGATION (V2) -->
-    <header class="bg-brand-primary border-b border-white/10 sticky top-0 z-40 shadow-md">
+    <header class="bg-brand-primary border-b border-white/10 sticky top-0 z-40 shadow-md no-print">
       <div class="max-w-[100%] mx-auto px-6 h-[96px] flex items-center justify-between">
         
         <!-- Left Section: Branding & Product Navigation -->
@@ -162,29 +167,47 @@
               </button>
               
               <div v-show="isReportsOpen" 
-                  class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-left transition-all duration-200">
+                  class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transform origin-top-left transition-all duration-200">
+                
                 <div class="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-1">
                   Reporting Hub
                 </div>
                 
-                <!-- Link to the Dashboard -->
+                <!-- 1. NEW: Management Dashboard Link -->
+                <router-link 
+                  :to="{ name: 'operational.dashboard', params: { productSlug: $route.params.productSlug } }" 
+                  class="block px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 transition-all font-bold"
+                  @click="isReportsOpen = false"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="material-icons text-lg text-indigo-400">insights</span>
+                    <div>
+                      <div class="leading-none">Management Dashboard</div>
+                      <div class="text-[9px] text-indigo-300 font-medium uppercase mt-0.5">Visual KPIs & Trends</div>
+                    </div>
+                  </div>
+                </router-link>
+
+                <!-- 2. EXISTING: Report Library Link -->
                 <router-link 
                   :to="{ name: 'ProductReport', params: { productSlug: $route.params.productSlug } }" 
-                  class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-medium"
+                  class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all font-medium mt-1"
                   @click="isReportsOpen = false"
                 >
                   <div class="flex items-center gap-2">
                     <span class="material-icons text-lg opacity-50">analytics</span>
-                    Open Report Library
+                    <div>
+                      <div class="leading-none">Report Library</div>
+                      <div class="text-[9px] text-gray-400 uppercase mt-0.5">Raw Data & Exports</div>
+                    </div>
                   </div>
                 </router-link>
 
-                <div class="px-4 py-3 text-[10px] text-gray-400 italic leading-tight bg-gray-50/50 mt-1">
-                  Access standard and custom operational reports.
+                <div class="px-4 py-3 text-[10px] text-gray-400 italic leading-tight bg-gray-50/50 mt-2 border-t">
+                  Select 'Dashboard' for insights or 'Library' for detailed row-level reports.
                 </div>
               </div>
             </div>
-
             <!-- Admin Dropdown Node -->
             <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin')" class="relative">
               <button @click="toggleAdminDropdown" 
@@ -326,12 +349,9 @@ const isAdminActive = computed(() => {
   return paths.some(p => route.path.startsWith(p));
 });
 
+// Check if the current route is within the reporting hub to apply active styles
 const isReportsActive = computed(() => {
-  if (!productSlug.value) return false;
-  const paths = [
-    `/${productSlug.value}/reports`
-  ];
-  return paths.some(p => route.path.startsWith(p));
+  return route.name === 'ProductReport' || route.name === 'operational.dashboard';
 });
 
 // Close dropdowns on route change

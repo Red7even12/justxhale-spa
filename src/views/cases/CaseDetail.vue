@@ -109,8 +109,9 @@
                 <td class="px-6 py-4 text-xs text-gray-500 font-mono">
                   {{ part.referenceNumber || part.reference_number || '-' }}
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-right flex justify-end gap-3">
                   <button @click="openAssignModal(part)" class="text-brand-primary hover:text-brand-secondary font-black text-xs uppercase tracking-widest">Edit</button>
+                  <button @click="deleteParticipant(part)" class="text-red-600 hover:text-red-700 font-black text-xs uppercase tracking-widest">Delete</button>
                 </td>
               </tr>
             </tbody>
@@ -253,7 +254,7 @@ import { useAlerts } from '@/composables/useAlerts';
 import teamService from '@/services/teamService';
 
 const route = useRoute();
-const { showAlert } = useAlerts();
+const { showAlert, showConfirm } = useAlerts();
 
 // --- STATE ---
 const caseFile = ref(null);
@@ -396,6 +397,19 @@ const saveParticipant = async () => {
     showAlert('Success', 'Participant updated.');
   } catch (e) { showAlert('Error', 'Save failed.'); }
   finally { isSubmitting.value = false; }
+};
+
+const deleteParticipant = async (part) => {
+  const confirmed = await showConfirm('Confirm Removal', `Are you sure you want to remove ${part.entity?.name} from this case?`);
+  if (!confirmed) return;
+
+  try {
+    await apiClient.delete(`/${route.params.productSlug}/cases/${route.params.id}/participants/${part.id}`);
+    showAlert('Success', 'Participant removed from case.');
+    fetchCase();
+  } catch (e) {
+    showAlert('Error', 'Failed to remove participant.');
+  }
 };
 
 // --- MODAL HELPERS ---

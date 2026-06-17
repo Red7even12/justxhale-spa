@@ -6,7 +6,7 @@ import AppLayout from '../layouts/AppLayout.vue';
 import Login from '../views/Login.vue';
 //import Dashboard from '../views/Dashboard.vue';
 import Dashboard from '../views/RemindersDashboard.vue';
-
+ 
 // Admin Imports
 import TeamIndex from '../views/admin/TeamIndex.vue';
 import Administration from '../views/Administration.vue';
@@ -145,6 +145,25 @@ const routes = [
         component: () => import('@/views/admin/PermissionMatrix.vue'),
         meta: { displayName: 'Authorization Matrix', requiresAuth: true, role: 'System Admin' }
       },  
+      
+      // --- BI DASHBOARD FACTORY (ADMIN) ---
+      {
+        path: 'dashboard-factory',
+        name: 'admin.dashboard-factory',
+        component: () => import('@/components/reports/DashboardBuilder.vue'),
+        meta: { displayName: 'Dashboard Factory', role: 'System Admin' }
+      },
+      {
+        path: 'dashboard-preview/:reportSlug',
+        name: 'admin.dashboard-preview',
+        component: () => import('@/components/reports/DashboardViewer.vue'),
+        props: route => ({ 
+            reportSlug: route.params.reportSlug, 
+            isAdminPreview: true 
+        }),
+        meta: { displayName: 'Dashboard Preview' }
+      },
+
       {
         path: 'report-factory',
         name: 'admin.report-factory',
@@ -247,7 +266,7 @@ const routes = [
         meta: { displayName: 'Global Registry' },
       },
 
-// 5. THE V2 GENERIC PRODUCT ENGINE (Must be LAST)
+      // 5. THE V2 GENERIC PRODUCT ENGINE (Must be LAST)
       {
         path: ':productSlug',
         component: ProductLayout,
@@ -318,6 +337,14 @@ const routes = [
             component: () => import('@/views/reports/ReportsDashboard.vue'),
             props: true,
             meta: { displayName: 'Reporting' }
+          },
+          // NEW: MANAGEMENT DASHBOARD (Insights)
+          {
+            path: 'insights/:slug?', 
+            name: 'operational.dashboard',
+            component: () => import('@/views/reports/WidgetDashboard.vue'),  //frontend-spa\src\components\reports\DashboardViewer.vue    @/views/reports/DashboardPortal.vue
+            props: true,
+            meta: { displayName: 'Management Dashboard' }
           }
         ]
       },

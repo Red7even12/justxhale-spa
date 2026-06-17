@@ -137,7 +137,8 @@ Create New Case File logic that broke due to audit logs
     1.  **Gate 1 (NPM):** Handles SSL and the initial split.
     2.  **Gate 2 (Frontend Nginx):** Acts as a safety net to ensure API and Storage requests always find their way home. 
 
-## [3.0.0] - 2026-06-01
+## [3.0.0] - 2026-06-01  
+Major update:  Removed V1 Legacy structures
 ### Added
 - RemindersDashboard.vue:
     * Added the "Tagged For" header before the "Status" column.
@@ -190,6 +191,7 @@ Create New Case File logic that broke due to audit logs
     2. Chained  ->values()  to guarantee the serialized JSON response is an ordered, zero-indexed list.
 
 ## [3.1.0] - 2026-06-11
+Sub Major Update:  Reporting layer launched
     ### Added
     - Added is_milestone to workflow steps
     1. Steps Table: Added a new Milestone column that displays a distinct amber badge for steps marked as milestones, making them easy to identify in the list.
@@ -241,3 +243,20 @@ Create New Case File logic that broke due to audit logs
 
 ### Fixed
 - Repaired Document pack sync triggering when Workflows were synced.
+
+## [JX-3.1.6] - 2026-06-16
+### Added
+- Dashboard functionality
+    1. Super admin dashboard factory
+    2. Subscriber Dashboard node under Reporting Menu  
+
+- Delete option on Case file Participant
+   1. UI Update: Added a "Delete" button next to the "Edit" button in the "Assigned Entities" table
+
+- Upload facility for indexes on View Factory
+
+### Changed
+-
+
+### Fixed
+- 

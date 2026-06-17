@@ -1,43 +1,3 @@
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import apiClient from '../../services/api';
-import ReportViewer from '../../components/reports/ReportViewer.vue';
-
-const route = useRoute();
-const reports = ref<any[]>([]);
-const selectedReportSlug = ref<string | null>(null);
-const loading = ref(true);
-
-const loadLibrary = async () => {
-    loading.value = true;
-    const productSlug = route.params.productSlug;
-    try {
-        const response = await apiClient.get(`/${productSlug}/reports`);
-        reports.value = response.data;
-        
-        // If a slug is in the URL, select it automatically
-        if (route.params.reportSlug) {
-            selectedReportSlug.value = route.params.reportSlug as string;
-        }
-    } catch (err) {
-        console.error("Library Load Error", err);
-    } finally {
-        loading.value = false;
-    }
-};
-
-const standardReports = computed(() => reports.value.filter(r => r.reportClass !== 'subscriber_specific'));
-const customReports = computed(() => reports.value.filter(r => r.reportClass === 'subscriber_specific'));
-
-const selectReport = (slug: string) => {
-    selectedReportSlug.value = slug;
-    // Optional: Update the URL without a full page reload if you want bookmarking
-};
-
-onMounted(() => loadLibrary());
-</script>
-
 <template>
     <div class="reports-dashboard flex h-full bg-gray-50">
         <!-- Sidebar Library -->
@@ -91,6 +51,48 @@ onMounted(() => loadLibrary());
         </main>
     </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import apiClient from '../../services/api';
+import ReportViewer from '../../components/reports/ReportViewer.vue';
+
+const route = useRoute();
+const reports = ref<any[]>([]);
+const selectedReportSlug = ref<string | null>(null);
+const loading = ref(true);
+
+const loadLibrary = async () => {
+    loading.value = true;
+    const productSlug = route.params.productSlug;
+    try {
+        const response = await apiClient.get(`/${productSlug}/reports`);
+        reports.value = response.data;
+        
+        // If a slug is in the URL, select it automatically
+        if (route.params.reportSlug) {
+            selectedReportSlug.value = route.params.reportSlug as string;
+        }
+    } catch (err) {
+        console.error("Library Load Error", err);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const standardReports = computed(() => reports.value.filter(r => r.reportClass !== 'subscriber_specific'));
+const customReports = computed(() => reports.value.filter(r => r.reportClass === 'subscriber_specific'));
+
+const selectReport = (slug: string) => {
+    selectedReportSlug.value = slug;
+    // Optional: Update the URL without a full page reload if you want bookmarking
+};
+
+onMounted(() => loadLibrary());
+</script>
+
+
 
 <style scoped>
 .reports-dashboard { min-height: calc(100vh - 64px); }
