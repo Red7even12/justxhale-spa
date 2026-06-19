@@ -131,6 +131,61 @@
         </div>
     </div>
   </div>
+
+    <!-- Place this at the bottom of ReportBuilder.vue -->
+    <div class="max-w-7xl mx-auto mt-10 pb-20">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 class="text-lg font-bold text-gray-800 tracking-tight">Managed Deployed Reports</h3>
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ availableReports.length }} Active Deployments</span>
+            </div>
+
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-widest">
+                    <tr>
+                        <th class="p-4">Report Name</th>
+                        <th class="p-4">Class</th>
+                        <th class="p-4">Target Context</th>
+                        <th class="p-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr v-for="report in availableReports" :key="report.id" class="hover:bg-slate-50 transition-colors group">
+                        <td class="p-4">
+                            <div class="font-bold text-gray-700">{{ report.name }}</div>
+                            <div class="text-[10px] font-mono text-blue-400">{{ report.slug }}</div>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase border" 
+                                :class="getClassStyling(report.reportClass || report.report_class)">
+                                {{ (report.reportClass || report.report_class || 'standard').replace('_', ' ') }}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <div class="text-xs font-medium text-gray-500">
+                                {{ getContextLabel(report) }}
+                            </div>
+                        </td>
+                        <td class="p-4 text-right">
+                            <div class="flex justify-end gap-3">
+                                <button @click="loadSelectedReport(report.slug)" class="text-blue-600 hover:text-blue-900 font-black text-[11px] uppercase">
+                                    Edit
+                                </button>
+                                <button @click="deleteReport(report)" class="text-red-400 hover:text-red-700 font-black text-[11px] uppercase">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div v-if="availableReports.length === 0" class="p-10 text-center text-gray-400 italic text-sm">
+                No reports found for the current scoping selection.
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup lang="ts">
@@ -403,4 +458,52 @@ const openViewCreator = () => {
     const routeData = router.resolve({ name: 'admin.view-factory' });
     window.open(routeData.href, '_blank');
 };
+
+/**
+ * Physically removes the report definition from the database.
+ */
+const deleteReport = async (report: any) => {
+    if (!confirm(`DANGER: Are you sure you want to delete the report "${report.name}"? This action cannot be undone.`)) return;
+
+    try {
+        await apiClient.delete(`/admin/report-factory/reports/${report.slug}`);
+        
+        // If we were currently editing this report, reset the form
+        if (selectedReportSlug.value === report.slug) {
+            resetForm();
+        }
+        
+        // Refresh the list (This function already exists in your ReportBuilder)
+        await fetchReports();
+        alert("Report destroyed successfully.");
+    } catch (e: any) {
+        alert("Delete Failed: " + (e.response?.data?.message || "Internal Error"));
+    }
+};
+
+/**
+ * Helper to trigger the existing loadExistingReport logic from the table
+ */
+const loadSelectedReport = (slug: string) => {
+    selectedReportSlug.value = slug;
+    // This calls your existing function that hydrates the columns and view
+    loadExistingReport(); 
+    // Scroll back to top to see the builder
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const getContextLabel = (report: any) => {
+    const rClass = report.reportClass || report.report_class;
+    if (rClass === 'paas_standard') return 'Universal Access';
+    if (rClass === 'product_standard') return report.product?.name || 'Product Standard';
+    return `${report.subscriber?.name || 'Subscriber'} (${report.product?.name || 'Bespoke'})`;
+};
+
+const getClassStyling = (reportClass: string) => {
+    if (reportClass === 'paas_standard') return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    if (reportClass === 'product_standard') return 'bg-blue-50 text-blue-600 border-blue-100';
+    return 'bg-purple-50 text-purple-600 border-purple-100';
+};
+
+
 </script>

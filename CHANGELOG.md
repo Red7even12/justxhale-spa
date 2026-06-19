@@ -260,3 +260,15 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - 
+
+## [JX-3.1.7] - 2026-06-xx
+### Added
+- 
+
+### Changed
+- Widget displays for better UI.
+- Added parameters for more flexibility on Gauge Dials
+
+### Fixed
+- Dimension dropdown not populating on widgets
+- Debugged LocalHost Logo uploads and displays
