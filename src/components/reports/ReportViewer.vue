@@ -291,11 +291,17 @@ const goBackToBuilder = () => {
 };
 
 const downloadCsv = async () => {
-    const pSlug = props.productSlug || (route.params.slug as string) || 'global';
+    // 1. Resolve Slugs
     const rSlug = props.reportSlug || (route.params.reportSlug as string);
+    // Use the same logic as fetchReport to find the product context
+    const pSlug = props.productSlug || (route.params.slug as string) || (route.params.productSlug as string);
+
+    if (!rSlug || rSlug === 'undefined') return;
+
+    // 2. CONTEXT AWARE EXPORT PATH
     const exportPath = props.isAdminPreview 
-    ? `/admin/report-factory/reports/${rSlug}/export` 
-    : `/reports/${rSlug}/export`;
+        ? `/admin/report-factory/reports/${rSlug}/export` 
+        : `/${pSlug}/reports/${rSlug}/export`; // ADDED pSlug here
 
     try {
         const params: any = { 
@@ -313,6 +319,7 @@ const downloadCsv = async () => {
             responseType: 'blob'
         });
         
+        // 3. Trigger Browser Download
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         const date = new Date().toISOString().split('T')[0];
@@ -322,9 +329,11 @@ const downloadCsv = async () => {
         document.body.appendChild(link);
         link.click();
         
+        // Cleanup
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
     } catch (err: any) {
+        console.error("Export Error:", err);
         alert("Failed to export CSV. Please check your permissions.");
     }
 };

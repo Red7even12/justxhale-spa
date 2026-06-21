@@ -272,3 +272,13 @@ Sub Major Update:  Reporting layer launched
 ### Fixed
 - Dimension dropdown not populating on widgets
 - Debugged LocalHost Logo uploads and displays
+
+## [JX-3.1.8] - 2026-06-21
+### Added
+- 
+
+### Changed
+-
+
+### Fixed
+- Export to CSV path for Reports from Subscriber Viewer repaired.
