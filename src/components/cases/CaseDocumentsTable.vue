@@ -464,7 +464,8 @@ import NotesPanel from '@/components/estates/NotesPanel.vue';
 
 const props = defineProps({ 
   caseId: { type: [String, Number], required: true },
-  currentTeamId: { type: [String, Number], default: null }
+  currentTeamId: { type: [String, Number], default: null },
+  isReadonly: { type: Boolean, default: false } 
 });
 const route = useRoute();
 const productSlug = computed(() => route.params.productSlug);

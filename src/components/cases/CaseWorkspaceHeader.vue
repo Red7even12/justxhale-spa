@@ -23,8 +23,9 @@
       <!-- Actions Toolbar -->
       <div class="flex items-center gap-3">
         
-        <!-- Notes -->
-        <button @click="openCaseNotes" 
+        <!-- Notes: HIDE if inactive -->
+        <button v-if="caseFile.status !== 'inactive'"
+                @click="openCaseNotes" 
                 class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-gray-50 uppercase tracking-wide flex items-center gap-2 transition-colors">
           <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -32,7 +33,7 @@
           Notes
         </button>
 
-        <!-- Timeline -->
+        <!-- Timeline: ALWAYS show (it's the read-only audit trail) -->
         <button @click="toggleTimeline" 
                 :class="[
                   showTimeline ? 'bg-brand-primary text-white border-brand-primary' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
@@ -44,8 +45,9 @@
           Timeline
         </button>
 
-        <!-- Edit Setup -->
-        <button @click="goToSetup" 
+        <!-- Edit Setup: HIDE if inactive -->
+        <button v-if="caseFile.status !== 'inactive'"
+                @click="goToSetup" 
                 class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors">
           Edit Case Setup
         </button>
@@ -103,7 +105,8 @@ const showTimeline = ref(false);
 const statusBadgeClass = computed(() => {
     switch (props.caseFile.status) {
         case 'open': return 'bg-green-100 text-green-800';
-        case 'closed': return 'bg-gray-100 text-gray-800';
+        case 'closed': return 'bg-blue-100 text-blue-800'; // Changed to blue per your template standard
+        case 'inactive': return 'bg-gray-200 text-gray-700 border border-gray-300'; // Grey/muted for deactivated
         case 'archived': return 'bg-yellow-100 text-yellow-800';
         default: return 'bg-blue-100 text-blue-800';
     }

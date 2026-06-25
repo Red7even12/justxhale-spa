@@ -2,52 +2,69 @@
   <div class="notes-panel">
     <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Notes & History</h3>
 
-    <div class="mb-4">
-      <textarea
-        ref="textareaRef"
-        v-model="newNoteContent"
-        class="form-input w-full"
-        placeholder="Add a new note..."
-        style="min-height: 80px;"
-        @input="autoResize"
-      ></textarea>
-        <div class="mt-2 flex flex-col sm:flex-row gap-2">
-        <input
-          type="text"
-          v-model="newCaseNumber"
-          class="form-input flex-1"
-          placeholder="Case Number (optional)"
-        >
-        <select 
-          v-if="teamMembers.length"
-          v-model="taggedUserId" 
-          class="form-input flex-1"
-        >
-          <option :value="null">Tag Team Member (optional)</option>
-          <option v-for="member in teamMembers" :key="member.id" :value="member.id">
-            Tag: {{ member.firstName || member.first_name }} {{ member.lastName || member.last_name }}
-          </option>
-        </select>
+    <div v-if="!isReadonly" class="mb-4">
+      <div class="mb-4">
+        <textarea
+          ref="textareaRef"
+          v-model="newNoteContent"
+          class="form-input w-full"
+          placeholder="Add a new note..."
+          style="min-height: 80px;"
+          @input="autoResize"
+        ></textarea>
+          <div class="mt-2 flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            v-model="newCaseNumber"
+            class="form-input flex-1"
+            placeholder="Case Number (optional)"
+          >
+          <select 
+            v-if="teamMembers.length"
+            v-model="taggedUserId" 
+            class="form-input flex-1"
+          >
+            <option :value="null">Tag Team Member (optional)</option>
+            <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+              Tag: {{ member.firstName || member.first_name }} {{ member.lastName || member.last_name }}
+            </option>
+          </select>
+        </div>
       </div>
+
+      
       <div v-if="error" class="text-sm text-red-600 mt-1">{{ error }}</div>
       
       <!-- Button group with consistent top margin -->
-      <div class="mt-2 space-x-2">
-        <button
-          @click="submitNote"
-          :disabled="isLoading || !newNoteContent.trim()"
-          class="btn-primary"
-          :class="{ 'opacity-50 cursor-not-allowed': isLoading }"
-        >
-          {{ isLoading ? 'Saving...' : 'Save Note' }}
-        </button>
-        <button @click="$emit('cancel')" class="btn-secondary">
-          Cancel
-        </button>
-        <button @click="showReminderInput = !showReminderInput" class="btn-secondary">
-          Set Reminder
-        </button>
-      </div>
+      <div class="mt-2 flex justify-between items-center">
+          <div class="space-x-2">
+              <button
+                  @click="submitNote"
+                  :disabled="isLoading || !newNoteContent.trim()"
+                  class="btn-primary"
+                  :class="{ 'opacity-50 cursor-not-allowed': isLoading }"
+              >
+                  {{ isLoading ? 'Saving...' : 'Save Note' }}
+              </button>
+              <button @click="$emit('cancel')" class="btn-secondary">Cancel</button>
+              <button @click="showReminderInput = !showReminderInput" class="btn-secondary">Set Reminder</button>
+          </div>
+
+          <!-- Right-aligned Deactivate button -->
+          <button 
+              v-if="canDeactivate" 
+              @click="handleDeactivation" 
+              type="button"
+              class="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 focus:outline-none"
+          >
+              {{ isLoading ? 'Deactivating...' : 'Make Inactive' }}
+          </button>
+
+          <div v-else class="mb-6 p-3 bg-gray-100 text-gray-500 rounded border border-dashed text-center text-sm font-semibold">
+              Adding notes is disabled for inactive cases.
+          </div> 
+        </div>
+      
     </div>
 
     <div v-if="showReminderInput" class="mb-4 bg-gray-50 p-3 rounded-md border">
@@ -150,7 +167,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick, computed } from 'vue';
+import { useAuthStore } from '@/store/auth'; 
 import noteService from '@/services/noteService';
 import apiClient from '@/services/api'; 
 
@@ -159,7 +177,8 @@ const props = defineProps({
   noteableType: { type: String, required: true },
   noteableId: { type: [Number, String], required: true }, 
   contextUrl: { type: String, required: true },
-  currentTeamId: { type: [Number, String], default: null }
+  currentTeamId: { type: [Number, String], default: null },
+  isReadonly: { type: Boolean, default: false } 
 });
 
 const emit = defineEmits(['note-added', 'cancel']);
@@ -171,6 +190,20 @@ const taggedUserId = ref(null);
 const teamMembers = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
+
+const authStore = useAuthStore();
+
+const canDeactivate = computed(() => {
+    // 1. Only show on the main Case File context (not on specific documents/workflow steps)
+    if (props.noteableType !== 'case_file') return false;
+
+    // 2. Access user from Pinia store
+    const user = authStore.user;
+    if (!user || !user.roles) return false;
+
+    // 3. Check for Case File Admin (1) or Subscriber Admin (3)
+    return user.roles.some(role => [1, 3].includes(role.id));
+});
 
 // Fetch team members if a team ID is provided
 const fetchTeamMembers = async () => {
@@ -334,6 +367,38 @@ const submitNote = async () => {
     isLoading.value = false;
   }
 };
+
+const handleDeactivation = async () => {
+    // 1. Validation
+    if (!newNoteContent.value || newNoteContent.value.trim().length < 5) {
+        alert("Please enter a reason for deactivation in the note box above.");
+        return;
+    }
+
+    // 2. Confirmation
+    const confirmed = confirm("Are you sure you want to make this case INACTIVE? This action is recorded and the case will be closed.");
+    if (!confirmed) return;
+
+    isLoading.value = true;
+    try {
+        // 3. API Call using the contextUrl (e.g. /api/v1/vizabiliti/cases/123/deactivate)
+        await apiClient.post(`/${props.contextUrl}/deactivate`, {
+            note_content: newNoteContent.value
+        });
+
+        alert("Case deactivated successfully.");
+        
+        // 4. Reload to update the workspace UI
+        window.location.reload(); 
+
+    } catch (err) {
+        error.value = err.response?.data?.message || 'Failed to deactivate case.';
+        console.error(err);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 </script>
 
 <style scoped>

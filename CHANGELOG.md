@@ -282,3 +282,19 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - Export to CSV path for Reports from Subscriber Viewer repaired.
+
+
+## [JX-3.1.9] - 2026-06-21
+### Added
+- Add in Roll back option for Case file workflow 
+    1. Hover "undo" buttons visible on each line once it was actioned. 
+- Add in option to deactivate a casefile
+    1. Add Deactivate buttpon on Notes capture for Subscriber Admins and Case File Managers.
+    2. Adde filter for inactive on Case File Index
+    3. Blocked editing of inactive case files while still having access to the timeline for audit purposes. 
+
+### Changed
+-
+
+### Fixed
+- 

@@ -34,14 +34,25 @@
             <td class="px-3 py-3 w-1/2 align-middle bg-white group-hover:bg-gray-50">
               
               <!-- STATE: COMPLETED -->
-              <div v-if="process.status === 'completed'" class="text-xs font-bold text-green-600 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                <!-- Show Value if it's not just a boolean '1' -->
-                <span v-if="process.dataValue && process.dataValue !== '1'" class="truncate max-w-[150px]" :title="process.dataValue">
-                  {{ process.dataValue }}
-                </span>
-                <span v-else>{{ process.workflowStep?.actionLabelCompleted || 'Done' }}</span>
+              <div v-if="process.status === 'completed'" class="flex items-center justify-between group/undo">
+                <div class="text-xs font-bold text-green-600 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                  <span v-if="process.dataValue && process.dataValue !== '1'" class="truncate max-w-[120px]" :title="process.dataValue">
+                    {{ process.dataValue }}
+                  </span>
+                  <span v-else>{{ process.workflowStep?.actionLabelCompleted || 'Done' }}</span>
+                </div>
+                
+                <!-- The Undo Button: Hidden by default, shows on row hover -->
+                <button 
+                  @click="revertStep(process)" 
+                  title="Undo / Revert Step"
+                  class="opacity-0 group-hover/undo:opacity-100 text-gray-400 hover:text-orange-500 transition-all p-1"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                </button>
               </div>
+              
 
               <!-- STATE: ACTIVE / ACTIONABLE -->
               <div v-else-if="process.isActionable" class="flex items-center gap-2 w-full">
@@ -211,6 +222,34 @@ const saveStep = async (process, isCheckbox = false) => {
     } catch (err) {
         console.error("Complete failed", err);
         showAlert('Error', 'Failed to update step.');
+    }
+};
+
+const revertStep = async (process) => {
+    if (!confirm('Revert this step? This will reset any reminders or steps that were automatically started by this action.')) {
+        return;
+    }
+
+    try {
+        await apiClient.post(
+            `/${route.params.productSlug}/cases/${props.caseId}/workflow/${process.id}/revert`
+        );
+
+        // 1. Manually clear local UI state immediately
+        process.status = 'pending';
+        process.dataValue = null;
+        process.isActionable = false;
+        if (inputData[process.id]) {
+            inputData[process.id] = ''; 
+        }
+
+        showAlert('Success', 'Step reverted to pending.');
+        
+        // 2. Re-fetch from server to sync all downstream changes
+        await fetchProcesses(true);
+    } catch (err) {
+        console.error("Revert failed", err);
+        showAlert('Error', 'Failed to revert step.');
     }
 };
 

@@ -61,6 +61,7 @@
             <option value="open">Open</option>
             <option value="pending">Pending</option>
             <option value="closed">Closed</option>
+            <option v-if="canSeeInactive" value="inactive">Deactivated (Inactive)</option>
           </select>
         </div>
         <div>
@@ -141,7 +142,12 @@
               </span>
             </td>
             <td class="px-6 py-4">
-               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 uppercase tracking-wide">
+              <span :class="[
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide',
+                caseFile.status === 'inactive' ? 'bg-gray-200 text-gray-700 border border-gray-300' : 
+                caseFile.status === 'closed' ? 'bg-blue-100 text-blue-800' :
+                'bg-green-100 text-green-800'
+              ]">
                 {{ caseFile.status }}
               </span>
             </td>
@@ -237,8 +243,16 @@ import { useRoute } from 'vue-router';
 import caseService from '@/services/caseService';
 import teamService from '@/services/teamService';
 
+import { useAuthStore } from '@/store/auth'; 
+const authStore = useAuthStore();
+
 const route = useRoute();
 const productSlug = computed(() => route.params.productSlug);
+
+const canSeeInactive = computed(() => {
+  const user = authStore.user;
+  return user?.roles?.some(role => [1, 3].includes(role.id));
+});
 
 const cases = ref([]);
 const fileTypes = ref([]);
