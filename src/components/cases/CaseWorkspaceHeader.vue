@@ -8,7 +8,19 @@
       <!-- Identity -->
       <div>
         <div class="flex items-center gap-3">
-          <h1 class="text-3xl font-bold text-gray-900 uppercase tracking-tight">{{ caseFile.fileName }}</h1>
+      <!-- Apply dynamic colors to the Name if a Class exists -->
+      <h1 
+        :style="caseFile.fileClass ? { 
+          backgroundColor: caseFile.fileClass.bg_color || caseFile.fileClass.bgColor, 
+          color: caseFile.fileClass.text_color || caseFile.fileClass.textColor 
+        } : {}"
+        :class="[
+          'text-3xl font-bold uppercase tracking-tight transition-all',
+          caseFile.fileClass ? 'px-4 py-1 rounded-lg shadow-sm' : 'text-gray-900'
+        ]"
+      >
+        {{ caseFile.fileName }}
+      </h1>
           <span :class="statusBadgeClass" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
             {{ caseFile.status }}
           </span>

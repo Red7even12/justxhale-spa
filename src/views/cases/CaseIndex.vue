@@ -115,13 +115,13 @@
             <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Type / Niche</th>
             <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
             
-            <!-- Sortable: Created -->
-            <th @click="toggleSort('created_at')" class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-brand-primary transition-colors group select-none">
+            <!-- Sortable: Updated -->
+            <th @click="toggleSort('updated_at')" class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-brand-primary transition-colors group select-none">
               <div class="flex items-center gap-1">
-                Created
+                Updated
                 <span class="text-gray-300 group-hover:text-brand-primary transition-colors">
-                  <svg v-if="filters.sort_by === 'created_at' && filters.sort_dir === 'asc'" class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                  <svg v-else-if="filters.sort_by === 'created_at' && filters.sort_dir === 'desc'" class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  <svg v-if="filters.sort_by === 'updated_at' && filters.sort_dir === 'asc'" class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                  <svg v-else-if="filters.sort_by === 'updated_at' && filters.sort_dir === 'desc'" class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                   <svg v-else class="w-4 h-4 opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
                 </span>
               </div>
@@ -132,10 +132,27 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="caseFile in cases" :key="caseFile.id" class="hover:bg-gray-50 transition-colors">
+
             <td class="px-6 py-4">
-              <div class="text-sm font-bold text-gray-900">{{ caseFile.fileName || caseFile.file_name }}</div>
-              <div class="text-xs text-gray-400">{{ caseFile.fileReference || caseFile.file_reference || 'No Reference' }}</div>
+              <!-- Apply the dynamic style if a fileClass exists. -->
+              <div 
+                :style="caseFile.fileClass ? { 
+                  backgroundColor: caseFile.fileClass.bg_color || caseFile.fileClass.bgColor, 
+                  color: caseFile.fileClass.text_color || caseFile.fileClass.textColor 
+                } : {}"
+                :class="[
+                  'text-sm font-bold mb-1', 
+                  caseFile.fileClass ? 'px-2 py-1 rounded shadow-sm inline-block' : 'text-gray-900'
+                ]"
+              >
+                {{ caseFile.fileName || caseFile.file_name }}
+              </div>
+              
+              <div class="text-xs text-gray-400 font-medium">
+                {{ caseFile.fileReference || caseFile.file_reference || 'No Reference' }}
+              </div>
             </td>
+
             <td class="px-6 py-4">
               <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold uppercase">
                 {{ caseFile.fileType?.name || caseFile.file_type?.name }}
@@ -152,7 +169,7 @@
               </span>
             </td>
             <td class="px-6 py-4 text-sm text-gray-500">
-              {{ new Date(caseFile.createdAt || caseFile.created_at).toLocaleDateString() }}
+              {{ new Date(caseFile.updatedAt || caseFile.updated_at).toLocaleDateString() }}
             </td>
             <td class="px-6 py-4 text-right text-sm font-medium">
               <router-link :to="`/${productSlug}/cases/${caseFile.id}`" class="text-brand-primary hover:underline font-bold">
@@ -268,7 +285,7 @@ const filters = ref({
   status: '',
   file_type_id: '',
   current_team_id: '',
-  sort_by: 'created_at', // Default sort column
+  sort_by: 'updated_at', // Default sort column
   sort_dir: 'desc',      // Default sort direction
   page: 1
 });
@@ -328,7 +345,7 @@ const fetchCases = async () => {
   try {
     const { data } = await caseService.getCases(productSlug.value, filters.value);
     
-    cases.value = data.data; 
+    cases.value = data.data;
     
     // Check for both snake_case and camelCase (or wrapped in a meta object)
     const meta = data.meta || data;

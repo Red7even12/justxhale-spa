@@ -23,6 +23,7 @@
         
         <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">DNA Architecture</div>
           <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="nav-link" active-class="nav-active">Casefile Types</router-link>
+          <router-link :to="{ name: 'admin.product.file-classes', params: { slug } }" class="nav-link" active-class="nav-active">Case Classifications</router-link>
           <router-link :to="{ name: 'admin.product.workflows', params: { slug } }" class="nav-link" active-class="nav-active">Workflows</router-link>
           <router-link :to="{ name: 'admin.product.document-packs', params: { slug } }" class="nav-link" active-class="nav-active">Document Packs</router-link>
           <router-link :to="{ name: 'admin.subscriber.entity-dna' }" class="nav-link" active-class="nav-active">Entity DNA</router-link>

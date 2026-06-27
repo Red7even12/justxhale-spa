@@ -374,6 +374,12 @@ const routes = [
                   props: true
               },
               {
+                  path: 'file-classes',
+                  name: 'admin.product.file-classes',
+                  component: () => import('@/views/admin/products/blueprints/FileClassManager.vue'),
+                  props: true
+              },
+              {
                   path: 'document-packs',
                   name: 'admin.product.document-packs',
                   component: () => import('@/views/admin/products/blueprints/DocumentPackBlueprint.vue'),

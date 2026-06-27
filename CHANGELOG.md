@@ -298,3 +298,14 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - 
+
+## [JX-3.1.10] - 2026-06-27
+### Added
+- System admin screens to manage Case File classes.
+
+### Changed
+- Use Updated_at on Case file index
+- Apply priority sort order to Case files with colour badges in the index and management screens.
+
+### Fixed
+- 

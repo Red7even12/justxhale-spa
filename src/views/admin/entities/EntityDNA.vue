@@ -2,7 +2,7 @@
   <div class="max-w-5xl mx-auto">
     <div class="flex justify-between items-end mb-8">
       <div>
-        <h2 class="text-2xl font-black text-gray-900 tracking-tight">Entity DNA</h2>
+        <h2 class="text-2xl font-black text-gray-900 tracking-tight"> </h2>
         <p class="text-sm text-gray-500 font-medium">Define global fields that follow people/companies across all cases.</p>
       </div>
       <button @click="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">

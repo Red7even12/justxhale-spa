@@ -6,8 +6,14 @@
     <div class="flex justify-between items-start border-b border-gray-200 pb-6">
       <div>
         <div class="flex items-center gap-3 mb-2">
-          <span class="bg-brand-primary text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
-            {{ caseFile.fileType?.name }}
+        <!-- Show Priority Badge if exists, else show Product Type Badge -->
+          <span v-if="caseFile?.fileClass"
+                :style="{ backgroundColor: caseFile.fileClass.bg_color, color: caseFile.fileClass.text_color }"
+                class="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">
+            {{ caseFile.fileClass.name }}
+          </span>
+          <span v-else class="bg-brand-primary text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
+            {{ caseFile?.fileType?.name }}
           </span>
           <h1 class="text-3xl font-black text-gray-900 tracking-tight">{{ caseFile.fileName }}</h1>
         </div>
@@ -49,11 +55,9 @@
                Save Details
              </button>
           </div>
+          
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="col-span-2 md:col-span-1">
-              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File Reference</label>
-              <input v-model="detailsForm.file_reference" type="text" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary font-bold text-gray-700">
-            </div>
+             <!-- Assigned Team -->
             <div class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Assigned Team</label>
               <select v-model="detailsForm.current_team_id" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm font-bold text-gray-700">
@@ -61,6 +65,22 @@
                 <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
               </select>
             </div>
+            <!-- Case Classification Dropdown -->
+            <div class="col-span-2 md:col-span-1">
+              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Classification (Priority)</label>
+              <select v-model="detailsForm.file_class_id" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm font-bold text-gray-700">
+                <option :value="null">-- Standard (No Class) --</option>
+                <option v-for="cls in fileClasses" :key="cls.id" :value="cls.id">
+                  {{ cls.name }}
+                </option>
+              </select>
+            </div>
+            <!-- File Reference -->
+            <div class="col-span-2 md:col-span-1">
+              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File Reference</label>
+              <input v-model="detailsForm.file_reference" type="text" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary font-bold text-gray-700">
+            </div>
+            <!-- Custom Fields -->
             <div v-for="field in caseFields.filter(f => !f.participantRoleId)" :key="field.id" class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                 {{ field.label }} 
@@ -266,7 +286,7 @@ const tabs = [{ id: 'details', label: 'Details' }, { id: 'participants', label: 
 const selectedLetter = ref('');
 
 // --- FORMS ---
-const detailsForm = reactive({ file_reference: '', current_team_id: null, meta_data: {} });
+const detailsForm = reactive({ file_reference: '', current_team_id: null, file_class_id: null, meta_data: {} });
 const showAssignModal = ref(false);
 const isEditingParticipant = ref(false);
 const editingParticipantId = ref(null);
@@ -289,23 +309,33 @@ const activeRoleFields = computed(() => {
   return caseFields.value.filter(f => parseInt(f.participantRoleId) === parseInt(selectedRole.id));
 });
 
+const fileClasses = ref([]); 
+
 // --- CORE FETCH ---
 const fetchCase = async () => {
   try {
-    const [{ data }, teamRes, rolesRes] = await Promise.all([
+    // 1. Capture 4 variables from 4 requests
+    const [{ data }, teamRes, rolesRes, fileClassesRes] = await Promise.all([
         apiClient.get(`/${route.params.productSlug}/cases/${route.params.id}`),
         teamService.getTeams(),
-        apiClient.get(`/${route.params.productSlug}/participant-roles`)
+        apiClient.get(`/${route.params.productSlug}/participant-roles`),
+        apiClient.get(`/${route.params.productSlug}/file-classes`) 
     ]);
     
     const cData = data.data || data;
     caseFile.value = cData;
-
     teams.value = teamRes.data.data || teamRes.data;
     participantRoles.value = rolesRes.data.data || rolesRes.data;
+    
+    // 2. Assign the captured variable
+    fileClasses.value = fileClassesRes.data.data || fileClassesRes.data;
 
     // 1. FORCE THE MAPPING (Bypassing ?? false logic)
     caseFields.value = (cData.fileType?.fields || []).map(f => {
+         // Determine if it belongs to a participant role
+        const pRoleId = f.participantRoleId || f.participant_role_id;
+        // Safety check for Boolean flags
+        const showStar = f.showInQuickView === true || f.show_in_quick_view === true || f.show_in_quick_view === 1;
         // Check IDs explicitly
         const hasId = !!f.entityFieldDefinitionId || !!f.entity_field_definition_id;
         const hasRel = !!f.entityFieldDefinition || !!f.entity_field_definition;
@@ -323,18 +353,21 @@ const fetchCase = async () => {
         }
 
         return {
-            id: f.id,
-            label: f.fieldLabel || f.field_label,
-            key: f.fieldKey || f.field_key, 
-            fieldType: f.fieldType || f.field_type,
-            participantRoleId: f.participantRoleId || f.participant_role_id || null,
-            isProjected: isProj,
-            globalDnaKey: dnaKey
+          id: f.id,
+          label: f.fieldLabel || f.field_label,
+          key: f.fieldKey || f.field_key, 
+          fieldType: f.fieldType || f.field_type,
+          // Ensure this is strictly null if not present to avoid filter bugs
+          participantRoleId: (pRoleId && pRoleId !== "0") ? pRoleId : null,
+          showInQuickView: showStar,
+          isProjected: f.isProjected || f.is_projected || false,
+          globalDnaKey: f.globalDnaKey || f.global_dna_key || null
         };
     });
 
     detailsForm.file_reference = cData.fileReference || cData.file_reference || '';
     detailsForm.current_team_id = cData.currentTeamId || cData.current_team_id || null;
+    detailsForm.file_class_id = cData.fileClassId || cData.file_class_id || null; 
     
     const rawMeta = cData.metaData || cData.meta_data || {};
     detailsForm.meta_data = {};
@@ -349,6 +382,8 @@ const fetchCase = async () => {
 
   } catch (e) { console.error("Fetch Case Error:", e); }
 };
+
+
 
 // --- HELPERS ---
 const resolveProjectedValue = (field) => {
@@ -373,6 +408,7 @@ const saveMetadata = async () => {
     await apiClient.put(`/${route.params.productSlug}/cases/${route.params.id}`, {
         file_reference: detailsForm.file_reference,
         current_team_id: detailsForm.current_team_id,
+        file_class_id: detailsForm.file_class_id,
         meta_data: detailsForm.meta_data
     });
     showAlert('Success', 'Case synchronized.');
