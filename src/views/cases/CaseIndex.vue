@@ -126,7 +126,8 @@
                 </span>
               </div>
             </th>
-            
+            <!-- NEW PROGRESS HEADER -->
+            <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Progress</th>
             <th class="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
           </tr>
         </thead>
@@ -171,6 +172,23 @@
             <td class="px-6 py-4 text-sm text-gray-500">
               {{ new Date(caseFile.updatedAt || caseFile.updated_at).toLocaleDateString() }}
             </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <!-- Updated to camelCase to match API Response -->
+                <span class="text-xs font-black text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                  {{ caseFile.milestonesCompleted || 0 }} / {{ caseFile.milestonesTotal || 0 }}
+                </span>
+                
+                <!-- Updated to camelCase for the dot logic -->
+                <div 
+                  v-if="caseFile.milestonesTotal > 0"
+                  :class="[
+                    'w-2 h-2 rounded-full',
+                    caseFile.milestonesCompleted === caseFile.milestonesTotal ? 'bg-green-500' : 'bg-amber-400'
+                  ]"
+                ></div>
+              </div>
+            </td>
             <td class="px-6 py-4 text-right text-sm font-medium">
               <router-link :to="`/${productSlug}/cases/${caseFile.id}`" class="text-brand-primary hover:underline font-bold">
                 View Details
@@ -178,7 +196,7 @@
             </td>
           </tr>
           <tr v-if="cases.length === 0 && !isLoading">
-            <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
+            <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">
               No cases found matching your criteria.
             </td>
           </tr>

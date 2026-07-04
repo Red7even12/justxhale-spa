@@ -2,7 +2,7 @@
   <div class="h-full flex flex-col">
     <!-- Header -->
     <h3 class="text-lg font-bold text-gray-800 uppercase tracking-tight mb-4 border-b border-gray-100 pb-2 shrink-0">
-      Workflow Checklist
+      Workflow Checklist (Milestones in Blue)
     </h3>
     
     <!-- Loading / Error States -->
@@ -20,15 +20,22 @@
         <tbody class="divide-y divide-gray-100">
           <tr v-for="process in visibleProcesses" :key="process.id" class="hover:bg-gray-50 transition-colors group">
             
-            <!-- Column 1: Step Name & Status -->
-            <td class="px-3 py-3 w-1/3 align-middle bg-white group-hover:bg-gray-50">
-              <p class="text-sm font-bold text-gray-800">{{ process.workflowStep?.label }}</p>
-              
-              <!-- Subtext: Active but waiting for input -->
-              <p v-if="process.status === 'active' && !process.isActionable" class="text-[10px] text-gray-400 italic mt-0.5">
-                {{ process.workflowStep?.actionLabelActive || 'Pending...' }}
-              </p>
-            </td>
+<!-- Column 1: Step Name & Status -->
+<td class="px-3 py-3 w-1/3 align-middle bg-white group-hover:bg-gray-50">
+  <p 
+    :class="[
+      'text-sm font-bold inline-block px-1 rounded transition-colors',
+      process.workflowStep?.isMilestone ? 'bg-blue-50 text-blue-800 border-b border-blue-200' : 'text-gray-800'
+    ]"
+  >
+    {{ process.workflowStep?.label }}
+  </p>
+  
+  <!-- Subtext remains unchanged -->
+  <p v-if="process.status === 'active' && !process.isActionable" class="text-[10px] text-gray-400 italic mt-0.5">
+    {{ process.workflowStep?.actionLabelActive || 'Pending...' }}
+  </p>
+</td>
 
             <!-- Column 2: Action / Data Input -->
             <td class="px-3 py-3 w-1/2 align-middle bg-white group-hover:bg-gray-50">

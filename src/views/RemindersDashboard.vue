@@ -64,9 +64,21 @@
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="reminder in reminders.data" :key="reminder.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm" :class="getDateStatusClass(reminder)">{{ formatDate(reminder.dueDate || reminder.due_date) }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span class="font-medium text-gray-900">{{ reminder.caseName || reminder.case_name }}</span>
-                <div class="text-xs text-gray-400">{{ reminder.caseReference || reminder.case_reference }}</div>
+              <td class="px-6 py-4">
+                <!-- Dynamic Style Injection -->
+                <div 
+                  :style="reminder.classBgColor ? { backgroundColor: reminder.classBgColor, color: reminder.classTextColor } : {}"
+                  :class="[
+                    'text-sm font-bold transition-all', 
+                    reminder.classBgColor ? 'px-2 py-1 rounded shadow-sm inline-block' : 'text-gray-900'
+                  ]"
+                >
+                  {{ reminder.caseName || reminder.case_name }}
+                </div>
+                
+                <div class="text-[10px] text-gray-400 font-mono mt-0.5">
+                  Ref: {{ reminder.caseReference || reminder.case_reference }}
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {{ reminder.taskContext || reminder.task_context }}

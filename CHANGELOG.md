@@ -309,3 +309,15 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - 
+
+## [JX-3.1.11] - 2026-07-04
+### Added
+- Milestone indicator on Case File Index page
+- User Interface & Visibility
+    1.  **Real-time Recognition**: High-priority cases now feature distinct color-coded badges and "Glass Pane" styling, ensuring critical files are instantly recognizable during high-volume processing.
+
+### Changed
+- 
+
+### Fixed
+- 
