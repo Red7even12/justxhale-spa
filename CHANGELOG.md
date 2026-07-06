@@ -180,7 +180,7 @@ Major update:  Removed V1 Legacy structures
 - Show only active team members on Reminder Tagging
 - Show both Firstname and Lastname on tagged reminders in reminder dashboard.
 - Added Company to the Participant on Quickview bar. 
-- Improved Partcicipant Selector on the Modal screen to a dropdown driven by first letter selection filter.
+- Improved Participant Selector on the Modal screen to a dropdown driven by first letter selection filter.
 - Applied Participant role sort order to the quick view bar.
 - Supply "Company" as part of the select string where you select Participants.
 - Added Company to the participant cards above the quick view bar.
@@ -321,3 +321,20 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - 
+
+## [JX-3.1.12] - 2026-07-06
+### Added
+- Notes on Participants
+   1. Linked frontend-spa\src\components\estates\NotesPanel.vue to the index on the Participant tab.
+   2. Updated case_timeline_view PostgreSQL view. Added a new `UNION ALL` branch that joins `notes` to `case_participants` and `entities`.
+   3. Tied in participant notes top Timleine search and Case file index search
+
+### Changed
+- 
+
+### Fixed
+- frontend-spa\nginx.conf 
+    1. "Never cache `index.html` to always get the latest file names after deployment.
+- Fixed Timeline Print report function which printed the full Case file Screen using Windows|Print
+    1. Changed button on embedded form to "Print Preview"
+    2. Open the Timeline in full screen mode with Button "Print Report"

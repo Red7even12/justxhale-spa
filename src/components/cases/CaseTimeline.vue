@@ -16,7 +16,7 @@
       </div>
       <button @click="printPage" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center shadow-sm text-sm">
         <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-        <span>Print Report</span>
+        <span>{{ isPrintPreview ? 'Print Preview' : 'Print Report' }}</span>
       </button>
     </div>
 
@@ -94,7 +94,7 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
 import { formatDateTime } from '@/utils/formatters';
 
@@ -106,6 +106,7 @@ const props = defineProps({
 defineEmits(['close']);
 
 const route = useRoute();
+const router = useRouter();
 
 // Use prop caseId or fall back to route param if needed (though prop is required here)
 const effectiveCaseId = computed(() => props.caseId || route.params.id);
@@ -126,8 +127,15 @@ const caseName = computed(() => {
     return internalCaseName.value;
 });
 
+const isPrintPreview = computed(() => route.name !== 'CaseTimelineReport');
+
 // --- API FETCH ---
 const fetchTimeline = async (truncateLimit = 150) => {
+  // Initialize filters from route query params when on the report page
+  if (route.query.origin_filter) originFilter.value = route.query.origin_filter;
+  if (route.query.description_filter) descriptionFilter.value = route.query.description_filter;
+  if (route.query.case_number_filter) caseNumberFilter.value = route.query.case_number_filter;
+
   isLoading.value = true;
   try {
     const params = {
@@ -233,7 +241,25 @@ const getIconBgClass = (eventType) => {
   return 'bg-gray-400';
 };
 
-const printPage = () => window.print();
+const printPage = () => {
+  // If already on the report page, trigger actual print
+  if (route.name === 'CaseTimelineReport') {
+    window.print();
+    return;
+  }
+  
+  // Otherwise, navigate to the dedicated report page with filter state
+  const query = {
+    origin_filter: originFilter.value,
+    description_filter: descriptionFilter.value,
+    case_number_filter: caseNumberFilter.value
+  };
+  router.push({ 
+    name: 'CaseTimelineReport', 
+    params: { productSlug: productSlug.value, id: effectiveCaseId.value },
+    query
+  });
+};
 
 // --- WATCHERS ---
 watch([originFilter, descriptionFilter, caseNumberFilter], () => {
@@ -249,7 +275,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style>
 @media print {
   .no-print { display: none !important; }
   .print-only { display: block !important; }

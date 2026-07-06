@@ -1,5 +1,6 @@
 <template>
   <!-- Path: frontend-spa/src/views/cases/CaseDetail.vue -->
+  <div class="case-detail-container">
   <div v-if="caseFile" class="space-y-6">
     
     <!-- 1. HEADER: IDENTITY & NAVIGATION -->
@@ -130,6 +131,15 @@
                   {{ part.referenceNumber || part.reference_number || '-' }}
                 </td>
                 <td class="px-6 py-4 text-right flex justify-end gap-3">
+                  <button 
+                      @click="openParticipantNotes(part)" 
+                      class="text-gray-400 hover:text-brand-primary p-2 transition-colors rounded hover:bg-gray-50"
+                      title="Participant History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                  </button>
                   <button @click="openAssignModal(part)" class="text-brand-primary hover:text-brand-secondary font-black text-xs uppercase tracking-widest">Edit</button>
                   <button @click="deleteParticipant(part)" class="text-red-600 hover:text-red-700 font-black text-xs uppercase tracking-widest">Delete</button>
                 </td>
@@ -264,6 +274,27 @@
       </div>
     </div>
   </div>
+
+ <!-- PARTICIPANT NOTES MODAL -->
+  <!-- Note: We use the Case File context URL to ensure the API 'Wall' is enforced via the Case Controller -->
+  <Modal :show="showNotesModal" @close="showNotesModal = false">
+    <template #title>
+      <span class="text-brand-primary font-bold">{{ currentNoteContext.title }}</span>
+    </template>
+
+    <div class="p-6">
+      <NotesPanel 
+          v-if="showNotesModal"
+          :noteable-type="currentNoteContext.type"
+          :noteable-id="currentNoteContext.id"
+          :context-url="`${productSlug}/cases/${caseFile.id}`" 
+          :current-team-id="caseFile.current_team_id"
+          :is-readonly="caseFile.is_closed"
+          @cancel="showNotesModal = false"
+      />
+    </div>
+  </Modal>
+ </div>
 </template>
 
 <script setup>
@@ -272,9 +303,18 @@ import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
 import teamService from '@/services/teamService';
+import Modal from '@/components/common/Modal.vue';
+import NotesPanel from '@/components/estates/NotesPanel.vue'; // Reuse V1 Panel
+
+const props = defineProps({
+  id: { type: [String, Number], required: true },
+  productSlug: { type: String, required: true }
+});
 
 const route = useRoute();
 const { showAlert, showConfirm } = useAlerts();
+const productSlug = computed(() => props.productSlug);
+const caseId = computed(() => props.id);
 
 // --- STATE ---
 const caseFile = ref(null);
@@ -295,6 +335,24 @@ const searchQuery = ref('');
 const searchResults = ref([]);
 const selectedEntity = ref(null);
 const participantForm = ref({ role_key: '', reference_number: '', notes: '', is_active: true, is_primary_contact: false, meta_data: {} });
+
+const showNotesModal = ref(false);
+const currentNoteContext = ref({ id: null, title: '', type: 'case_participant' });
+
+const openParticipantNotes = (participant) => {
+    // 1. Check if the participant actually exists before trying to read .id
+    if (!participant || !participant.id) {
+        console.error("Cannot open notes: Participant object is missing or has no ID", participant);
+        return;
+    }
+
+    currentNoteContext.value = {
+        id: participant.id,
+        title: `History: ${participant.entity?.name || 'Participant'}`,
+        type: 'case_participant'
+    };
+    showNotesModal.value = true;
+};
 
 // --- COMPUTED ---
 const activeRoleFields = computed(() => {
