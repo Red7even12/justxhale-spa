@@ -35,7 +35,7 @@
             
             <!-- Reset Button -->
             <div class="flex items-end">
-                <button @click="resetFilters" class="text-xs text-blue-600 hover:underline mb-2">Clear All</button>
+                <button @click="resetFilters" class="text-s text-blue-600 hover:underline mb-2">Clear All Filters</button>
             </div>
         </div>
         
@@ -63,11 +63,14 @@
                 <button @click="fetchReport" class="p-2 text-gray-500 hover:text-blue-600 transition-colors">
                     <span class="material-icons text-sm">refresh</span>
                 </button>
-                <!-- Default to true if not explicitly false -->
-                <button v-if="definition?.uiConfig?.allowExport !== false" 
-                        @click="downloadCsv"
-                        class="px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition-all shadow-sm">
-                    Export CSV
+
+                <button 
+                    @click="handleExport(reportSlug)"
+                    :disabled="isExporting"
+                    class="btn-primary"
+                >
+                    <span v-if="isExporting" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ isExporting ? 'Preparing File...' : 'Export to Excel' }}
                 </button>
             </div>
         </div>
@@ -149,6 +152,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '../../services/api'; // Ensure this path is correct
+import { useUiStore } from '../../store/ui.js'; // Import the UI store for toast notifications
 
 // 1. Interfaces (Strictly Typed)
 interface ColumnDefinition {
@@ -184,6 +188,10 @@ const props = defineProps<{
 
 const route = useRoute();
 const router = useRouter();
+const uiStore = useUiStore();
+
+const isExporting = ref(false);
+const exportProgress = ref(0); // Optional: if you want to show it's working
 
 // 3. Reactive State
 const definition = ref<ReportDefinition | null>(null);
@@ -381,6 +389,61 @@ const groupedData = computed(() => {
         return groups;
     }, {});
 });
+
+const handleExport = async (reportSlug) => {
+    try {
+        isExporting.value = true;
+        
+        // 1. Resolve Slugs
+        const rSlug = reportSlug || props.reportSlug;
+        const pSlug = props.productSlug || (route.params.slug as string) || (route.params.productSlug as string);
+
+        if (!rSlug || !pSlug) {
+            throw new Error('Missing report or product slug');
+        }
+
+        // 2. CONTEXT AWARE EXPORT PATH
+        const exportPath = props.isAdminPreview 
+            ? `/admin/report-factory/reports/${rSlug}/export` 
+            : `/${pSlug}/reports/${rSlug}/export`;
+
+        // 3. Trigger the Export Job
+        const response = await apiClient.get(exportPath);
+        const exportId = response.data.exportRequest.id;
+
+        // 4. Start Polling
+        pollExportStatus(exportId);
+        
+        uiStore.showToast("Export started. We'll download it automatically when ready.", "success");
+    } catch (error) {
+        isExporting.value = false;
+        uiStore.showToast("Failed to start export.", "error");
+        console.error(error);
+    }
+};
+
+const pollExportStatus = async (id) => {
+    try {
+        const response = await apiClient.get(`/reports/export-status/${id}`);
+        const { status, downloadUrl, error } = response.data;
+
+        if (status === 'completed') {
+            isExporting.value = false;
+            // Trigger the browser download
+            window.location.href = downloadUrl;
+            uiStore.showToast("Download starting...", "success");
+        } else if (status === 'failed') {
+            isExporting.value = false;
+            uiStore.showToast(`Export failed: ${error}`, "error");
+        } else {
+            // Wait 3 seconds and check again
+            setTimeout(() => pollExportStatus(id), 3000);
+        }
+    } catch (err) {
+        isExporting.value = false;
+        uiStore.showToast("Lost connection to export server.", "error");
+    }
+};
 </script>
 
 <style scoped>

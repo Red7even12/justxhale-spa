@@ -338,3 +338,14 @@ Sub Major Update:  Reporting layer launched
 - Fixed Timeline Print report function which printed the full Case file Screen using Windows|Print
     1. Changed button on embedded form to "Print Preview"
     2. Open the Timeline in full screen mode with Button "Print Report"
+
+
+## [JX-3.1.13] - 2026-07-xx
+### Added
+- Report Preview to export reports to Excel using Windows Export
+
+### Changed
+-
+
+### Fixed
+- Added Case file Name to editable fields in Case file edit screens

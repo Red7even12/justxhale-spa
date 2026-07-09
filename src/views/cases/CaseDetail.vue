@@ -76,6 +76,11 @@
                 </option>
               </select>
             </div>
+            <!-- File Name -->
+            <div class="col-span-2 md:col-span-1">
+              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File Name</label>
+              <input v-model="detailsForm.file_name" type="text" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary font-bold text-gray-700">
+            </div>
             <!-- File Reference -->
             <div class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File Reference</label>
@@ -326,7 +331,7 @@ const tabs = [{ id: 'details', label: 'Details' }, { id: 'participants', label: 
 const selectedLetter = ref('');
 
 // --- FORMS ---
-const detailsForm = reactive({ file_reference: '', current_team_id: null, file_class_id: null, meta_data: {} });
+const detailsForm = reactive({ file_name: '', file_reference: '', current_team_id: null, file_class_id: null, meta_data: {} });
 const showAssignModal = ref(false);
 const isEditingParticipant = ref(false);
 const editingParticipantId = ref(null);
@@ -423,9 +428,10 @@ const fetchCase = async () => {
         };
     });
 
+    detailsForm.file_name = cData.fileName || cData.file_name || '';
     detailsForm.file_reference = cData.fileReference || cData.file_reference || '';
     detailsForm.current_team_id = cData.currentTeamId || cData.current_team_id || null;
-    detailsForm.file_class_id = cData.fileClassId || cData.file_class_id || null; 
+    detailsForm.file_class_id = cData.fileClassId || cData.file_class_id || null;
     
     const rawMeta = cData.metaData || cData.meta_data || {};
     detailsForm.meta_data = {};
@@ -464,6 +470,7 @@ const saveMetadata = async () => {
   isSubmitting.value = true;
   try {
     await apiClient.put(`/${route.params.productSlug}/cases/${route.params.id}`, {
+        file_name: detailsForm.file_name,
         file_reference: detailsForm.file_reference,
         current_team_id: detailsForm.current_team_id,
         file_class_id: detailsForm.file_class_id,
