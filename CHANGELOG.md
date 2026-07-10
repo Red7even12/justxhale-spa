@@ -340,7 +340,7 @@ Sub Major Update:  Reporting layer launched
     2. Open the Timeline in full screen mode with Button "Print Report"
 
 
-## [JX-3.1.13] - 2026-07-xx
+## [JX-3.1.13] - 2026-07-09
 ### Added
 - Report Preview to export reports to Excel using Windows Export
 
@@ -349,3 +349,11 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - Added Case file Name to editable fields in Case file edit screens
+
+## [JX-3.1.14] - 2026-07-10
+### Added
+
+### Changed
+
+### Fixed
+- None
