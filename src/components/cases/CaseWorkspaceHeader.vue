@@ -36,13 +36,13 @@
       <div class="flex items-center gap-3">
         
         <!-- Notes: HIDE if inactive -->
-        <button v-if="caseFile.status !== 'inactive'"
+      <button v-if="canSeeNotes"
                 @click="openCaseNotes" 
                 class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-gray-50 uppercase tracking-wide flex items-center gap-2 transition-colors">
           <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
           </svg>
-          Notes
+          {{ canManageStatus ? 'Notes / Status' : 'Notes' }}
         </button>
 
         <!-- Timeline: ALWAYS show (it's the read-only audit trail) -->
@@ -58,7 +58,7 @@
         </button>
 
         <!-- Edit Setup: HIDE if inactive -->
-        <button v-if="caseFile.status !== 'inactive'"
+        <button v-if="!['cancelled', 'closed', 'pending'].includes(caseFile.status)"
                 @click="goToSetup" 
                 class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors">
           Edit Case Setup
@@ -85,6 +85,7 @@
            :initial-notes="currentNotes"
            noteable-type="case_file"
            :noteable-id="caseFile.id"
+           :current-status="caseFile.status" 
            :context-url="`${route.params.productSlug}/cases/${caseFile.id}`" 
            :current-team-id="caseFile.current_team_id || caseFile.currentTeamId"
            @cancel="showNotesModal = false"
@@ -103,6 +104,21 @@ import CaseTimeline from '@/components/cases/CaseTimeline.vue';
 import Modal from '@/components/common/Modal.vue';
 import NotesPanel from '@/components/estates/NotesPanel.vue';
 import noteService from '@/services/noteService';
+import { useAuthStore } from '@/store/auth'; 
+
+const authStore = useAuthStore();
+const canSeeNotes = computed(() => {
+    // 1. If the case is OPEN, everyone can see notes
+    if (props.caseFile.status === 'open') return true;
+
+    // 2. If the case is NOT open, only Subscriber Admins and Case File Admins can see them
+    return authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
+});
+
+// Only Subscriber Admins and Case File Admins can manage status
+const canManageStatus = computed(() => {
+    return authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
+});
 
 const props = defineProps({
   caseFile: { type: Object, required: true }
@@ -117,8 +133,9 @@ const showTimeline = ref(false);
 const statusBadgeClass = computed(() => {
     switch (props.caseFile.status) {
         case 'open': return 'bg-green-100 text-green-800';
-        case 'closed': return 'bg-blue-100 text-blue-800'; // Changed to blue per your template standard
-        case 'inactive': return 'bg-gray-200 text-gray-700 border border-gray-300'; // Grey/muted for deactivated
+        case 'pending': return 'bg-yellow-100 text-yellow-800'; 
+        case 'closed': return 'bg-blue-100 text-blue-800'; 
+        case 'cancelled': return 'bg-gray-200 text-gray-700 border border-gray-300'; 
         case 'archived': return 'bg-yellow-100 text-yellow-800';
         default: return 'bg-blue-100 text-blue-800';
     }

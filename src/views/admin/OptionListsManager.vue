@@ -55,7 +55,7 @@
                 <td class="px-4 py-3">
                   <!-- FIX: camelCase isActive -->
                   <span :class="['px-2 py-0.5 text-xs rounded-full', option.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700']">
-                    {{ option.isActive ? 'Active' : 'Inactive' }}
+                    {{ option.isActive ? 'Active' : 'Cancelled' }}
                   </span>
                 </td>
                 <td class="px-4 py-3 text-right space-x-3">

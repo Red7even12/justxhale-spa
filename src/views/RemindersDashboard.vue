@@ -27,22 +27,73 @@
             </option>
           </select>
         </div>
+
+        <!-- From Date Filter -->
         <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
-              <label for="from_date" class="block text-sm font-medium text-gray-700">From</label>
-              <input id="from_date" type="date" v-model="filters.from_date" :disabled="filters.status === 'all'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          <label for="from_date" class="block text-sm font-medium text-gray-700">From</label>
+          
+          <div class="relative mt-1 group">
+            <!-- Display Layer (Finesse Style) -->
+            <div class="flex items-center justify-between w-full px-3 h-[38px] bg-white border border-gray-300 rounded-md shadow-sm group-hover:border-brand-blue-500 transition-colors">
+              <span class="text-sm font-bold uppercase tracking-tight" :class="filters.from_date ? 'text-brand-blue-700' : 'text-gray-400'">
+                {{ filters.from_date ? $formatDate(filters.from_date) : 'Pick Date' }}
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
-            <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
-              <label for="to_date" class="block text-sm font-medium text-gray-700">To</label>
-              <input id="to_date" type="date" v-model="filters.to_date" :disabled="filters.status === 'all'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
-            </div>
-            <div class="filter-group flex items-end">
-              <div class="flex items-center h-10">
-                <input id="my_tagged_only" type="checkbox" v-model="filters.my_tagged_only" class="h-4 w-4 text-brand-blue-600 focus:ring-brand-blue-500 border-gray-300 rounded" />
-                <label for="my_tagged_only" class="ml-2 block text-sm text-gray-900 font-medium">My Tagged Only</label>
-              </div>
-            </div>
+            
+            <!-- Hidden Native Picker -->
+            <input 
+              id="from_date" 
+              type="date" 
+              v-model="filters.from_date" 
+              :disabled="filters.status === 'all'" 
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+            />
           </div>
         </div>
+
+        <!-- To Date Filter -->
+        <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
+          <label for="to_date" class="block text-sm font-medium text-gray-700">To</label>
+          
+          <div class="relative mt-1 group">
+            <!-- Display Layer (Finesse Style) -->
+            <div class="flex items-center justify-between w-full px-3 h-[38px] bg-white border border-gray-300 rounded-md shadow-sm group-hover:border-brand-blue-500 transition-colors">
+              <span class="text-sm font-bold uppercase tracking-tight" :class="filters.to_date ? 'text-brand-blue-700' : 'text-gray-400'">
+                {{ filters.to_date ? $formatDate(filters.to_date) : 'Pick Date' }}
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            
+            <!-- Hidden Native Picker -->
+            <input 
+              id="to_date" 
+              type="date" 
+              v-model="filters.to_date" 
+              :disabled="filters.status === 'all'" 
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        <!-- Checkbox Group -->
+        <div class="filter-group flex items-end">
+          <div class="flex items-center h-10">
+            <input 
+              id="my_tagged_only" 
+              type="checkbox" 
+              v-model="filters.my_tagged_only" 
+              class="h-4 w-4 text-brand-blue-600 focus:ring-brand-blue-500 border-gray-300 rounded" 
+            />
+            <label for="my_tagged_only" class="ml-2 block text-sm text-gray-900 font-medium">My Tagged Only</label>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Data Table Container -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -63,7 +114,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="reminder in reminders.data" :key="reminder.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm" :class="getDateStatusClass(reminder)">{{ formatDate(reminder.dueDate || reminder.due_date) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm" :class="getDateStatusClass(reminder)">{{ $formatDate(reminder.dueDate || reminder.due_date) }}</td>
               <td class="px-6 py-4">
                 <!-- Dynamic Style Injection -->
                 <div 

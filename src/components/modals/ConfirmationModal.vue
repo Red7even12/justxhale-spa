@@ -1,29 +1,49 @@
 <!-- frontend-spa/src/components/modals/ConfirmationModal.vue -->
 <template>
-  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+  <!-- Teleport to body ensures it is not trapped inside the layout's Z-index context -->
+  <Teleport to="body">
+    <!-- 
+      We use z-[9999] (with brackets) so Tailwind generates the high Z-index. 
+      The backdrop is built into this fixed container.
+    -->
+    <div v-if="show" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm">
       
-      <!-- Modal Header -->
-      <div class="mb-4">
-        <h3 class="text-xl font-semibold text-gray-900">{{ title }}</h3>
+      <!-- Modal Box -->
+      <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all border border-gray-100">
+        
+        <!-- Modal Header -->
+        <div class="mb-4">
+          <h3 class="text-xl font-black text-gray-900 uppercase tracking-tight">{{ title }}</h3>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="mb-8">
+          <p class="text-sm font-medium text-gray-600 leading-relaxed">{{ message }}</p>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end gap-3">
+          <!-- Cancel Button -->
+          <button 
+            v-if="mode === 'confirm'" 
+            @click="onCancel" 
+            class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-widest transition-colors"
+          >
+            {{ cancelButtonText || 'Cancel' }}
+          </button>
+          
+          <!-- Confirm/OK Button -->
+          <button 
+            @click="onConfirm" 
+            class="bg-brand-primary text-white px-6 py-2 rounded-xl text-xs font-black shadow-lg shadow-brand-primary/20 hover:opacity-90 uppercase tracking-widest transition-all"
+          >
+            {{ confirmButtonText || 'Confirm' }}
+          </button>
+        </div>
+
       </div>
-
-      <!-- Modal Body -->
-      <p class="text-gray-600 mb-6">{{ message }}</p>
-
-      <!-- Modal Footer -->
-      <div class="flex justify-end space-x-4">
-        <!-- MODIFIED: Conditionally show the cancel button -->
-        <button v-if="mode === 'confirm'" @click="onCancel" class="btn-secondary">
-          {{ cancelButtonText }}
-        </button>
-        <button @click="onConfirm" class="btn-primary">
-          {{ confirmButtonText }}
-        </button>
-      </div>
-
-    </div>
-  </div>
+    </div> 
+  </Teleport>
 </template>
 
 <script setup>

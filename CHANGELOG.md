@@ -365,3 +365,26 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - None
+
+## [JX-3.1.16] - 2026-07-11
+### Added
+
+### Changed
+-  Workspace Lifecycle Management**
+    1. **NotesPanel Integration**: Transformed the Notes Panel into a Lifecycle Controller. Admins can now switch statuses via a dropdown, subject to a mandatory reason/note.
+    2.  **Double-Confirmation Workflow**: Integrated the global `useAlerts` system to enforce a two-step confirmation process for critical status changes.
+    3.   **Z-Index & Stacking**: Utilized Vue `<Teleport>` and high-priority Z-indexing (`9999`) on `ConfirmationModal.vue` to ensure alerts always appear over active workspace modals.
+
+- UI/UX "Lockdown" Strategy**
+    1.  **The Glass Pane**: Implemented a non-destructive lockdown in `TemplateEstateStandard.vue`. Closed/Inactive cases now utilize `pointer-events-none`, `grayscale`, and `opacity` filters to render Document and Workflow panels read-only without touching internal component logic.
+    2.  **Contextual Banners**: Added color-coded status banners (Red for Inactive, Blue for Closed) to the workspace for immediate user feedback.
+    3.  **Dynamic Visibility**: Updated `CaseWorkspaceHeader.vue` to hide the "Edit Setup" button on non-open cases, while keeping "Notes" and "Timeline" accessible for Administrators.
+
+- Visual Classification (Branding)**
+    1.  **Case Index & Dashboard**: Injected dynamic styles into table rows to highlight Case Names using the background and text colors defined in the Product Factory.
+    2.   **Workspace Branding**: Styled the Workspace Title (`h1`) to inherit classification colors, ensuring visual continuity from the dashboard to the file itself.
+    3.  **Modified Tracking**: Updated the primary date display across all indices from "Created" to "Modified" (`updated_at`) to prioritize active files.
+
+
+### Fixed
+- 

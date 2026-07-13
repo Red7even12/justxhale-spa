@@ -38,19 +38,24 @@
 </td>
 
             <!-- Column 2: Action / Data Input -->
-            <td class="px-3 py-3 w-1/2 align-middle bg-white group-hover:bg-gray-50">
+<td class="px-3 py-3 w-1/2 align-middle bg-white group-hover:bg-gray-50">
+  
+          <!-- STATE: COMPLETED -->
+          <div v-if="process.status === 'completed'" class="flex items-center justify-between group/undo">
+            <div class="text-xs font-bold text-green-600 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
               
-              <!-- STATE: COMPLETED -->
-              <div v-if="process.status === 'completed'" class="flex items-center justify-between group/undo">
-                <div class="text-xs font-bold text-green-600 flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                  <span v-if="process.dataValue && process.dataValue !== '1'" class="truncate max-w-[120px]" :title="process.dataValue">
-                    {{ process.dataValue }}
-                  </span>
-                  <span v-else>{{ process.workflowStep?.actionLabelCompleted || 'Done' }}</span>
-                </div>
-                
-                <!-- The Undo Button: Hidden by default, shows on row hover -->
+              <!-- Logic: If it is a date-type field, use the pretty formatter. Otherwise, show raw value -->
+              <span v-if="process.dataValue && process.dataValue !== '1'" class="truncate max-w-[140px]" :title="process.dataValue">
+                <template v-if="['date', 'timestamptz'].includes(process.workflowStep?.dataType)">
+                  {{ $formatDate(process.dataValue) }}
+                </template>
+                <template v-else>
+                  {{ process.dataValue }}
+                </template>
+              </span>
+              <span v-else>{{ process.workflowStep?.actionLabelCompleted || 'Done' }}</span>
+            </div>             
                 <button 
                   @click="revertStep(process)" 
                   title="Undo / Revert Step"
@@ -60,20 +65,31 @@
                 </button>
               </div>
               
-
               <!-- STATE: ACTIVE / ACTIONABLE -->
-              <div v-else-if="process.isActionable" class="flex items-center gap-2 w-full">
+              <div v-else-if="process.isActionable" class="flex flex-col gap-1 w-full">
                 
                 <!-- Input Type: DATE / TIMESTAMP -->
-                <div v-if="['date', 'timestamptz'].includes(process.workflowStep?.dataType)" class="flex w-full gap-2 items-center">
-                  <input 
-                    type="date" 
-                    v-model="inputData[process.id]" 
-                    class="flex-1 text-xs border-gray-300 rounded shadow-sm focus:ring-brand-primary focus:border-brand-primary py-1"
-                  >
-                  <button @click="saveStep(process)" class="bg-white border border-gray-300 text-gray-600 hover:text-brand-primary hover:border-brand-primary text-[10px] font-bold px-2 py-1 rounded shadow-sm transition-colors">
-                    Save
-                  </button>
+                <div v-if="['date', 'timestamptz'].includes(process.workflowStep?.dataType)" class="w-full">
+                  <div class="flex gap-2 items-center">
+                  <!-- Finesse Date Picker -->
+                  <div class="relative group min-w-[160px]">
+                    <div class="flex items-center justify-between w-full px-3 py-1 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
+                      <span class="text-[11px] font-black uppercase tracking-tight" :class="inputData[process.id] ? 'text-brand-blue-700' : 'text-gray-400'">
+                        {{ inputData[process.id] ? $formatDate(inputData[process.id]) : 'Pick Date...' }}
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input 
+                      type="date" 
+                      v-model="inputData[process.id]" 
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                  </div>
+                    <button @click="saveStep(process)" class="bg-white border border-gray-300 text-gray-600 hover:text-brand-primary hover:border-brand-primary text-[10px] font-bold px-2 py-1 rounded shadow-sm transition-colors">
+                      Save
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Input Type: TEXT -->
@@ -153,6 +169,7 @@ import { ref, onMounted, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
+import { useAuthStore } from '@/store/auth'; 
 import Modal from '@/components/common/Modal.vue';
 import NotesPanel from '@/components/estates/NotesPanel.vue'; // Reuse V1 Panel
 import noteService from '@/services/noteService';
@@ -161,8 +178,14 @@ const props = defineProps({
   caseId: { type: [String, Number], required: true },
   currentTeamId: { type: [String, Number], default: null }
 });
+const authStore = useAuthStore();
 const route = useRoute();
 const { showAlert } = useAlerts();
+
+// Only Subscriber Admins and Case File Admins can manage status
+const canManageStatus = computed(() => {
+  return authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
+});
 
 const showNotesModal = ref(false);
 const currentNoteContext = reactive({ type: '', id: 0, title: '' });

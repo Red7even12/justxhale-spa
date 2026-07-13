@@ -92,9 +92,33 @@
                 {{ field.label }} 
                 <span v-if="field.showInQuickView" class="text-brand-primary ml-1">★</span>
               </label>
-              <input v-model="detailsForm.meta_data[field.key]" 
-                     :type="field.fieldType === 'date' ? 'date' : (field.fieldType === 'number' ? 'number' : 'text')" 
-                     class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm">
+
+              <!-- CASE 1: Date Type (The Finesse Picker) -->
+              <div v-if="field.fieldType === 'date'" class="relative group">
+                <!-- Display Layer -->
+                <div class="flex items-center justify-between w-full px-3 h-[42px] bg-white border border-gray-200 rounded-xl shadow-sm group-hover:border-brand-primary transition-colors">
+                  <span class="text-sm font-bold uppercase tracking-tight" :class="detailsForm.meta_data[field.key] ? 'text-brand-blue-700' : 'text-gray-400'">
+                    {{ detailsForm.meta_data[field.key] ? $formatDate(detailsForm.meta_data[field.key]) : 'Select Date...' }}
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <!-- Hidden Picker Layer -->
+                <input 
+                  type="date" 
+                  v-model="detailsForm.meta_data[field.key]" 
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                >
+              </div>
+
+              <!-- CASE 2: Text / Number Type (Standard Input) -->
+              <input 
+                v-else
+                v-model="detailsForm.meta_data[field.key]" 
+                :type="field.fieldType === 'number' ? 'number' : 'text'" 
+                class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm font-bold text-gray-700 h-[42px]"
+              >
             </div>
           </div>
         </form>

@@ -5,7 +5,7 @@ export default {
   // This is the single, correct version that handles both cases
   getCompanies(params = {}) {
     // Axios will automatically convert the 'params' object into URL query parameters.
-    // e.g., { status: 'inactive', search: 'acme' } becomes "?status=inactive&search=acme"
+    // e.g., { status: 'cancelled', search: 'acme' } becomes "?status=inactive&search=acme"
     return apiClient.get('companies', { params });
   },
 

@@ -50,27 +50,64 @@
               <button @click="showReminderInput = !showReminderInput" class="btn-secondary">Set Reminder</button>
           </div>
 
-          <!-- Right-aligned Deactivate button -->
-          <button 
-              v-if="canDeactivate" 
-              @click="handleDeactivation" 
-              type="button"
-              class="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 focus:outline-none"
-          >
-              {{ isLoading ? 'Deactivating...' : 'Make Inactive' }}
-          </button>
 
-          <div v-else class="mb-6 p-3 bg-gray-100 text-gray-500 rounded border border-dashed text-center text-sm font-semibold">
-              Adding notes is disabled for inactive cases.
+            <!-- Status Switcher (Only for Admins) -->
+            <div v-if="canManageStatus" class="flex items-center gap-2 border-l pl-4 ml-4 border-gray-200">
+                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</label>
+                <select v-model="selectedStatus" class="form-input text-xs font-bold py-1 w-32 rounded-lg border-gray-200">
+                    <option value="open">Open</option>
+                    <option value="pending">Pending</option>
+                    <option value="closed">Closed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                
+                <button 
+                    v-if="selectedStatus !== currentStatus"
+                    @click="handleStatusChange" 
+                    type="button"
+                    :disabled="isLoading"
+                    class="px-3 py-1.5 text-[10px] font-black text-white bg-brand-primary rounded-lg shadow-md hover:opacity-90 uppercase tracking-widest transition-all"
+                >
+                    {{ isLoading ? 'Updating...' : 'Update Status' }}
+                </button>
+            </div>
+
+          <div v-else-if="currentStatus !== 'open'" class="mb-6 p-3 bg-gray-100 text-gray-500 rounded border border-dashed text-center text-sm font-semibold">
+              Adding notes is disabled for inactive, closed and pending cases. 
           </div> 
         </div>
       
     </div>
 
-    <div v-if="showReminderInput" class="mb-4 bg-gray-50 p-3 rounded-md border">
-      <label for="reminder-date" class="form-label">Set a follow-up date for this note:</label>
-      <input id="reminder-date" type="date" v-model="reminderDate" class="form-input mt-1">
-      <p class="text-xs text-gray-500 mt-1">A reminder will be created when you save the note.</p>
+    <div v-if="showReminderInput" class="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+    <label for="reminder-date" class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">
+        Set a follow-up date for this note:
+    </label>
+    
+    <!-- Finesse Picker Wrapper -->
+    <div class="relative group max-w-sm">
+        <!-- Display Layer -->
+        <div class="flex items-center justify-between w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm group-hover:border-brand-primary transition-colors">
+        <span class="text-xs font-bold uppercase tracking-tight" :class="reminderDate ? 'text-brand-blue-700' : 'text-gray-400'">
+            {{ reminderDate ? $formatDate(reminderDate) : 'Pick follow-up date...' }}
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        </div>
+        
+        <!-- Hidden Picker Layer -->
+        <input 
+        id="reminder-date" 
+        type="date" 
+        v-model="reminderDate" 
+        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        >
+    </div>
+
+    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-2 italic">
+        A reminder will be created automatically when you save the note.
+    </p>
     </div>
 
     <!-- List of existing notes -->
@@ -171,6 +208,7 @@ import { ref, onMounted, watch, nextTick, computed } from 'vue';
 import { useAuthStore } from '@/store/auth'; 
 import noteService from '@/services/noteService';
 import apiClient from '@/services/api'; 
+import { useAlerts } from '@/composables/useAlerts'; 
 
 // Allow noteableId to accept strings just in case Vue parses it as a string attribute
 const props = defineProps({
@@ -178,7 +216,8 @@ const props = defineProps({
   noteableId: { type: [Number, String], required: true }, 
   contextUrl: { type: String, required: true },
   currentTeamId: { type: [Number, String], default: null },
-  isReadonly: { type: Boolean, default: false } 
+  isReadonly: { type: Boolean, default: false },
+  currentStatus: { type: String, default: 'open' }
 });
 
 const emit = defineEmits(['note-added', 'cancel']);
@@ -193,17 +232,60 @@ const error = ref(null);
 
 const authStore = useAuthStore();
 
-const canDeactivate = computed(() => {
-    // 1. Only show on the main Case File context (not on specific documents/workflow steps)
+const { showAlert, showConfirm } = useAlerts();
+const selectedStatus = ref(props.currentStatus);
+
+watch(() => props.currentStatus, (newVal) => {
+    selectedStatus.value = newVal;
+});
+
+const canManageStatus = computed(() => {
+    // 1. Must be in the 'case_file' context
     if (props.noteableType !== 'case_file') return false;
 
-    // 2. Access user from Pinia store
-    const user = authStore.user;
-    if (!user || !user.roles) return false;
-
-    // 3. Check for Case File Admin (1) or Subscriber Admin (3)
-    return user.roles.some(role => [1, 3].includes(role.id));
+    // 2. Only Subscriber Admins and Case File Admins can change status
+    return authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
 });
+
+const handleStatusChange = async () => {
+    // 1. Requirement Check: Note must be captured
+    if (!newNoteContent.value || newNoteContent.value.trim().length < 5) {
+        await showAlert('Action Required', 'A status change requires a written reason. Please type it in the note box above first.');
+        return;
+    }
+
+    // 2. First styled confirmation
+    const confirm1 = await showConfirm(
+        'Change Case Status', 
+        `Are you sure you want to change this case status to ${selectedStatus.value.toUpperCase()}?`
+    );
+    if (!confirm1) return;
+
+    // 3. Double-Warning (Second styled confirmation)
+    const confirm2 = await showConfirm(
+        'Final Audit Confirmation', 
+        'CRITICAL: This change will be logged in the permanent audit trail. Do you wish to proceed?'
+    );
+    if (!confirm2) return;
+
+    isLoading.value = true;
+    try {
+        await apiClient.post(`/${props.contextUrl}/change-status`, {
+            status: selectedStatus.value,
+            note_content: newNoteContent.value
+        });
+
+        await showAlert('Success', 'The case status has been updated.');
+        window.location.reload(); 
+
+    } catch (err) {
+        const msg = err.response?.data?.message || 'Failed to update status.';
+        await showAlert('Error', msg);
+        console.error(err);
+    } finally {
+        isLoading.value = false;
+    }
+};
 
 // Fetch team members if a team ID is provided
 const fetchTeamMembers = async () => {
@@ -366,37 +448,6 @@ const submitNote = async () => {
   } finally {
     isLoading.value = false;
   }
-};
-
-const handleDeactivation = async () => {
-    // 1. Validation
-    if (!newNoteContent.value || newNoteContent.value.trim().length < 5) {
-        alert("Please enter a reason for deactivation in the note box above.");
-        return;
-    }
-
-    // 2. Confirmation
-    const confirmed = confirm("Are you sure you want to make this case INACTIVE? This action is recorded and the case will be closed.");
-    if (!confirmed) return;
-
-    isLoading.value = true;
-    try {
-        // 3. API Call using the contextUrl (e.g. /api/v1/vizabiliti/cases/123/deactivate)
-        await apiClient.post(`/${props.contextUrl}/deactivate`, {
-            note_content: newNoteContent.value
-        });
-
-        alert("Case deactivated successfully.");
-        
-        // 4. Reload to update the workspace UI
-        window.location.reload(); 
-
-    } catch (err) {
-        error.value = err.response?.data?.message || 'Failed to deactivate case.';
-        console.error(err);
-    } finally {
-        isLoading.value = false;
-    }
 };
 
 </script>

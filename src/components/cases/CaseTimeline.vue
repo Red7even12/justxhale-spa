@@ -23,7 +23,7 @@
     <!-- Print Header -->
     <div class="print-only hidden mb-8">
       <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ caseName }} - Timeline Report</h1>
-      <p class="text-sm text-gray-600">Generated: {{ new Date().toLocaleDateString() }}</p>
+      <p class="text-sm text-gray-600">Generated: {{ $formatDate(new Date()) }}</p>
     </div>
 
     <!-- Filters -->
@@ -42,7 +42,7 @@
       </div>
       <div class="flex gap-2 ml-auto">
         <button @click="clearFilters" class="text-gray-500 hover:text-gray-700 font-bold text-xs underline px-2">Clear Filters</button>
-        <button @click="exportToCsv" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-xs shadow">Export CSV</button>
+        <button @click="exportToExcel" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-xs shadow">Export Excel</button>
       </div>
     </div>
     
@@ -65,10 +65,15 @@
                 </span>
               </div>
               <div class="flex min-w-0 flex-1 space-x-4 pt-1.5">
-                <div class="whitespace-nowrap text-left text-sm text-gray-500 w-32 shrink-0">
-                    <div class="font-bold text-gray-700">{{ formatDateTime(event.eventDate) }}</div>
-                    <div class="text-[10px] uppercase text-gray-400">by {{ event.userName }}</div>
-                </div>
+              <div class="whitespace-nowrap text-left text-sm text-gray-500 w-40 shrink-0">
+                  <!-- Changed to $formatDateTime and slightly widened the container to w-40 -->
+                  <div class="font-bold text-gray-700">
+                      {{ $formatDateTime(event.eventDate) }}
+                  </div>
+                  <div class="text-[10px] uppercase text-gray-400">
+                      by {{ event.userName }}
+                  </div>
+              </div>
                 <div class="grow">
                     <p class="text-sm text-gray-500 flex items-center flex-wrap gap-1">
                         <span class="uppercase text-[10px] font-bold tracking-wider text-gray-400">{{ event.eventType }}</span> 
@@ -147,13 +152,13 @@ const fetchTimeline = async (truncateLimit = 150) => {
 
     const { data } = await apiClient.get(`/${productSlug.value}/cases/${effectiveCaseId.value}/timeline`, { params });
     timelineEvents.value = data; 
-  } catch (err) {
-    error.value = "Failed to fetch timeline.";
-    console.error(err);
-  } finally {
-    isLoading.value = false;
-  }
-};
+      } catch (err) {
+        error.value = "Failed to fetch timeline.";
+        console.error(err);
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
 const fetchCaseDetails = async () => {
     if (props.caseFile) return;
@@ -172,67 +177,51 @@ const clearFilters = () => {
   caseNumberFilter.value = '';
 };
 
-const exportToCsv = async () => {
+const isExporting = ref(false);
+
+const exportToExcel = async () => {
   try {
+    isExporting.value = true;
+
+    // 1. Prepare filters for the Engine
+    // Note: We map your local UI filters to the DB fields defined in Phase 1
     const params = {
-        origin_filter: originFilter.value,
-        description_filter: descriptionFilter.value,
-        case_number_filter: caseNumberFilter.value,
-        truncate_limit: -1
+        case_file_id: effectiveCaseId.value,  // Lock export to THIS case only
+        origin_label: originFilter.value,
+        description: descriptionFilter.value,
     };
 
-    const { data } = await apiClient.get(`/${productSlug.value}/cases/${effectiveCaseId.value}/timeline`, { params });
+    // 2. Trigger the Generic Export Engine
+    // We use the slug 'case-timeline' we created in Phase 1
+    const response = await apiClient.get(`/${productSlug.value}/reports/case-timeline/export`, { params });
+    const exportId = response.data.exportRequest.id;
 
-    if (!data || data.length === 0) {
-      alert('No data available to export.');
-      return;
-    }
-
-    const columns = [
-        { label: 'Date', key: 'eventDate' },
-        { label: 'User', key: 'userName' },
-        { label: 'Type', key: 'eventType' },
-        { label: 'Context', key: 'originLabel' },
-        { label: 'Case Number', key: 'caseNumber' },
-        { label: 'Description', key: 'description' }
-    ];
-
-    const csvRows = [];
-    csvRows.push(columns.map(col => col.label).join(','));
-
-    data.forEach(row => {
-      const values = columns.map(col => {
-        let value = row[col.key];
-        if (col.key === 'caseNumber' && value === undefined) {
-            value = row['case_number'];
-        }
-        value = value || '';
-        if (col.key === 'eventDate' && value) {
-            value = formatDateTime(value);
-        }
-        value = String(value);
-        if (value.includes(',') || value.includes('\n') || value.includes('"')) {
-            value = `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      });
-      csvRows.push(values.join(','));
-    });
-
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    // 3. Start Polling
+    pollExportStatus(exportId);
     
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Timeline_${caseName.value.replace(/[^a-z0-9]/gi, '_')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   } catch (err) {
-    console.error("Failed to export CSV:", err);
-    alert("Could not export data.");
+    isExporting.value = false;
+    console.error("Failed to start export:", err);
   }
+};
+
+const pollExportStatus = async (id) => {
+    try {
+        const response = await apiClient.get(`/reports/export-status/${id}`);
+        const { status, downloadUrl, error } = response.data;
+
+        if (status === 'completed') {
+            isExporting.value = false;
+            window.location.href = downloadUrl;
+        } else if (status === 'failed') {
+            isExporting.value = false;
+            alert(`Export failed: ${error}`);
+        } else {
+            setTimeout(() => pollExportStatus(id), 3000);
+        }
+    } catch (err) {
+        isExporting.value = false;
+    }
 };
 
 const getIconBgClass = (eventType) => {

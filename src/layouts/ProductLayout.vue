@@ -370,13 +370,12 @@ const colors = ref({ primary: '#3B82F6', secondary: '#1E40AF' });
 const fetchBranding = async () => {
   if (!productSlug.value) return;
   try {
-    // Note: apiClient already includes /api/v1
-    const { data } = await apiClient.get(`products/${productSlug.value}`);
+        const { data } = await apiClient.get(`products/${productSlug.value}`);
     product.value = data;
     colors.value.primary = data.primaryColor || data.primary_color || '#3B82F6';
     colors.value.secondary = data.secondaryColor || data.secondary_color || '#1E40AF';
   } catch (e) {
-    console.error("Branding fetch failed. Check if slug exists in DB.", e);
+    //console.error("Branding fetch failed. Check if slug exists in DB.", e);
   }
 };
 

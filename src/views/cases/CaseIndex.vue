@@ -4,7 +4,12 @@
       <h1 class="text-2xl font-bold text-gray-800 uppercase tracking-tight">
         {{ productSlug }} Cases
       </h1>
-      <button @click="showModal = true" class="bg-brand-primary text-white px-4 py-2 rounded-lg shadow-md font-bold hover:opacity-90 transition-all">
+      
+      <!-- Controlled by the "create case files" permission -->
+      <button 
+        v-if="canCreateCase" 
+        @click="showModal = true" 
+        class="bg-brand-primary text-white px-4 py-2 rounded-lg shadow-md font-bold hover:opacity-90 transition-all">
         + Create New Case
       </button>
     </div>
@@ -57,11 +62,16 @@
         <div>
           <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
           <select v-model="filters.status" @change="applyFilters" class="w-full border-gray-300 rounded-lg text-sm">
-            <option value="">All Statuses</option>
+            <!-- Visible to everyone -->
+            <option value="">All Active (Open)</option>
             <option value="open">Open</option>
-            <option value="pending">Pending</option>
-            <option value="closed">Closed</option>
-            <option v-if="canSeeInactive" value="inactive">Deactivated (Inactive)</option>
+
+            <!-- Controlled by the "edit case files" permission -->
+            <template v-if="canSeeInactive">
+                <option value="pending">Pending</option>
+                <option value="closed">Closed</option>
+                <option value="cancelled">Cancelled</option>
+            </template>
           </select>
         </div>
         <div>
@@ -132,7 +142,12 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="caseFile in cases" :key="caseFile.id" class="hover:bg-gray-50 transition-colors">
+          <tr v-for="caseFile in cases" :key="caseFile.id" 
+            :class="[
+              'hover:bg-gray-50 transition-colors', 
+              { 'opacity-60 grayscale-[30%]': ['cancelled', 'closed'].includes(caseFile.status) }
+            ]"
+            >
 
             <td class="px-6 py-4">
               <!-- Apply the dynamic style if a fileClass exists. -->
@@ -161,16 +176,17 @@
             </td>
             <td class="px-6 py-4">
               <span :class="[
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide',
-                caseFile.status === 'inactive' ? 'bg-gray-200 text-gray-700 border border-gray-300' : 
-                caseFile.status === 'closed' ? 'bg-blue-100 text-blue-800' :
-                'bg-green-100 text-green-800'
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border',
+                caseFile.status === 'open' ? 'bg-green-100 text-green-800 border-green-200' : 
+                caseFile.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-200' : 
+                caseFile.status === 'closed' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                'bg-gray-200 text-gray-700 border-gray-300'
               ]">
                 {{ caseFile.status }}
               </span>
             </td>
             <td class="px-6 py-4 text-sm text-gray-500">
-              {{ new Date(caseFile.updatedAt || caseFile.updated_at).toLocaleDateString() }}
+               {{ $formatDate(caseFile.updatedAt || caseFile.updated_at) }}
             </td>
             <td class="px-6 py-4">
               <div class="flex items-center gap-2">
@@ -284,9 +300,20 @@ const authStore = useAuthStore();
 const route = useRoute();
 const productSlug = computed(() => route.params.productSlug);
 
+// This controls the Status Dropdown (Visibility of Pending, Closed, Cancelled)
 const canSeeInactive = computed(() => {
-  const user = authStore.user;
-  return user?.roles?.some(role => [1, 3].includes(role.id));
+  return authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
+});
+
+// This controls the "+ Create New Case" button
+const canCreateCase = computed(() => {
+  const permissions = authStore.permissions || [];
+  return permissions.includes('create case files');
+});
+
+const canManageStatus = computed(() => {
+  // Only Subscriber Admins and Case File Admins can change status
+  return authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
 });
 
 const cases = ref([]);
@@ -300,7 +327,7 @@ const filters = ref({
   search_general: '',
   search_participant: '',
   search_external_ref: '',
-  status: '',
+  status: 'open',
   file_type_id: '',
   current_team_id: '',
   sort_by: 'updated_at', // Default sort column
@@ -402,7 +429,7 @@ const applyFilters = () => {
 const clearFilters = () => {
   filters.value = { 
     search_general: '', search_participant: '', search_external_ref: '', 
-    status: '', file_type_id: '', current_team_id: '', 
+    status: 'open', file_type_id: '', current_team_id: '', 
     sort_by: 'created_at', sort_dir: 'desc', page: 1 
   };
   fetchCases();

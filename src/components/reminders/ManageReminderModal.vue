@@ -11,7 +11,7 @@
         <div class="mb-6 space-y-2 text-sm bg-gray-50 p-4 rounded-md border border-gray-200">
           <p><strong>Case Reference:</strong> {{ reminder.caseFile?.fileReference || reminder.caseName || 'Unknown Case' }}</p>
           <p><strong>Task:</strong> {{ reminder.taskContext || reminder.title || 'General Task' }}</p>
-          <p><strong>Current Due Date:</strong> {{ reminder.dueDate }}</p>
+          <p><strong>Current Due Date:</strong> {{ $formatDate(reminder.dueDate) }}</p>
           <p>
             <strong>Status:</strong> 
             <span class="font-semibold" :class="statusClass">{{ reminder.status?.name || 'Unknown' }}</span>
@@ -86,9 +86,29 @@
             <p class="text-xs text-gray-500 mb-2">
               Use this to correct an error. It moves the existing task without creating a history record.
             </p>
+            
             <div class="flex items-center space-x-2">
-              <input id="new_due_date" type="date" v-model="form.newDueDate" class="form-input flex-grow">
-              <button @click="updateDueDate" class="btn-primary" :disabled="!form.newDueDate">Update</button>
+              <!-- Finesse Picker Wrapper -->
+              <div class="relative group flex-grow h-[38px]">
+                <div class="flex items-center justify-between w-full h-full px-3 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
+                  <span class="text-xs font-bold uppercase tracking-tight" :class="form.newDueDate ? 'text-brand-blue-700' : 'text-gray-400'">
+                    {{ form.newDueDate ? $formatDate(form.newDueDate) : 'Select Date...' }}
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input 
+                  id="new_due_date" 
+                  type="date" 
+                  v-model="form.newDueDate" 
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                >
+              </div>
+              
+              <button @click="updateDueDate" class="btn-primary shrink-0" :disabled="!form.newDueDate">
+                Update
+              </button>
             </div>
           </div>
 
@@ -117,11 +137,32 @@
             </p>
             
             <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Action 2: Snooze -->
               <div>
                 <label for="snooze_due_date" class="text-sm font-medium text-gray-700">Snooze to date</label>
                 <div class="flex items-center space-x-2 mt-1">
-                  <input id="snooze_due_date" type="date" v-model="form.snoozeDueDate" class="form-input flex-grow">
-                  <button @click="snoozeReminder" class="btn-secondary" :disabled="!form.snoozeDueDate">Snooze</button>
+                  
+                  <!-- Finesse Picker Wrapper -->
+                  <div class="relative group flex-grow h-[38px]">
+                    <div class="flex items-center justify-between w-full h-full px-3 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
+                      <span class="text-xs font-bold uppercase tracking-tight" :class="form.snoozeDueDate ? 'text-brand-blue-700' : 'text-gray-400'">
+                        {{ form.snoozeDueDate ? $formatDate(form.snoozeDueDate) : 'Pick Date...' }}
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input 
+                      id="snooze_due_date" 
+                      type="date" 
+                      v-model="form.snoozeDueDate" 
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    >
+                  </div>
+
+                  <button @click="snoozeReminder" class="btn-secondary shrink-0" :disabled="!form.snoozeDueDate">
+                    Snooze
+                  </button>
                 </div>
               </div>
               <div>

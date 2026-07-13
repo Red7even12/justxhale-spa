@@ -62,15 +62,15 @@
             class="text-sm font-bold truncate"
             :class="field.isProjected ? 'text-emerald-700' : 'text-gray-800'"
           >
-            {{ field.value || '-' }}
+            <!-- NEW: Logic to handle Date vs Text vs Number -->
+            <template v-if="(field.fieldType === 'date' || field.fieldType === 'timestamptz') && field.value">
+              {{ $formatDate(field.value) }}
+            </template>
+            <template v-else>
+              {{ field.value || '-' }}
+            </template>
           </div>
-          <!--
-          <div v-if="field.isProjected" class="text-[9px] text-emerald-400 font-bold uppercase tracking-tighter">
-            Global DNA Record
-          </div>
-          -->
         </div>
-
       </div>
       <div v-else class="text-center text-xs text-gray-400 italic py-2">
         No 'Quick View' fields configured for this Niche.
@@ -156,6 +156,7 @@ const quickFields = computed(() => {
         id: def.id,
         label: def.fieldLabel || def.field_label,
         value: value,
+        fieldType: def.fieldType || def.field_type, 
         isProjected: isProjected,
         sortOrder: def.sortOrder || def.sort_order || 0
       };

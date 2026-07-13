@@ -68,14 +68,27 @@
               <div v-if="req.currentStatus !== 'not_applicable' && submissionData[req.id]">
                 
                 <!-- Date Inputs -->
-                <div v-if="['expiry_date', 'date'].includes(req.documentType?.actionFieldType)">
-                  <input 
+                <div v-if="['expiry_date', 'date'].includes(req.documentType?.actionFieldType)" class="relative group max-w-[180px]">
+                
+                <!-- LAYER 1: The "Finesse" Display (What the user sees) -->
+                <div class="flex items-center justify-between w-full px-3 py-1 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
+                    <span class="text-[11px] font-black uppercase tracking-tight" :class="submissionData[req.id].value ? 'text-brand-blue-700' : 'text-gray-400'">
+                    {{ submissionData[req.id].value ? $formatDate(submissionData[req.id].value) : 'Select Date...' }}
+                    </span>
+                    <!-- Calendar Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+
+                <!-- LAYER 2: The "Hidden Engine" (The actual date picker) -->
+                <!-- We make it invisible (opacity-0) and stretch it to cover the entire box -->
+                <input 
                     type="date"
-                    :placeholder="req.documentType.actionFieldLabel || 'yyyy-mm-dd'"
                     v-model="submissionData[req.id].value" 
                     @change="handleInputChange(req.id)"
-                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-xs"
-                  >
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                >
                 </div>
 
                 <!-- Text Input -->
