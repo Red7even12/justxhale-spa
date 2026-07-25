@@ -368,6 +368,9 @@ Sub Major Update:  Reporting layer launched
 
 ## [JX-3.1.16] - 2026-07-11
 ### Added
+- Functionality to close a Case file
+- Dropdown Status options for Case file manager and Subscriber Admin on Case File Notes modal
+
 
 ### Changed
 -  Workspace Lifecycle Management**
@@ -388,3 +391,5 @@ Sub Major Update:  Reporting layer launched
 
 ### Fixed
 - 
+
+All future changelogs will only be recorded in the backend log.

@@ -189,20 +189,26 @@
                {{ $formatDate(caseFile.updatedAt || caseFile.updated_at) }}
             </td>
             <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <!-- Updated to camelCase to match API Response -->
-                <span class="text-xs font-black text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200">
-                  {{ caseFile.milestonesCompleted || 0 }} / {{ caseFile.milestonesTotal || 0 }}
-                </span>
-                
-                <!-- Updated to camelCase for the dot logic -->
-                <div 
-                  v-if="caseFile.milestonesTotal > 0"
-                  :class="[
-                    'w-2 h-2 rounded-full',
-                    caseFile.milestonesCompleted === caseFile.milestonesTotal ? 'bg-green-500' : 'bg-amber-400'
-                  ]"
-                ></div>
+              <div class="flex flex-col gap-1">
+                <!-- The Milestone Matrix (The "Teeth") -->
+                <div v-if="caseFile.milestone_matrix || caseFile.milestoneMatrix" class="flex gap-0.5 items-center">
+                  <div 
+                    v-for="(m, index) in (caseFile.milestone_matrix || caseFile.milestoneMatrix)" 
+                    :key="index"
+                    :title="m.name"
+                    :class="[
+                        'w-2 h-4 rounded-sm border transition-colors duration-300',
+                        m.status === 1 
+                            ? 'bg-green-300 border-green-400 shadow-sm' 
+                            : 'bg-gray-100 border-gray-200'
+                    ]"
+                  ></div>
+                </div>
+
+                <!-- Raw Count only -->
+                <div class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">
+                    {{ (caseFile.milestonesCompleted ?? caseFile.milestones_completed ?? 0) }} / {{ (caseFile.milestonesTotal ?? caseFile.milestones_total ?? 0) }}
+                </div>
               </div>
             </td>
             <td class="px-6 py-4 text-right text-sm font-medium">
@@ -411,6 +417,7 @@ const fetchCases = async () => {
     isLoading.value = false;
   }
 };
+
 
 // Debounce search input to prevent spamming the database
 const handleSearchInput = (type) => {
