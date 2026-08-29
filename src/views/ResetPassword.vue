@@ -11,7 +11,6 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form class="space-y-6" @submit.prevent="handleResetPassword">
           
-          <!-- This part is already correct, using formData.email -->
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Account</label>
             <div class="mt-1">
@@ -28,7 +27,6 @@
             </div>
           </div>
           
-          <!-- This section is already correct, using formData and uiState -->
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700">
               New Secure Password
@@ -60,7 +58,6 @@
             </div>
           </div>
 
-          <!-- This section is already correct, using formData and uiState -->
           <div>
             <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
               Confirm New Password
@@ -84,13 +81,11 @@
             </div>
           </div>
           
-          <!-- FIX: Point to uiState.errorMessage -->
           <div v-if="uiState.errorMessage" class="rounded-md bg-red-50 p-4">
               <p class="text-sm font-medium text-red-800">{{ uiState.errorMessage }}</p>
           </div>
 
           <div>
-            <!-- FIX: Point to uiState.isLoading and formData.email -->
             <button
               type="submit"
               :disabled="uiState.isLoading || !formData.email"

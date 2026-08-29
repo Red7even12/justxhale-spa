@@ -7,14 +7,14 @@
     <div class="flex justify-between items-start border-b border-gray-200 pb-6">
       <div>
         <div class="flex items-center gap-3 mb-2">
-        <!-- Show Priority Badge if exists, else show Product Type Badge -->
+          <!-- Show Priority Badge if exists, else show Product Type Badge -->
           <span v-if="caseFile?.fileClass"
                 :style="{ backgroundColor: caseFile.fileClass.bg_color, color: caseFile.fileClass.text_color }"
                 class="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">
             {{ caseFile.fileClass.name }}
           </span>
           <span v-else class="bg-brand-primary text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
-            {{ caseFile?.fileType?.name }}
+            {{ activeNiche?.name || caseFile?.fileType?.name }}
           </span>
           <h1 class="text-3xl font-black text-gray-900 tracking-tight">{{ caseFile.fileName }}</h1>
         </div>
@@ -33,7 +33,24 @@
       </div>
     </div>
 
-    <!-- 2. TABS -->
+    <!-- 1.5. NICHE CONTEXT SELECTION TABS -->
+    <div v-if="availableNiches.length > 1" class="bg-gray-50 p-2 rounded-xl border border-gray-200/80 flex items-center gap-2 overflow-x-auto">
+      <button 
+        v-for="niche in availableNiches" 
+        :key="niche.id"
+        @click="selectedNicheId = niche.id"
+        type="button"
+        class="px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all whitespace-nowrap"
+        :class="selectedNicheId === niche.id 
+          ? 'bg-brand-primary text-white shadow-sm' 
+          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'"
+      >
+        <span class="material-icons text-sm">{{ niche.icon || 'folder' }}</span>
+        <span>{{ niche.name }}</span>
+      </button>
+    </div>
+
+    <!-- 2. TABS (Details vs Participants) -->
     <div class="flex border-b border-gray-200 gap-8">
       <button 
         v-for="tab in tabs" :key="tab.id"
@@ -50,10 +67,12 @@
       <div v-if="activeTab === 'details'" class="max-w-4xl">
         <form @submit.prevent="saveMetadata" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <div class="flex justify-between items-center mb-8">
-             <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight">Case Information</h3>
+             <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight">
+               Case Information <span v-if="activeNiche">({{ activeNiche.name }})</span>
+             </h3>
 
-             <button type="submit" class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-               Save Details
+             <button type="submit" :disabled="isSubmitting" class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+               {{ isSubmitting ? 'Saving...' : 'Save Details' }}
              </button>
           </div>
           
@@ -86,8 +105,9 @@
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File Reference</label>
               <input v-model="detailsForm.file_reference" type="text" class="w-full border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary font-bold text-gray-700">
             </div>
-            <!-- Custom Fields -->
-            <div v-for="field in caseFields.filter(f => !f.participantRoleId)" :key="field.id" class="col-span-2 md:col-span-1">
+
+            <!-- Niche Custom Fields -->
+            <div v-for="field in currentNicheFields.filter(f => !f.participantRoleId)" :key="field.id" class="col-span-2 md:col-span-1">
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                 {{ field.label }} 
                 <span v-if="field.showInQuickView" class="text-brand-primary ml-1">★</span>
@@ -95,7 +115,6 @@
 
               <!-- CASE 1: Date Type (The Finesse Picker) -->
               <div v-if="field.fieldType === 'date'" class="relative group">
-                <!-- Display Layer -->
                 <div class="flex items-center justify-between w-full px-3 h-[42px] bg-white border border-gray-200 rounded-xl shadow-sm group-hover:border-brand-primary transition-colors">
                   <span class="text-sm font-bold uppercase tracking-tight" :class="detailsForm.meta_data[field.key] ? 'text-brand-blue-700' : 'text-gray-400'">
                     {{ detailsForm.meta_data[field.key] ? $formatDate(detailsForm.meta_data[field.key]) : 'Select Date...' }}
@@ -104,7 +123,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <!-- Hidden Picker Layer -->
                 <input 
                   type="date" 
                   v-model="detailsForm.meta_data[field.key]" 
@@ -127,7 +145,9 @@
       <!-- TAB: PARTICIPANTS -->
       <div v-if="activeTab === 'participants'" class="space-y-6">
         <div class="flex justify-between items-center">
-          <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight">Assigned Entities</h3>
+          <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight">
+            Assigned Entities <span v-if="activeNiche">({{ activeNiche.name }})</span>
+          </h3>
           <button @click="openAssignModal()" class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             + Assign Role-player
           </button>
@@ -143,7 +163,7 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-100">
-              <tr v-for="part in caseFile.participants" :key="part.id" class="hover:bg-gray-50 transition-colors">
+              <tr v-for="part in scopedParticipants" :key="part.id" class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="text-sm font-bold text-gray-900">
                     <span v-if="part.entity?.entity_type === 'company' || part.entity?.entityType === 'company'" class="text-gray-500 font-normal">Co: </span>{{ part.entity?.name }}
@@ -173,6 +193,11 @@
                   <button @click="deleteParticipant(part)" class="text-red-600 hover:text-red-700 font-black text-xs uppercase tracking-widest">Delete</button>
                 </td>
               </tr>
+              <tr v-if="scopedParticipants.length === 0">
+                <td colspan="4" class="p-8 text-center text-xs text-gray-400 italic">
+                  No active role-players assigned for {{ activeNiche?.name || 'this niche' }}.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -185,7 +210,7 @@
         
         <div class="bg-brand-primary p-6 text-white shrink-0">
           <h2 class="text-xl font-black uppercase tracking-tight">{{ isEditingParticipant ? 'Update Participant' : 'Assign Participant' }}</h2>
-          <p class="text-[10px] opacity-70 uppercase tracking-widest font-bold mt-1">Niche: {{ caseFile.fileType?.name }}</p>
+          <p class="text-[10px] opacity-70 uppercase tracking-widest font-bold mt-1">Niche: {{ activeNiche?.name || caseFile.fileType?.name }}</p>
         </div>
         
         <form @submit.prevent="saveParticipant" class="p-8 space-y-6 overflow-y-auto">
@@ -195,7 +220,7 @@
             <div>
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Search Global Registry</label>
               
-              <!-- Alpha Jump Bar (Double Row Grid) -->
+              <!-- Alpha Jump Bar -->
               <div class="grid gap-1 mb-3" style="grid-template-columns: repeat(14, minmax(0, 1fr));">
                 <button 
                   type="button"
@@ -218,7 +243,6 @@
               <input v-model="searchQuery" @input="handleSearch" type="text" class="w-full p-3 border-gray-200 rounded-xl focus:ring-brand-primary focus:border-brand-primary text-sm shadow-sm" placeholder="Type name or email...">
             </div>
 
-            <!-- Rich Results Dropdown -->
             <ul v-if="searchResults.length > 0" class="mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-gray-50">
               <li v-for="entity in searchResults" :key="entity.id" @click="selectEntity(entity)" class="p-3 hover:bg-gray-50 cursor-pointer text-sm font-bold text-gray-700 flex justify-between items-center transition-colors">
                 <div>
@@ -249,7 +273,7 @@
               <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Role in Case</label>
               <select v-model="participantForm.role_key" required class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700">
                 <option value="" disabled>Select Role...</option>
-                <option v-for="role in participantRoles" :key="role.roleKey" :value="role.roleKey || role.role_key">{{ role.name }}</option>
+                <option v-for="role in scopedParticipantRoles" :key="role.roleKey || role.id" :value="role.roleKey || role.role_key">{{ role.name }}</option>
               </select>
             </div>
             <div>
@@ -264,7 +288,6 @@
                   Metadata for Character: {{ participantForm.role_key }}
               </div>
               
-              <!-- GUARANTEED RENDER GRID -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div v-for="field in activeRoleFields" :key="field.id" 
                      :class="field.fieldType === 'textarea' ? 'col-span-1 md:col-span-2' : 'col-span-1'">
@@ -304,8 +327,7 @@
     </div>
   </div>
 
- <!-- PARTICIPANT NOTES MODAL -->
-  <!-- Note: We use the Case File context URL to ensure the API 'Wall' is enforced via the Case Controller -->
+  <!-- PARTICIPANT NOTES MODAL -->
   <Modal :show="showNotesModal" @close="showNotesModal = false">
     <template #title>
       <span class="text-brand-primary font-bold">{{ currentNoteContext.title }}</span>
@@ -327,13 +349,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue';
+import { ref, onMounted, reactive, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
 import teamService from '@/services/teamService';
 import Modal from '@/components/common/Modal.vue';
-import NotesPanel from '@/components/estates/NotesPanel.vue'; // Reuse V1 Panel
+import NotesPanel from '@/components/estates/NotesPanel.vue';
+import { useAuthStore } from '@/store/auth';
+
+const authStore = useAuthStore();
 
 const props = defineProps({
   id: { type: [String, Number], required: true },
@@ -347,12 +372,103 @@ const caseId = computed(() => props.id);
 
 // --- STATE ---
 const caseFile = ref(null);
-const caseFields = ref([]);
 const teams = ref([]);
-const participantRoles = ref([]);
+const rawParticipantRoles = ref([]);
+const fileClasses = ref([]); 
 const activeTab = ref('details');
 const tabs = [{ id: 'details', label: 'Details' }, { id: 'participants', label: 'Participants' }];
 const selectedLetter = ref('');
+
+// --- POPIA RBAC SCOPED TAB COMPUTED ---
+const availableNiches = computed(() => {
+  if (!caseFile.value) return [];
+  const productTypes = caseFile.value.product?.fileTypes || 
+                       caseFile.value.product?.file_types || 
+                       [];
+  
+  let types = [...productTypes];
+
+  // 1. POPIA RBAC Scoping Check:
+  // Subscriber Admins & Case File Admins see all niches.
+  // Standard operators only see niches authorized for their assigned team(s).
+  const isCaseAdmin = authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
+
+  if (!isCaseAdmin && authStore.user) {
+    const userTeamIds = (authStore.user.teams || []).map(t => t.id ?? t);
+    
+    types = types.filter(ft => {
+      const allowedTeamIds = ft.team_ids || ft.teamIds || ft.allowed_team_ids || [];
+      // If niche has no specific team restrictions, or user belongs to an allowed team
+      if (!allowedTeamIds || allowedTeamIds.length === 0) return true;
+      return allowedTeamIds.some(id => userTeamIds.includes(id));
+    });
+  }
+
+  if (types.length > 0) {
+    return types.sort((a, b) => (a.sort_order || a.sortOrder || 1) - (b.sort_order || b.sortOrder || 1));
+  }
+
+  return caseFile.value.fileType ? [caseFile.value.fileType] : [];
+});
+
+const selectedNicheId = ref(null);
+
+const activeNiche = computed(() => {
+  if (!availableNiches.value.length) return null;
+  return availableNiches.value.find(n => n.id === selectedNicheId.value) || availableNiches.value[0];
+});
+
+// Fields scoped to active niche
+const currentNicheFields = computed(() => {
+  const fields = activeNiche.value?.fields || caseFile.value?.fileType?.fields || [];
+  return fields.map(f => {
+    const pRoleId = f.participantRoleId || f.participant_role_id;
+    const showStar = f.showInQuickView === true || f.show_in_quick_view === true || f.show_in_quick_view === 1;
+    const hasId = !!f.entityFieldDefinitionId || !!f.entity_field_definition_id;
+    const hasRel = !!f.entityFieldDefinition || !!f.entity_field_definition;
+    const isProj = hasId || hasRel || f.isProjected === true || f.is_projected === true;
+    
+    let dnaKey = f.globalDnaKey || f.global_dna_key || null;
+    if (!dnaKey) {
+      const rel = f.entityFieldDefinition || f.entity_field_definition;
+      if (rel) dnaKey = rel.fieldKey || rel.field_key || null;
+    }
+
+    return {
+      id: f.id,
+      label: f.fieldLabel || f.field_label,
+      key: f.fieldKey || f.field_key, 
+      fieldType: f.fieldType || f.field_type,
+      participantRoleId: (pRoleId && pRoleId !== "0") ? pRoleId : null,
+      showInQuickView: showStar,
+      isProjected: isProj,
+      globalDnaKey: dnaKey
+    };
+  });
+});
+
+// Roles scoped to active niche
+const scopedParticipantRoles = computed(() => {
+  const nicheId = activeNiche.value?.id;
+  if (!nicheId) return rawParticipantRoles.value;
+
+  return rawParticipantRoles.value.filter(r => {
+    const roleTypeId = r.file_type_id || r.fileTypeId;
+    return !roleTypeId || roleTypeId === nicheId;
+  });
+});
+
+// Participants scoped to active niche
+const scopedParticipants = computed(() => {
+  if (!caseFile.value?.participants) return [];
+  const nicheId = activeNiche.value?.id;
+  if (!nicheId) return caseFile.value.participants;
+
+  return caseFile.value.participants.filter(p => {
+    const pTypeId = p.file_type_id || p.fileTypeId || p.participantRole?.file_type_id || p.participant_role?.file_type_id;
+    return !pTypeId || pTypeId === nicheId;
+  });
+});
 
 // --- FORMS ---
 const detailsForm = reactive({ file_name: '', file_reference: '', current_team_id: null, file_class_id: null, meta_data: {} });
@@ -369,12 +485,7 @@ const showNotesModal = ref(false);
 const currentNoteContext = ref({ id: null, title: '', type: 'case_participant' });
 
 const openParticipantNotes = (participant) => {
-    // 1. Check if the participant actually exists before trying to read .id
-    if (!participant || !participant.id) {
-        console.error("Cannot open notes: Participant object is missing or has no ID", participant);
-        return;
-    }
-
+    if (!participant || !participant.id) return;
     currentNoteContext.value = {
         id: participant.id,
         title: `History: ${participant.entity?.name || 'Participant'}`,
@@ -383,25 +494,22 @@ const openParticipantNotes = (participant) => {
     showNotesModal.value = true;
 };
 
-// --- COMPUTED ---
+// --- COMPUTED ROLE FIELDS ---
 const activeRoleFields = computed(() => {
-  if (!caseFile.value || !participantForm.value.role_key || !participantRoles.value.length) return [];
+  if (!caseFile.value || !participantForm.value.role_key || !scopedParticipantRoles.value.length) return [];
 
-  const selectedRole = participantRoles.value.find(r => 
+  const selectedRole = scopedParticipantRoles.value.find(r => 
     (r.roleKey || r.role_key || '').toLowerCase() === participantForm.value.role_key.toLowerCase()
   );
   
   if (!selectedRole) return [];
 
-  return caseFields.value.filter(f => parseInt(f.participantRoleId) === parseInt(selectedRole.id));
+  return currentNicheFields.value.filter(f => parseInt(f.participantRoleId) === parseInt(selectedRole.id));
 });
-
-const fileClasses = ref([]); 
 
 // --- CORE FETCH ---
 const fetchCase = async () => {
   try {
-    // 1. Capture 4 variables from 4 requests
     const [{ data }, teamRes, rolesRes, fileClassesRes] = await Promise.all([
         apiClient.get(`/${route.params.productSlug}/cases/${route.params.id}`),
         teamService.getTeams(),
@@ -412,66 +520,46 @@ const fetchCase = async () => {
     const cData = data.data || data;
     caseFile.value = cData;
     teams.value = teamRes.data.data || teamRes.data;
-    participantRoles.value = rolesRes.data.data || rolesRes.data;
-    
-    // 2. Assign the captured variable
+    rawParticipantRoles.value = rolesRes.data.data || rolesRes.data;
     fileClasses.value = fileClassesRes.data.data || fileClassesRes.data;
 
-    // 1. FORCE THE MAPPING (Bypassing ?? false logic)
-    caseFields.value = (cData.fileType?.fields || []).map(f => {
-         // Determine if it belongs to a participant role
-        const pRoleId = f.participantRoleId || f.participant_role_id;
-        // Safety check for Boolean flags
-        const showStar = f.showInQuickView === true || f.show_in_quick_view === true || f.show_in_quick_view === 1;
-        // Check IDs explicitly
-        const hasId = !!f.entityFieldDefinitionId || !!f.entity_field_definition_id;
-        const hasRel = !!f.entityFieldDefinition || !!f.entity_field_definition;
-        
-        // If the backend sent explicit 'true', use it. Otherwise rely on the relations/IDs.
-        const isProj = hasId || hasRel || f.isProjected === true || f.is_projected === true;
-        
-        // Force extract the key
-        let dnaKey = f.globalDnaKey || f.global_dna_key || null;
-        if (!dnaKey) {
-             const rel = f.entityFieldDefinition || f.entity_field_definition;
-             if (rel) {
-                 dnaKey = rel.fieldKey || rel.field_key || null;
-             }
-        }
+    // Set active niche tab from query parameter if provided
+    if (route.query.tab) {
+      selectedNicheId.value = Number(route.query.tab);
+    } else if (cData.file_type_id) {
+      selectedNicheId.value = cData.file_type_id;
+    }
 
-        return {
-          id: f.id,
-          label: f.fieldLabel || f.field_label,
-          key: f.fieldKey || f.field_key, 
-          fieldType: f.fieldType || f.field_type,
-          // Ensure this is strictly null if not present to avoid filter bugs
-          participantRoleId: (pRoleId && pRoleId !== "0") ? pRoleId : null,
-          showInQuickView: showStar,
-          isProjected: f.isProjected || f.is_projected || false,
-          globalDnaKey: f.globalDnaKey || f.global_dna_key || null
-        };
-    });
-
-    detailsForm.file_name = cData.fileName || cData.file_name || '';
-    detailsForm.file_reference = cData.fileReference || cData.file_reference || '';
-    detailsForm.current_team_id = cData.currentTeamId || cData.current_team_id || null;
-    detailsForm.file_class_id = cData.fileClassId || cData.file_class_id || null;
-    
-    const rawMeta = cData.metaData || cData.meta_data || {};
-    detailsForm.meta_data = {};
-
-    caseFields.value.filter(f => !f.participantRoleId).forEach(f => {
-        const blueprintKey = f.key;
-        const camelKey = blueprintKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-        detailsForm.meta_data[blueprintKey] = rawMeta[blueprintKey] !== undefined 
-            ? rawMeta[blueprintKey] 
-            : (rawMeta[camelKey] || '');
-    });
+    populateFormFields();
 
   } catch (e) { console.error("Fetch Case Error:", e); }
 };
 
+const populateFormFields = () => {
+  if (!caseFile.value) return;
+  const cData = caseFile.value;
 
+  detailsForm.file_name = cData.fileName || cData.file_name || '';
+  detailsForm.file_reference = cData.fileReference || cData.file_reference || '';
+  detailsForm.current_team_id = cData.currentTeamId || cData.current_team_id || null;
+  detailsForm.file_class_id = cData.fileClassId || cData.file_class_id || null;
+  
+  const rawMeta = cData.metaData || cData.meta_data || {};
+  detailsForm.meta_data = {};
+
+  const nicheId = activeNiche.value?.id;
+  const nicheScopedMeta = (nicheId && rawMeta[nicheId] && typeof rawMeta[nicheId] === 'object') ? rawMeta[nicheId] : {};
+
+  currentNicheFields.value.filter(f => !f.participantRoleId).forEach(f => {
+      const key = f.key;
+      const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+      
+      // Look in niche-keyed meta first, then top-level flat meta
+      detailsForm.meta_data[key] = nicheScopedMeta[key] ?? nicheScopedMeta[camelKey] ?? rawMeta[key] ?? rawMeta[camelKey] ?? '';
+  });
+};
+
+watch(selectedNicheId, populateFormFields);
 
 // --- HELPERS ---
 const resolveProjectedValue = (field) => {
@@ -481,11 +569,9 @@ const resolveProjectedValue = (field) => {
     const dnaKey = field.globalDnaKey;
     if (!dnaKey) return null;
 
-    // Create variations
     const camelKey = dnaKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
     const pascalKey = camelKey.charAt(0).toUpperCase() + camelKey.slice(1);
 
-    // Return exact match
     return entityMeta[dnaKey] || entityMeta[camelKey] || entityMeta[pascalKey] || null;
 };
 
@@ -493,12 +579,25 @@ const resolveProjectedValue = (field) => {
 const saveMetadata = async () => {
   isSubmitting.value = true;
   try {
+    const rawMeta = { ...(caseFile.value.metaData || caseFile.value.meta_data || {}) };
+    const nicheId = activeNiche.value?.id;
+
+    if (nicheId) {
+      // Nest custom fields under active niche ID
+      rawMeta[nicheId] = {
+        ...(rawMeta[nicheId] || {}),
+        ...detailsForm.meta_data
+      };
+    } else {
+      Object.assign(rawMeta, detailsForm.meta_data);
+    }
+
     await apiClient.put(`/${route.params.productSlug}/cases/${route.params.id}`, {
         file_name: detailsForm.file_name,
         file_reference: detailsForm.file_reference,
         current_team_id: detailsForm.current_team_id,
         file_class_id: detailsForm.file_class_id,
-        meta_data: detailsForm.meta_data
+        meta_data: rawMeta
     });
     showAlert('Success', 'Case synchronized.');
     fetchCase();
@@ -510,7 +609,11 @@ const saveParticipant = async () => {
   isSubmitting.value = true;
   try {
     const baseUrl = `/${route.params.productSlug}/cases/${route.params.id}/participants`;
-    const payload = { entity_id: selectedEntity.value.id, ...participantForm.value };
+    const payload = { 
+      entity_id: selectedEntity.value.id, 
+      file_type_id: activeNiche.value?.id,
+      ...participantForm.value 
+    };
     
     if (isEditingParticipant.value) {
         await apiClient.put(`${baseUrl}/${editingParticipantId.value}`, payload);
@@ -576,7 +679,7 @@ const openAssignModal = (part = null) => {
 
 let searchTimeout = null;
 const handleSearch = () => {
-    selectedLetter.value = ''; // Reset alpha filter if user starts typing manually
+    selectedLetter.value = '';
     if (searchTimeout) clearTimeout(searchTimeout);
     
     if (searchQuery.value.length < 2) {
@@ -596,7 +699,7 @@ const handleSearch = () => {
 
 const filterByLetter = async (letter) => {
     selectedLetter.value = letter;
-    searchQuery.value = ''; // Clear manual query text
+    searchQuery.value = '';
     if (searchTimeout) clearTimeout(searchTimeout);
     try {
         const { data } = await apiClient.get(`/entities?prefix=${letter}`);

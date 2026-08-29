@@ -2,7 +2,7 @@
   <!-- Path: frontend-spa/src/components/cases/CaseQuickViewHeader.vue -->
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
     
-    <!-- SECTION 1: PARTICIPANTS (Role-Player Identities) -->
+    <!-- SECTION 1: PARTICIPANTS (Scoped to Active Niche) -->
     <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-gray-50 border-b border-gray-200">
       
       <div v-for="part in orderedParticipants" :key="part.id" class="p-4 flex flex-col justify-center min-h-[80px]">
@@ -30,11 +30,11 @@
       </div>
 
       <div v-if="orderedParticipants.length === 0" class="p-4 text-xs text-gray-400 italic text-center col-span-4">
-        No active role-players assigned.
+        No active role-players assigned for this niche.
       </div>
     </div>
 
-    <!-- SECTION 2: METADATA (Quick View & Global DNA Projections) -->
+    <!-- SECTION 2: METADATA (Scoped to Active Niche) -->
     <div class="p-5">
       <div v-if="quickFields.length > 0" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-6 gap-x-8">
         
@@ -62,7 +62,6 @@
             class="text-sm font-bold truncate"
             :class="field.isProjected ? 'text-emerald-700' : 'text-gray-800'"
           >
-            <!-- NEW: Logic to handle Date vs Text vs Number -->
             <template v-if="(field.fieldType === 'date' || field.fieldType === 'timestamptz') && field.value">
               {{ $formatDate(field.value) }}
             </template>
@@ -83,13 +82,30 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-  caseFile: { type: Object, required: true }
+  caseFile: { type: Object, required: true },
+  activeFileType: { type: Object, default: null }
 });
 
-// --- 1. PARTICIPANT ORDERING ---
+// Target Niche/FileType context (falls back to case file primary fileType)
+const currentFileType = computed(() => {
+  return props.activeFileType || props.caseFile.fileType || null;
+});
+
+// --- 1. PARTICIPANT ORDERING & SCOPING ---
 const orderedParticipants = computed(() => {
   if (!props.caseFile.participants) return [];
-  const activeParts = props.caseFile.participants.filter(p => p.isActive || p.is_active);
+  
+  let activeParts = props.caseFile.participants.filter(p => p.isActive || p.is_active);
+
+  // Filter participants scoped to active file_type_id if available
+  const activeTypeId = currentFileType.value?.id;
+  if (activeTypeId) {
+    activeParts = activeParts.filter(p => {
+      const pTypeId = p.file_type_id || p.fileTypeId || p.participantRole?.file_type_id || p.participant_role?.file_type_id;
+      // Allow if participant belongs to active file type OR is a universal/unscoped participant
+      return !pTypeId || pTypeId === activeTypeId;
+    });
+  }
 
   return activeParts.sort((a, b) => {
     const roleA = a.participantRole || a.participant_role;
@@ -108,20 +124,20 @@ const orderedParticipants = computed(() => {
   });
 });
 
-// --- 2. METADATA RESOLUTION (The Tri-Layer Logic) ---
+// --- 2. METADATA RESOLUTION (Scoped to active Niche) ---
 const quickFields = computed(() => {
-  const definitions = props.caseFile.fileType?.fields || [];
+  // Pull definitions from activeFileType, or fall back to primary caseFile.fileType
+  const definitions = currentFileType.value?.fields || props.caseFile.fileType?.fields || [];
   
-  // Layers
   const metaData = props.caseFile.metaData || props.caseFile.meta_data || {};
   const projectedMeta = props.caseFile.projectedMetaData || props.caseFile.projected_meta_data || {};
   const participants = props.caseFile.participants || [];
+  const activeTypeId = currentFileType.value?.id;
 
   return definitions
     .filter(def => def.showInQuickView || def.show_in_quick_view)
     .map(def => {
       const key = def.fieldKey || def.field_key;
-      // Robust camelCase generator
       const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
       
       const hasId = !!def.entityFieldDefinitionId || !!def.entity_field_definition_id;
@@ -130,13 +146,9 @@ const quickFields = computed(() => {
       let value = null;
 
       if (isProjected) {
-          // A. Try the summarized 'projected_meta_data' object first
           value = projectedMeta[key] ?? projectedMeta[camelKey] ?? null;
 
-          // B. DEEP SEARCH FALLBACK: If the backend flattening failed, 
-          // look through participants manually.
           if (value === null || value === undefined) {
-              // Find any participant whose entity has this metadata key
               const foundPart = participants.find(p => {
                   const entMeta = p.entity?.metaData || p.entity?.meta_data;
                   return entMeta && (entMeta[key] !== undefined || entMeta[camelKey] !== undefined);
@@ -148,8 +160,16 @@ const quickFields = computed(() => {
               }
           }
       } else {
-          // Standard Case Meta resolution
-          value = metaData[key] ?? metaData[camelKey] ?? null;
+          // Scoped Case Meta resolution:
+          // Check if metaData stores niche-keyed object metaData[file_type_id][fieldKey]
+          if (activeTypeId && metaData[activeTypeId] && typeof metaData[activeTypeId] === 'object') {
+            value = metaData[activeTypeId][key] ?? metaData[activeTypeId][camelKey] ?? null;
+          }
+          
+          // Fallback to top-level flat metaData
+          if (value === null || value === undefined) {
+            value = metaData[key] ?? metaData[camelKey] ?? null;
+          }
       }
 
       return {

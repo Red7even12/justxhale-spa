@@ -39,8 +39,8 @@
           <tr v-for="pack in packs" :key="pack.id" class="hover:bg-indigo-50/30 transition-colors">
             <td class="px-6 py-4 font-bold text-gray-900">{{ pack.name }}</td>
             <td class="px-6 py-4 text-sm">
-              <span v-if="pack.fileType" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 font-medium">
-                {{ pack.fileType.name }}
+              <span v-if="pack.fileTypeId" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 font-medium">
+                {{ getFileTypeName(pack.fileTypeId) }}
               </span>
               <span v-else class="text-gray-400 italic">Global (All Niches)</span>
             </td>
@@ -154,12 +154,16 @@ const loadFileTypes = async () => {
   }
 };
 
+const getFileTypeName = (id) => {
+  return fileTypes.value.find(t => t.id === id)?.name || 'Unknown';
+};
+
 const openModal = (pack = null) => {
   if (pack) {
     form.id = pack.id;
     form.name = pack.name;
-    form.file_type_id = pack.file_type_id;
-    form.is_active = pack.is_active;
+    form.file_type_id = pack.fileTypeId ?? pack.file_type_id ?? null;
+    form.is_active = pack.isActive ?? pack.is_active ?? true;
   } else {
     form.id = null;
     form.name = '';

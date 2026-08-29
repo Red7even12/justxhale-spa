@@ -34,6 +34,12 @@ const routes = [
     component: Login,
   },
   {
+    path: '/onboard/wlp/:token',
+    name: 'WlpOnboardingAcceptance',
+    component: () => import('@/views/portal/OnboardingAcceptanceView.vue'),
+    meta: { requiresAuth: false, title: 'WLP Partner Onboarding' }
+  },
+  {
     path: '/portal/upload/:token',
     name: 'ClientUploadPortal',
     // We lazy-load it to keep the main admin bundle small
@@ -116,6 +122,52 @@ const routes = [
         meta: { requiresAuth: true, permission: 'edit subscribers' }
       },
 
+      // --- LEVEL 2: WLP PARTNER ADMIN PORTAL ---
+      {
+        path: 'admin/wlp-partners',
+        name: 'admin.wlp-partners',
+        component: () => import('@/views/admin/WlpPartnersView.vue'),
+        meta: { displayName: 'White-Label Partners', requiresAuth: true },
+        // Super Admin screen only - invisible & inaccessible to WLP Admins
+        beforeEnter: (to, from, next) => {
+          const authStore = useAuthStore();
+          if (authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')) {
+            next();
+          } else {
+            next({ name: 'AppLauncher' });
+          }
+        }
+      },
+
+      {
+        path: 'partner-admin/dashboard',
+        name: 'partner.admin.dashboard',
+        component: () => import('@/views/admin/WlpDashboardView.vue'),
+        meta: { displayName: 'Partner Admin Dashboard', requiresAuth: true },
+        beforeEnter: (to, from, next) => {
+          const authStore = useAuthStore();
+          if (authStore.hasRole('WLP Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')) {
+            next();
+          } else {
+            next({ name: 'AppLauncher' });
+          }
+        }
+      },
+      {
+        path: 'partner-admin/subscribers',
+        name: 'partner.admin.subscribers',
+        component: () => import('@/views/admin/WlpSubscribersView.vue'),
+        meta: { displayName: 'Subscriber Management', requiresAuth: true },
+        beforeEnter: (to, from, next) => {
+          const authStore = useAuthStore();
+          if (authStore.hasRole('WLP Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')) {
+            next();
+          } else {
+            next({ name: 'AppLauncher' });
+          }
+        }
+      },
+
       {
         path: '/admin/system-mails',
         name: 'SystemMailsSetup',
@@ -144,7 +196,14 @@ const routes = [
         name: 'admin.permissions',
         component: () => import('@/views/admin/PermissionMatrix.vue'),
         meta: { displayName: 'Authorization Matrix', requiresAuth: true, role: 'System Admin' }
-      },  
+      }, 
+      {
+        path: 'admin/legal-documents',
+        name: 'admin.legal-documents',
+        component: () => import('@/views/admin/LegalDocumentsView.vue'),
+        meta: { displayName: 'Legal Documents', requiresAuth: true }
+      },
+      
       
       // --- BI DASHBOARD FACTORY (ADMIN) ---
       {

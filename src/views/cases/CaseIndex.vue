@@ -188,27 +188,67 @@
             <td class="px-6 py-4 text-sm text-gray-500">
                {{ $formatDate(caseFile.updatedAt || caseFile.updated_at) }}
             </td>
+            <!-- ADAPTIVE STACKED NICHE MILESTONES -->
             <td class="px-6 py-4">
-              <div class="flex flex-col gap-1">
-                <!-- The Milestone Matrix (The "Teeth") -->
-                <div v-if="caseFile.milestone_matrix || caseFile.milestoneMatrix" class="flex gap-0.5 items-center">
-                  <div 
-                    v-for="(m, index) in (caseFile.milestone_matrix || caseFile.milestoneMatrix)" 
-                    :key="index"
-                    :title="m.name"
-                    :class="[
-                        'w-2 h-4 rounded-sm border transition-colors duration-300',
+              <div v-if="getNicheMilestones(caseFile).length" class="space-y-2 min-w-[180px]">
+                
+                <!-- Niche Milestone Rows -->
+                <div 
+                  v-for="(niche, nIdx) in (
+                    isCaseExpanded(caseFile.id) || getNicheMilestones(caseFile).length <= 3
+                      ? getNicheMilestones(caseFile)
+                      : getNicheMilestones(caseFile).slice(0, 2)
+                  )" 
+                  :key="niche.file_type_id || nIdx"
+                  class="flex flex-col gap-0.5"
+                >
+                  <!-- Niche Header: Title (Left) | Count (Right) -->
+                  <div class="flex items-center justify-between text-[10px] uppercase font-bold tracking-tight">
+                    <span class="text-gray-600 truncate max-w-[120px]" :title="niche.file_type_name">
+                      {{ niche.file_type_name }}
+                    </span>
+                    <span class="font-mono text-[9px] font-black text-gray-400">
+                      {{ niche.milestones_completed }}/{{ niche.milestones_total }}
+                    </span>
+                  </div>
+
+                  <!-- Milestone Matrix (The "Teeth") -->
+                  <div class="flex gap-0.5 items-center">
+                    <div 
+                      v-for="(m, mIdx) in niche.milestone_matrix" 
+                      :key="mIdx"
+                      :title="m.name"
+                      :class="[
+                        'w-2 h-3.5 rounded-xs border transition-colors duration-200',
                         m.status === 1 
-                            ? 'bg-green-300 border-green-400 shadow-sm' 
-                            : 'bg-gray-100 border-gray-200'
-                    ]"
-                  ></div>
+                          ? 'bg-green-400 border-green-500 shadow-2xs' 
+                          : 'bg-gray-100 border-gray-200'
+                      ]"
+                    ></div>
+                  </div>
                 </div>
 
-                <!-- Raw Count only -->
-                <div class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">
-                    {{ (caseFile.milestonesCompleted ?? caseFile.milestones_completed ?? 0) }} / {{ (caseFile.milestonesTotal ?? caseFile.milestones_total ?? 0) }}
+                <!-- Auto-Expander for > 3 Niches -->
+                <div v-if="getNicheMilestones(caseFile).length > 3" class="pt-0.5">
+                  <button 
+                    @click.stop="toggleCaseMilestones(caseFile.id)" 
+                    type="button" 
+                    class="text-[10px] font-bold text-brand-primary hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>
+                      {{ isCaseExpanded(caseFile.id) 
+                        ? '▲ Show less' 
+                        : `+ ${getNicheMilestones(caseFile).length - 2} more niches ▾` 
+                      }}
+                    </span>
+                  </button>
                 </div>
+
+              </div>
+
+              <!-- Fallback if case has no milestone steps -->
+              <div v-else class="text-xs text-gray-300 italic">
+                No milestones
               </div>
             </td>
             <td class="px-6 py-4 text-right text-sm font-medium">
@@ -356,6 +396,56 @@ const toggleSort = (column) => {
   fetchCases();
 };
 
+// --- GROUP MILESTONES BY NICHE TAB ---
+const getNicheMilestones = (caseFile) => {
+  let matrix = caseFile.milestoneMatrix || caseFile.milestone_matrix;
+
+  // Defensive JSON string parsing
+  if (typeof matrix === 'string') {
+    try {
+      matrix = JSON.parse(matrix);
+    } catch (e) {
+      matrix = [];
+    }
+  }
+
+  if (!matrix || !Array.isArray(matrix) || matrix.length === 0) return [];
+
+  const groups = {};
+  for (const m of matrix) {
+    // Support both camelCase and snake_case
+    const typeId = m.fileTypeId ?? m.file_type_id;
+    const typeName = m.fileTypeName ?? m.file_type_name ?? 'General';
+    const key = typeId ?? typeName;
+
+    if (!groups[key]) {
+      groups[key] = {
+        file_type_id: typeId,
+        file_type_name: typeName,
+        milestones_total: 0,
+        milestones_completed: 0,
+        milestone_matrix: []
+      };
+    }
+    groups[key].milestone_matrix.push(m);
+    groups[key].milestones_total++;
+    if (m.status === 1) {
+      groups[key].milestones_completed++;
+    }
+  }
+  return Object.values(groups);
+};
+
+const expandedCases = ref([]);
+const toggleCaseMilestones = (caseId) => {
+  const index = expandedCases.value.indexOf(caseId);
+  if (index > -1) {
+    expandedCases.value.splice(index, 1);
+  } else {
+    expandedCases.value.push(caseId);
+  }
+};
+const isCaseExpanded = (caseId) => expandedCases.value.includes(caseId);
 
 
 // Pagination Tracking Object

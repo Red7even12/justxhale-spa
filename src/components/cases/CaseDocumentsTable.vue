@@ -1,9 +1,9 @@
 <template>
-  <!--frontend-spa\src\components\cases\CaseDocumentsTable.vue-->
+  <!-- frontend-spa/src/components/cases/CaseDocumentsTable.vue -->
   <div class="documents-table h-full flex flex-col">
-    <!-- Header -->
-
-    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 shrink-0">
+    
+    <!-- 1. Header Toolbar -->
+    <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2 shrink-0">
       <h3 class="text-lg font-bold text-gray-800 uppercase tracking-tight">Checklist</h3>
       <div class="flex items-center gap-2">
         <button 
@@ -19,8 +19,49 @@
         </button>
       </div>
     </div>
+
+    <!-- 2. STAKEHOLDER / PARTICIPANT SELECTOR BAR -->
+    <div v-if="stakeholders.length > 0" class="mb-3 flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0">
+      <!-- Corporate / Entity Default Pill -->
+      <button 
+        @click="selectedParticipantId = 'corporate'" 
+        type="button"
+        class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap border"
+        :class="selectedParticipantId === 'corporate' 
+          ? 'bg-brand-primary text-white border-brand-primary shadow-xs' 
+          : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'"
+      >
+        <span>🏢 Corporate / Entity</span>
+        <span class="text-[10px] opacity-80 font-mono">({{ getParticipantDocCount(null) }})</span>
+      </button>
+
+      <!-- Individual Stakeholder Pills -->
+      <button 
+        v-for="p in stakeholders" 
+        :key="p.id"
+        @click="selectedParticipantId = p.id" 
+        type="button"
+        class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap border"
+        :class="selectedParticipantId === p.id 
+          ? 'bg-brand-primary text-white border-brand-primary shadow-xs' 
+          : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'"
+      >
+        <span>👤 {{ p.entity?.name || 'Shareholder' }}</span>
+        <span class="text-[10px] opacity-80 font-mono">({{ getParticipantDocCount(p.id) }})</span>
+      </button>
+
+      <!-- Show All Option -->
+      <button 
+        @click="selectedParticipantId = 'all'" 
+        type="button"
+        class="px-2.5 py-1 rounded-lg text-xs font-bold text-gray-400 hover:text-gray-700 transition-colors ml-auto text-[11px]"
+        :class="{'text-brand-primary underline': selectedParticipantId === 'all'}"
+      >
+        All Docs
+      </button>
+    </div>
     
-    <!-- Loading / Error States -->
+    <!-- 3. Loading / Error States -->
     <div v-if="isLoading" class="flex-1 flex items-center justify-center text-gray-400 text-sm font-bold">
       Loading requirements...
     </div>
@@ -29,7 +70,7 @@
       <p>{{ error }}</p>
     </div>
 
-    <!-- The V1 Table Layout -->
+    <!-- 4. The Documents Checklist Table -->
     <div v-else class="flex-1 overflow-auto border border-gray-200 rounded-lg bg-white relative">
       <table class="min-w-full divide-y divide-gray-200 documents-table-override">
         <thead class="bg-gray-50 sticky top-0 z-10">
@@ -41,16 +82,23 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="req in activeRequirements" :key="req.id">
+          <tr v-for="req in filteredRequirements" :key="req.id">
             
-            <!-- Document Name & Note -->
+            <!-- Document Name, Note & Target Stakeholder -->
             <td class="px-3 py-2 whitespace-nowrap align-top">
               <div class="flex items-center">
                 <div>
-                  <div class="text-sm font-bold text-gray-900">{{ req.documentType?.label }}</div>
+                  <div class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    {{ req.documentType?.label || req.documentType?.name }}
+                    <span v-if="req.is_required" class="text-[9px] text-red-500 font-bold uppercase tracking-wide border border-red-100 px-1 rounded">Req</span>
+                  </div>
+                  
+                  <!-- Participant Tag if viewing in "All Docs" mode -->
+                  <div v-if="req.participant?.entity?.name" class="text-[10px] text-brand-primary font-bold mt-0.5">
+                    Target: {{ req.participant.entity.name }}
+                  </div>
+                  
                   <div v-if="req.documentType?.note" class="text-xs text-gray-500 mt-0.5">{{ req.documentType.note }}</div>
-                  <!-- Required Badge -->
-                  <span v-if="req.is_required" class="text-[9px] text-red-500 font-bold uppercase tracking-wide border border-red-100 px-1 rounded ml-1">Req</span>
                 </div>
               </div>
             </td>
@@ -63,32 +111,26 @@
               </span>
             </td>
 
-            <!-- Input / Actions -->
+            <!-- Input Fields -->
             <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 align-top">
               <div v-if="req.currentStatus !== 'not_applicable' && submissionData[req.id]">
                 
                 <!-- Date Inputs -->
                 <div v-if="['expiry_date', 'date'].includes(req.documentType?.actionFieldType)" class="relative group max-w-[180px]">
-                
-                <!-- LAYER 1: The "Finesse" Display (What the user sees) -->
-                <div class="flex items-center justify-between w-full px-3 py-1 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
-                    <span class="text-[11px] font-black uppercase tracking-tight" :class="submissionData[req.id].value ? 'text-brand-blue-700' : 'text-gray-400'">
-                    {{ submissionData[req.id].value ? $formatDate(submissionData[req.id].value) : 'Select Date...' }}
-                    </span>
-                    <!-- Calendar Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                </div>
-
-                <!-- LAYER 2: The "Hidden Engine" (The actual date picker) -->
-                <!-- We make it invisible (opacity-0) and stretch it to cover the entire box -->
-                <input 
-                    type="date"
-                    v-model="submissionData[req.id].value" 
-                    @change="handleInputChange(req.id)"
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                >
+                  <div class="flex items-center justify-between w-full px-3 py-1 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
+                      <span class="text-[11px] font-black uppercase tracking-tight" :class="submissionData[req.id].value ? 'text-brand-blue-700' : 'text-gray-400'">
+                      {{ submissionData[req.id].value ? $formatDate(submissionData[req.id].value) : 'Select Date...' }}
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                  </div>
+                  <input 
+                      type="date"
+                      v-model="submissionData[req.id].value" 
+                      @change="handleInputChange(req.id)"
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  >
                 </div>
 
                 <!-- Text Input -->
@@ -110,13 +152,13 @@
                     class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-xs"
                   >
                     <option value="">-- Select --</option>
-                    <option v-for="item in sourcedData[req.documentType.recordsource] || []" :key="item.id" :value="item.optionValue">
+                    <option v-for="item in sourcedData[resolveSourceKey(req.documentType)] || []" :key="item.id" :value="item.optionValue">
                       {{ item.optionValue }}
                     </option>
                   </select>
                 </div>
 
-                <!-- Checkbox (None) -->
+                <!-- Checkbox -->
                 <div v-else>
                   <input 
                     type="checkbox"
@@ -129,11 +171,9 @@
               </div>
             </td>
 
-            <!-- History / Notes / Files Actions -->
+            <!-- Actions: Files & Notes -->
             <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium align-top">
              <div class="flex items-center justify-end gap-2">
-                
-                <!-- FILES BUTTON -->
                 <button 
                     @click="openFiles(req)" 
                     class="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold transition-colors border"
@@ -146,11 +186,16 @@
                     <span v-if="req.files && req.files.length > 0">{{ req.files.length }}</span>
                 </button>
 
-                <!-- NOTES BUTTON -->
                 <button @click="openNotes(req)" class="text-gray-400 hover:text-brand-primary transition p-1 rounded hover:bg-gray-50" title="View/Add Notes">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd"></path></svg>
                 </button>
              </div>
+            </td>
+          </tr>
+          
+          <tr v-if="filteredRequirements.length === 0">
+            <td colspan="4" class="text-center py-8 text-gray-400 text-xs italic">
+              No documents required for this selection.
             </td>
           </tr>
         </tbody>
@@ -167,13 +212,11 @@
       <NotesPanel 
           :noteable-type="currentNoteContext.type"
           :noteable-id="currentNoteContext.id"
+          :file-type-id="props.fileTypeId"
           :context-url="`${route.params.productSlug}/cases/${props.caseId}`" 
           :current-team-id="props.currentTeamId"
           @note-added="(n) => {
-              // Ensure currentNotes is an array before calling unshift
-              if (!Array.isArray(currentNotes)) {
-                  currentNotes = [];
-              }
+              if (!Array.isArray(currentNotes)) currentNotes = [];
               currentNotes.unshift(n);
           }"
           @cancel="showNotesModal = false"
@@ -189,8 +232,6 @@
 
     <div class="p-6">
       <div class="mb-6 space-y-4">
-          
-          <!-- Action Grid (Added the 4th option: Universal Path) -->
           <div class="grid grid-cols-4 gap-2">
               <button @click="triggerInput('scan')" class="flex flex-col items-center justify-center p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 shadow-sm transition-colors">
                   <span class="text-xl mb-1">📷</span>
@@ -204,75 +245,42 @@
                   <span class="text-xl mb-1">📁</span>
                   <span class="text-[10px] font-bold text-gray-600 uppercase text-center leading-tight">File</span>
               </button>
-              <!-- NEW: Link Path Button -->
               <button @click="showLinkInput = !showLinkInput" :class="showLinkInput ? 'bg-blue-50 border-brand-primary' : 'bg-white border-gray-200'" class="flex flex-col items-center justify-center p-2 border rounded-lg hover:bg-blue-50 shadow-sm transition-colors">
                   <span class="text-xl mb-1">🔗</span>
                   <span class="text-[10px] font-bold text-brand-primary uppercase text-center leading-tight">Link</span>
               </button>
           </div>
 
-          <!-- External Link Input UI (Conditionally rendered) -->
-          <transition
-              enter-active-class="transition ease-out duration-200"
-              enter-from-class="opacity-0 translate-y-1"
-              enter-to-class="opacity-100 translate-y-0"
-              leave-active-class="transition ease-in duration-150"
-              leave-from-class="opacity-100 translate-y-0"
-              leave-to-class="opacity-0 translate-y-1"
-          >
-              <div v-if="showLinkInput" class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner space-y-3">
-                  <div class="flex items-center justify-between">
-                      <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-                          Universal Document Path
-                      </label>
-                      <button @click="showLinkInput = false" class="text-gray-400 hover:text-gray-600">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                      </button>
-                  </div>
-
-                  <div class="flex gap-2">
-                      <div class="relative flex-1">
-                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span class="text-gray-400 text-sm">🔗</span>
-                          </div>
-                          <input 
-                              v-model="externalLinkPath" 
-                              type="text" 
-                              placeholder="Paste SharePoint URL or Local Drive Path..." 
-                              class="block w-full pl-9 pr-3 py-2.5 border-gray-300 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary shadow-sm"
-                              @keyup.enter="submitExternalLink"
-                          >
-                      </div>
-                      <button 
-                          @click="submitExternalLink" 
-                          :disabled="!externalLinkPath || isUploading"
-                          class="bg-brand-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2"
-                      >
-                          <span v-if="!isUploading">Save Link</span>
-                          <span v-else class="animate-spin text-xs">🌀</span>
-                      </button>
-                  </div>
-                  
-                  <div class="flex items-start gap-2 px-1">
-                      <svg class="h-4 w-4 text-brand-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p class="text-[10px] text-gray-500 leading-normal">
-                          Use this for files stored on your organization's SharePoint, OneDrive, or internal network drives (Z:\). 
-                          JustXhale will record the location for process tracking without copying the actual file.
-                      </p>
-                  </div>
+          <div v-if="showLinkInput" class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner space-y-3">
+              <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">Universal Document Path</label>
+                  <button @click="showLinkInput = false" class="text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
               </div>
-          </transition>
 
-          <!-- Hidden Inputs with different capture intents -->
+              <div class="flex gap-2">
+                  <input 
+                      v-model="externalLinkPath" 
+                      type="text" 
+                      placeholder="Paste SharePoint URL or Local Drive Path..." 
+                      class="block w-full px-3 py-2 border-gray-300 rounded-lg text-sm focus:ring-brand-primary focus:border-brand-primary shadow-sm"
+                      @keyup.enter="submitExternalLink"
+                  >
+                  <button 
+                      @click="submitExternalLink" 
+                      :disabled="!externalLinkPath || isUploading"
+                      class="bg-brand-primary text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:opacity-90 disabled:opacity-50 transition-all"
+                  >
+                      Save
+                  </button>
+              </div>
+          </div>
+
           <input type="file" ref="galleryInput" class="hidden" @change="handleFileUpload" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
           <input type="file" ref="scanInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="environment">
           <input type="file" ref="selfieInput" class="hidden" @change="handleFileUpload" accept="image/*" capture="user">
 
-          <!-- Loading indicator -->
           <div v-if="isUploading" class="text-center p-2 text-brand-primary font-bold animate-pulse">
               Processing Document...
           </div>
@@ -282,99 +290,22 @@
               <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1">Attached Documents</h4>
               <div v-for="file in activeFileReq.files" :key="file.id" class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
                   <div class="flex items-center gap-3 overflow-hidden">
-                      <div class="bg-gray-100 p-2 rounded text-gray-600">
-                          
-                          <!-- ICON LOGIC UPDATED -->
-                          <svg v-if="file.is_external_path || file.isExternalPath" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                          <svg v-else-if="file.mime_type?.includes('pdf')" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <svg v-else-if="file.mime_type?.includes('image')" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                      </div>
-
                       <div class="min-w-0">
-                          <!-- LINK LOGIC UPDATED -->
-                          <!-- If External Link & starts with http, open in new tab -->
-                          <a v-if="(file.is_external_path || file.isExternalPath) && (file.file_path?.startsWith('http') || file.filePath?.startsWith('http'))" 
-                              :href="file.file_path || file.filePath" 
-                              target="_blank" 
-                              class="text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline truncate block"
-                              title="Open External Cloud Link"
-                          >
+                          <a v-if="file.is_external_path || file.isExternalPath" :href="file.file_path || file.filePath" target="_blank" class="text-sm font-bold text-brand-primary hover:underline truncate block">
                               {{ file.file_name || file.fileName }}
                           </a>
-                          <!-- If External Link (Local drive Z:\ etc), just show text -->
-                          <span v-else-if="(file.is_external_path || file.isExternalPath)" 
-                              class="text-sm font-bold text-gray-900 truncate block"
-                              title="Local Network Path"
-                          >
-                              {{ file.file_name || file.fileName }}
-                          </span>
-                          <!-- If Physical File, use Preview endpoint -->
-                          <a v-else
-                              :href="getFileUrl(file, 'preview')" 
-                              target="_blank" 
-                              class="text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline truncate block"
-                              title="Preview File"
-                          >
+                          <a v-else :href="getFileUrl(file, 'preview')" target="_blank" class="text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline truncate block">
                               {{ file.file_name || file.fileName }}
                           </a>
-
-                          <div class="text-[10px] text-gray-500 font-medium mt-0.5">
-                              <span v-if="file.is_external_path || file.isExternalPath" class="uppercase text-brand-primary border border-brand-primary/20 bg-blue-50 px-1 py-0.5 rounded mr-1">External Path</span>
-                              <span v-else>{{ formatSize(file.size_kb || file.sizeKb) }} • </span>
-                              {{ formatDate(file.created_at || file.createdAt) }}
-                          </div>
                       </div>
                   </div>
                   
                   <div class="flex items-center gap-1">
-                      <!-- ACTION BUTTONS LOGIC UPDATED -->
-                      
-                      <!-- Copy Path Button (For External Links) -->
-                      <button v-if="file.is_external_path || file.isExternalPath"
-                          @click="copyToClipboard(file.file_path || file.filePath)" 
-                          class="text-gray-400 hover:text-brand-primary p-2 transition-colors rounded hover:bg-gray-50"
-                          title="Copy Path to Clipboard"
-                      >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                      </button>
-
-                      <!-- Download Button (For Physical Files Only) -->
-                      <a v-else
-                          :href="getFileUrl(file, 'download')" 
-                          class="text-gray-400 hover:text-brand-primary p-2 transition-colors rounded hover:bg-gray-50"
-                          title="Download File"
-                      >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                      </a>
-
-                      <!-- DELETE BUTTON (Always available) -->
-                      <button 
-                          @click="deleteFile(file.id)" 
-                          class="text-gray-400 hover:text-red-500 p-2 transition-colors rounded hover:bg-red-50"
-                          title="Remove Record"
-                      >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                      <button @click="deleteFile(file.id)" class="text-gray-400 hover:text-red-500 p-2 rounded hover:bg-red-50" title="Delete File">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                   </div>
               </div>
-          </div>
-          <div v-else class="text-center py-6 text-gray-500 text-sm italic bg-gray-50 rounded border border-gray-100">
-              No files or paths linked yet.
           </div>
 
           <div class="mt-6 flex justify-end">
@@ -384,7 +315,8 @@
     </div>
   </Modal>
 
-<Modal :show="isRequestModalOpen" @close="closeRequestModal">
+  <!-- SECURE PORTAL REQUEST MODAL -->
+  <Modal :show="isRequestModalOpen" @close="closeRequestModal">
     <template #title>Request Documents via Secure Portal</template>
     
     <div class="p-6">
@@ -392,14 +324,14 @@
             Select the required documents and choose who should receive the secure upload link. They will receive a passwordless Magic Link to upload these files directly from their phone or computer.
         </p>
 
-        <!-- Step 1: Select Recipient -->
+<!-- Step 1: Select Recipient -->
         <div class="mb-6">
             <label class="block text-sm font-bold text-gray-700 mb-2">1. Who are you requesting these from?</label>
-            <div v-if="isLoadingParticipants" class="text-xs text-gray-500">Loading contacts...</div>
+            <div v-if="isLoadingParticipants" class="text-xs text-gray-500 font-bold animate-pulse">Loading contacts...</div>
             <select 
                 v-else 
                 v-model="requestPayload.participantId" 
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm font-medium"
             >
                 <option :value="null" disabled>-- Select a Contact --</option>
                 <option 
@@ -407,7 +339,10 @@
                     :key="p.id" 
                     :value="p.id"
                 >
-                    {{ p.isPrimaryContact ? '⭐ ' : '' }}{{ p.entity?.name }} ({{ p.roleKey }}) - {{ p.entity?.email || p.entity?.phonePrimary || 'No Contact Info' }}
+                    {{ (p.isPrimaryContact || p.is_primary_contact) ? '⭐ ' : '' }}
+                    {{ p.entity?.name || 'Unknown Entity' }} 
+                    ({{ p.roleKey || p.role_key || 'Contact' }}) - 
+                    {{ p.entity?.email || p.entity?.phone_primary || p.entity?.phonePrimary || 'No Email' }}
                 </option>
             </select>
         </div>
@@ -456,13 +391,12 @@
                 :disabled="isSendingRequest || !requestPayload.participantId || requestPayload.documentIds.length === 0"
                 class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-primary hover:bg-opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <svg v-if="isSendingRequest" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                {{ isSendingRequest ? 'Generating Link...' : 'Send Secure Link' }}
+                <span v-if="!isSendingRequest">Send Secure Link</span>
+                <span v-else class="animate-spin text-xs">🌀</span>
             </button>
         </div>
     </div>
-</Modal>
-
+  </Modal>
 </template>
 
 <script setup>
@@ -478,48 +412,47 @@ import NotesPanel from '@/components/estates/NotesPanel.vue';
 const props = defineProps({ 
   caseId: { type: [String, Number], required: true },
   currentTeamId: { type: [String, Number], default: null },
+  fileTypeId: { type: [Number, String], default: null },
   isReadonly: { type: Boolean, default: false } 
 });
+
 const route = useRoute();
 const productSlug = computed(() => route.params.productSlug);
-const caseId = computed(() => route.params.id);
 const { showAlert } = useAlerts();
-const authStore = useAuthStore(); // Needed for API Token in downloads
+const authStore = useAuthStore();
 
 const requirements = ref([]);
+const stakeholders = ref([]);
+const selectedParticipantId = ref('corporate');
 const isLoading = ref(true);
 const error = ref(null);
 const submissionData = reactive({});
 const dirtyRequirementIds = reactive(new Set());
 const sourcedData = ref({});
 
-// Notes State
+// Notes & Files State
 const showNotesModal = ref(false);
 const currentNoteContext = reactive({ type: '', id: 0, title: '' });
 const currentNotes = ref([]);
-
-// Files State
 const showFilesModal = ref(false);
 const activeFileReq = ref(null);
 const isUploading = ref(false);
 const galleryInput = ref(null);
 const scanInput = ref(null);
 const selfieInput = ref(null);
+const showLinkInput = ref(false);
+const externalLinkPath = ref('');
+
 const triggerInput = (type) => {
     if (type === 'scan') scanInput.value.click();
     else if (type === 'selfie') selfieInput.value.click();
     else galleryInput.value.click();
 };
 
-// --- FILE HELPERS ---
 const openFiles = (req) => {
     activeFileReq.value = req;
     showFilesModal.value = true;
 };
-
-// REFS
-const showLinkInput = ref(false);
-const externalLinkPath = ref('');
 
 // Document Request Modal State
 const isRequestModalOpen = ref(false);
@@ -532,23 +465,45 @@ const requestPayload = reactive({
     documentIds: []
 });
 
-const activeRequirements = computed(() => {
+// --- FILTER REQUIREMENTS BY ACTIVE STAKEHOLDER SELECTION ---
+const filteredRequirements = computed(() => {
     return requirements.value.filter(req => {
         const docType = req.documentType || req.document_type;
         if (!docType) return false;
         
-        // Handle potential naming variations and type differences (boolean/int/string)
         const active = docType.is_active !== undefined ? docType.is_active : docType.isActive;
-        return active === true || active === 1 || active === '1';
+        if (active !== true && active !== 1 && active !== '1') return false;
+
+        const reqParticipantId = req.case_participant_id || req.caseParticipantId;
+
+        // Corporate Tab: only show items with no participant attached
+        if (selectedParticipantId.value === 'corporate') {
+            return !reqParticipantId;
+        }
+
+        // Show All
+        if (selectedParticipantId.value === 'all') {
+            return true;
+        }
+
+        // Specific Stakeholder Selected
+        return reqParticipantId === selectedParticipantId.value;
     });
 });
 
+const getParticipantDocCount = (participantId) => {
+    return requirements.value.filter(req => {
+        const pId = req.case_participant_id || req.caseParticipantId;
+        if (participantId === null) return !pId;
+        return pId === participantId;
+    }).length;
+};
+
 const pendingDocuments = computed(() => {
-    // Only show documents that are 'pending' (or 'stale') and are actually required
-    return activeRequirements.value.filter(doc => 
+    return filteredRequirements.value.filter(doc => 
         (doc.currentStatus === 'pending' || 
-            doc.currentStatus === 'stale' || 
-            doc.currentStatus === 'requested' 
+         doc.currentStatus === 'stale' || 
+         doc.currentStatus === 'requested' 
         ) && 
         doc.isRequired !== false
     );
@@ -558,31 +513,45 @@ const selectAllDocs = () => {
     requestPayload.documentIds = pendingDocuments.value.map(doc => doc.id);
 };
 
+// --- PARTICIPANT / STAKEHOLDER FETCHING ---
+const fetchParticipants = async () => {
+    isLoadingParticipants.value = true;
+    try {
+        const targetCaseId = props.caseId || route.params.id;
+        const targetSlug = productSlug.value || route.params.productSlug;
+        
+        const response = await apiClient.get(`/${targetSlug}/cases/${targetCaseId}/participants`);
+        const allParticipants = response.data?.data || response.data || [];
+        
+        // Full list for the Request Modal
+        availableParticipants.value = allParticipants;
+
+        // ONLY display in the top pill bar if flagged in Blueprint OR has documents attached
+        stakeholders.value = allParticipants.filter(p => {
+            const isFlagged = p.group_on_documents === true || p.groupOnDocuments === true;
+            const hasAssignedDocs = requirements.value.some(req => {
+                const pId = req.case_participant_id || req.caseParticipantId;
+                return pId === p.id;
+            });
+            return isFlagged || hasAssignedDocs;
+        });
+    } catch (err) {
+        console.error("Could not load participants", err);
+    } finally {
+        isLoadingParticipants.value = false;
+    }
+};
+
 const openRequestModal = async () => {
     isRequestModalOpen.value = true;
     requestPayload.documentIds = [];
-    requestPayload.participantId = null;
-    isLoadingParticipants.value = true;
-
-    try {
-        // Fetch participants for this case to populate the dropdown
-        const response = await apiClient.get(`/${productSlug.value}/case-files/${caseId.value}/participants`);
-        
-        // Filter out participants that have absolutely no contact info
-        availableParticipants.value = response.data.data.filter(p => 
-            p.entity?.email || p.entity?.phonePrimary
-        );
-
-        // Auto-select the Primary Contact if one exists
-        const primary = availableParticipants.value.find(p => p.isPrimaryContact);
-        if (primary) {
-            requestPayload.participantId = primary.id;
-        }
-    } catch (error) {
-        console.error("Failed to load role-players", error);
-        alert("Could not load contacts. Please ensure role-players are added to the case.");
-    } finally {
-        isLoadingParticipants.value = false;
+    
+    // Auto-select stakeholder if one is actively selected in the table
+    if (typeof selectedParticipantId.value === 'number') {
+        requestPayload.participantId = selectedParticipantId.value;
+    } else {
+        const primary = availableParticipants.value.find(p => p.isPrimaryContact || p.is_primary_contact);
+        requestPayload.participantId = primary ? primary.id : null;
     }
 };
 
@@ -593,15 +562,13 @@ const closeRequestModal = () => {
 const sendDocumentRequest = async () => {
     isSendingRequest.value = true;
     try {
-        // We will build this backend endpoint in the next step!
-        const response = await apiClient.post(`/${productSlug.value}/case-files/${caseId.value}/portal-requests`, {
+        await apiClient.post(`/${productSlug.value}/cases/${props.caseId}/portal-requests`, {
             participant_id: requestPayload.participantId,
             document_ids: requestPayload.documentIds
         });
 
-        alert("Secure link generated and sent successfully!");
+        showAlert('Success', 'Secure link generated and dispatched!');
         
-        // Update local UI state to 'requested' (Orange) so they don't have to refresh
         requestPayload.documentIds.forEach(id => {
             const doc = requirements.value.find(d => d.id === id);
             if (doc) doc.currentStatus = 'requested';
@@ -609,156 +576,23 @@ const sendDocumentRequest = async () => {
 
         closeRequestModal();
     } catch (error) {
-        console.error("Failed to send request", error);
-        alert(error.response?.data?.message || "Failed to send the document request.");
+        showAlert('Error', error.response?.data?.message || 'Failed to dispatch portal link.');
     } finally {
         isSendingRequest.value = false;
     }
 };
 
-const formatSize = (kb) => {
-    if (!kb || isNaN(kb)) return '0 KB';
-    if (kb < 1024) return `${kb} KB`;
-    return `${(kb / 1024).toFixed(2)} MB`;
-};
-
-const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
-const getFileUrl = (file, type = 'preview') => {
-    // Append Token for Authorization
-    const token = authStore.token || authStore.user?.token || ''; 
-    
-    // type can be 'preview' or 'download'
-    return `/api/v1/files/${file.id}/${type}?token=${token}`;
-};
-
-const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file || !activeFileReq.value) return;
-
-    isUploading.value = true;
-    const formData = new FormData();
-    // ... (keep your filename logic here) ...
-    formData.append('file', file, fileName);
-
-    try {
-        // 1. Capture the response from the server
-        const { data } = await apiClient.post(`requirements/${activeFileReq.value.id}/files`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-
-        // 2. Instead of fetchRequirements(), update the local array
-        // We find the requirement in our list and push the NEW file into its files array
-        const reqIndex = requirements.value.findIndex(r => r.id === activeFileReq.value.id);
-        if (reqIndex !== -1) {
-            // Ensure the files array exists, then add the new file data
-            if (!requirements.value[reqIndex].files) requirements.value[reqIndex].files = [];
-            requirements.value[reqIndex].files.push(data.file); 
-            
-            // Sync the modal view too
-            activeFileReq.value = requirements.value[reqIndex];
-        }
-
-        showAlert('Success', 'File uploaded');
-    } catch (err) {
-        showAlert('Error', 'Upload failed');
-    } finally {
-        isUploading.value = false;
-        // reset inputs...
-    }
-};
-
-const deleteFile = async (fileId) => {
-    if (!confirm("Are you sure you want to delete this file?")) return;
-
-    try {
-        await apiClient.delete(`files/${fileId}`);
-        
-        // Refresh
-        await fetchRequirements();
-        activeFileReq.value = requirements.value.find(r => r.id === activeFileReq.value.id);
-        
-        showAlert('Success', 'File deleted');
-    } catch (err) {
-        console.error("Delete failed", err);
-        showAlert('Error', 'Failed to delete file');
-    }
-};
-
-/**
- * Handle External Path Submission
- */
-const submitExternalLink = async () => {
-    if (!externalLinkPath.value || isUploading.value) return;
-
-    isUploading.value = true;
-    try {
-        // We POST to the same store endpoint, but sending a JSON object instead of FormData
-        const { data } = await apiClient.post(`requirements/${activeFileReq.value.id}/files`, {
-            external_path: externalLinkPath.value
-        });
-
-        // Add to local state (Surgical update)
-        activeFileReq.value.files.push(data);
-        
-        // Reset and Close
-        externalLinkPath.value = '';
-        showLinkInput.value = false;
-        
-    } catch (error) {
-        alert("Failed to link path. Ensure the string is valid.");
-        console.error(error);
-    } finally {
-        isUploading.value = false;
-    }
-};
-
-/**
- * Utility to Copy Path to Clipboard
- */
-const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-        // Optional: Trigger a small toast notification here
-        alert("Path copied to clipboard!");
-    }).catch(err => {
-        console.error('Could not copy text: ', err);
-    });
-};
-
-// --- NOTES LOGIC ---
-const openNotes = async (req) => {
-    currentNoteContext.type = 'case_document_requirement';
-    currentNoteContext.id = req.id;
-    currentNoteContext.title = `Notes: ${req.documentType?.label || 'Document'}`;
-    const contextUrl = `${route.params.productSlug}/cases/${props.caseId}`;
-    try {
-        const { data } = await noteService.getNotes('case_document_requirement', req.id, contextUrl);
-        currentNotes.value = data;
-        showNotesModal.value = true;
-    } catch (err) {
-        console.error("Failed to load notes", err);
-        showAlert('Error', 'Failed to load notes');
-    }
-};
-
 // --- DATA FETCHING ---
+const resolveSourceKey = (docType) => docType?.recordsourceId ?? docType?.recordsource_id ?? docType?.recordsource ?? null;
+
 const fetchSourcedData = async () => {
     const sourcesToFetch = new Set(
-        requirements.value.map(req => req.documentType?.recordsource).filter(Boolean) 
+        requirements.value.map(req => resolveSourceKey(req.documentType)).filter(Boolean) 
     );
     for (const source of sourcesToFetch) {
         if (!sourcedData.value[source]) { 
             try {
-                const { data } = await apiClient.get(`/option-lists/${encodeURIComponent(source)}`);
+                const { data } = await apiClient.get(`/products/${productSlug.value}/option-lists/${encodeURIComponent(source)}`);
                 sourcedData.value[source] = data; 
             } catch (err) { console.error(`Failed source: ${source}`, err); }
         }
@@ -769,7 +603,8 @@ const fetchRequirements = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${props.caseId}/documents`);
+    const params = props.fileTypeId ? { file_type_id: props.fileTypeId } : {};
+    const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${props.caseId}/documents`, { params });
     requirements.value = data;
     dirtyRequirementIds.clear();
     
@@ -828,7 +663,90 @@ const getStatusInfo = (status) => {
     return map[normalized] || map.pending;
 };
 
-onMounted(fetchRequirements);
+// --- NOTES LOGIC ---
+const openNotes = async (req) => {
+    currentNoteContext.type = 'case_document_requirement';
+    currentNoteContext.id = req.id;
+    currentNoteContext.title = `Notes: ${req.documentType?.label || 'Document'}`;
+    const contextUrl = `${route.params.productSlug}/cases/${props.caseId}`;
+    try {
+        const { data } = await noteService.getNotes('case_document_requirement', req.id, contextUrl);
+        currentNotes.value = data;
+        showNotesModal.value = true;
+    } catch (err) {
+        showAlert('Error', 'Failed to load notes');
+    }
+};
+
+const getFileUrl = (file, type = 'preview') => {
+    const token = authStore.token || authStore.user?.token || ''; 
+    return `/api/v1/files/${file.id}/${type}?token=${token}`;
+};
+
+const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !activeFileReq.value) return;
+
+    isUploading.value = true;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const { data } = await apiClient.post(`requirements/${activeFileReq.value.id}/files`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        const reqIndex = requirements.value.findIndex(r => r.id === activeFileReq.value.id);
+        if (reqIndex !== -1) {
+            if (!requirements.value[reqIndex].files) requirements.value[reqIndex].files = [];
+            requirements.value[reqIndex].files.push(data); 
+            activeFileReq.value = requirements.value[reqIndex];
+        }
+
+        showAlert('Success', 'File uploaded');
+    } catch (err) {
+        showAlert('Error', 'Upload failed');
+    } finally {
+        isUploading.value = false;
+    }
+};
+
+const deleteFile = async (fileId) => {
+    if (!confirm("Are you sure you want to delete this file?")) return;
+
+    try {
+        await apiClient.delete(`files/${fileId}`);
+        await fetchRequirements();
+        activeFileReq.value = requirements.value.find(r => r.id === activeFileReq.value.id);
+        showAlert('Success', 'File deleted');
+    } catch (err) {
+        showAlert('Error', 'Failed to delete file');
+    }
+};
+
+const submitExternalLink = async () => {
+    if (!externalLinkPath.value || isUploading.value) return;
+
+    isUploading.value = true;
+    try {
+        const { data } = await apiClient.post(`requirements/${activeFileReq.value.id}/files`, {
+            external_path: externalLinkPath.value
+        });
+
+        activeFileReq.value.files.push(data);
+        externalLinkPath.value = '';
+        showLinkInput.value = false;
+    } catch (error) {
+        alert("Failed to link path.");
+    } finally {
+        isUploading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchRequirements();
+    fetchParticipants();
+});
 </script>
 
 <style scoped>

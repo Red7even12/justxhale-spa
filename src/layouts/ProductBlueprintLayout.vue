@@ -13,8 +13,8 @@
                 <p class="text-[10px] text-white/50 uppercase tracking-widest font-black">DNA Blueprint</p>
             </div>
         </div>
-        <router-link to="/admin/products" class="text-xs text-white/60 hover:text-white font-bold flex items-center justify-center gap-1 mt-2 transition-colors">
-            ← Exit to Factory
+        <router-link :to="backDestination" class="text-xs text-white/60 hover:text-white font-bold flex items-center justify-center gap-1 mt-2 transition-colors">
+            ← {{ backLabel }}
         </router-link>
       </div>
 
@@ -31,18 +31,24 @@
           <router-link :to="{ name: 'admin.product.communication', params: { slug } }" class="nav-link" active-class="nav-active">System Mails</router-link>
           <router-link :to="{ name: 'admin.product.option-lists', params: { slug } }" class="nav-link" active-class="nav-active">Option Lists</router-link>
 
-        <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Business</div>
-          <router-link :to="{ name: 'admin.product.licensing', params: { slug } }" class="nav-link" active-class="nav-active">License Management</router-link>
+        <div v-if="isSystemAdmin" class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Business</div>
+          <router-link v-if="isSystemAdmin" :to="{ name: 'admin.product.licensing', params: { slug } }" class="nav-link" active-class="nav-active">License Management</router-link>
       </nav>
 
-      <div class="p-4 border-t border-white/10 bg-black/20 text-[10px] text-white/40 font-bold uppercase text-center tracking-tighter">
-          Product Factory v2.1
+      <div class="p-4 border-t border-white/10 bg-black/20 space-y-2">
+          <router-link to="/launcher" class="block w-full text-center text-[10px] font-bold uppercase tracking-widest text-white/70 hover:text-white border border-white/30 rounded-md py-1.5 hover:bg-white/10 transition-colors">
+              ← Switch App (Home)
+          </router-link>
+          <div class="text-[10px] text-white/40 font-bold uppercase text-center tracking-tighter">
+              Product Factory v2.1
+          </div>
       </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shrink-0 shadow-sm z-10">
+        <!-- Left: Breadcrumbs -->
         <div class="flex items-center gap-2 text-sm text-gray-400">
             <span class="font-medium">Factory Floor</span> 
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -50,13 +56,37 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
             <span class="text-brand-primary-600 font-black uppercase text-[10px] tracking-widest">{{ $route.meta.displayName || 'Blueprinting' }}</span>
         </div>
+
+        <!-- Right: Layout Selector & Role Badge -->
         <div class="flex items-center gap-4">
-             <div class="h-8 w-px bg-gray-100"></div>
-             <div class="text-right">
-                 <div class="text-xs font-bold text-gray-900 leading-none">Architect View</div>
-                 <div class="text-[10px] text-gray-400 font-medium">Standard Edition</div>
-             </div>
-        </div>
+            <!-- 1. NEW: DYNAMIC PRODUCT UX LAYOUT SELECTOR -->
+            <div v-if="product" class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 shadow-2xs">
+              <span class="text-[10px] font-black uppercase tracking-wider text-gray-400 whitespace-nowrap">Layout:</span>
+              <select 
+                :value="product.workspace_template || product.workspaceTemplate || 'TemplateUnifiedStandard'"
+                @change="updateLayoutEngine($event.target.value)"
+                :disabled="updatingLayout"
+                class="text-xs font-bold text-gray-800 bg-transparent border-0 p-0 focus:ring-0 cursor-pointer pr-4 disabled:opacity-50"
+              >
+                <option value="TemplateUnifiedStandard">Unified Workspace (Tabs & Dual Engine)</option>
+                <option value="TemplateEstateStandard">Estates: Classic 3-Column Manager</option>
+                <option value="TemplateStandard">Standard Generic Single-Column</option>
+              </select>
+              <div v-if="updatingLayout" class="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+
+            <div class="h-8 w-px bg-gray-100"></div>
+
+            <!-- Role Badge -->
+            <div class="text-right">
+                <div class="text-xs font-bold text-gray-900 leading-none">
+                    {{ authStore.hasRole('System Admin') ? 'Architect View' : 'Product Owner View' }}
+                </div>
+                <div class="text-[10px] text-gray-400 font-medium">
+                    {{ product?.name }} DNA
+                </div>
+            </div>
+        </div> 
       </header>
 
       <div class="flex-1 overflow-y-auto p-8 bg-gray-50/50">
@@ -75,10 +105,13 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient, { getAssetUrl } from '@/services/api';
+import { useAuthStore } from '@/store/auth';
 
+const authStore = useAuthStore();
 const route = useRoute();
 const slug = ref(route.params.slug);
 const product = ref(null);
+const updatingLayout = ref(false);
 
 const brandStyles = computed(() => {
     if (!product.value) return {};
@@ -89,12 +122,44 @@ const brandStyles = computed(() => {
     };
 });
 
+const isWlpAdmin = computed(() => authStore.hasRole('WLP Admin') || authStore.hasRole('WLPAdmin'));
+const isSystemAdmin = computed(() => authStore.hasRole('System Admin') || authStore.hasRole('Business Admin'));
+
+const backDestination = computed(() => {
+    return isWlpAdmin.value
+        ? { name: 'partner.admin.dashboard' }
+        : { name: 'admin.products' };
+});
+
+const backLabel = computed(() => {
+    return isWlpAdmin.value ? 'Return to Partner Console' : 'Exit to Factory';
+});
+
 const fetchProduct = async () => {
   try {
     const { data } = await apiClient.get(`admin/products/${slug.value}`);
     product.value = data;
   } catch (error) {
     console.error("Failed to load context", error);
+  }
+};
+
+// Autosave Layout Engine on change
+const updateLayoutEngine = async (newLayout) => {
+  updatingLayout.value = true;
+  try {
+    await apiClient.put(`admin/products/${slug.value}`, {
+      workspace_template: newLayout
+    });
+    if (product.value) {
+      product.value.workspace_template = newLayout;
+      product.value.workspaceTemplate = newLayout;
+    }
+  } catch (error) {
+    console.error("Failed to update layout engine", error);
+    alert("Failed to update product layout engine.");
+  } finally {
+    updatingLayout.value = false;
   }
 };
 

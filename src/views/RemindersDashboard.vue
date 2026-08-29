@@ -246,6 +246,7 @@
         :initial-notes="notesContext.initialNotes"
         :noteable-type="notesContext.noteableType"
         :noteable-id="notesContext.noteableId"
+        :file-type-id="notesContext.fileTypeId" 
         :context-url="notesContext.contextUrl" 
         :current-team-id="notesContext.currentTeamId"
         @note-added="isNotesModalOpen = false"
@@ -310,12 +311,14 @@ watch(() => filters.case_search, (newSearch) => {
 });
 
 const isNotesModalOpen = ref(false);
+
 const notesContext = reactive({
   title: '',
   noteableType: null,
   noteableId: null,
   contextUrl: '', 
   currentTeamId: null,
+  fileTypeId: null,
   initialNotes: [],
 });
 
@@ -527,14 +530,15 @@ const addNote = async (reminder) => {
   const caseId = reminder.caseFileId || reminder.case_file_id;
   const caseName = reminder.caseName || reminder.case_name || 'Unknown Case';
   
-  // 5. Set up the Modal Context (No API call needed here!)
+  // 5. Set up Modal Context
   notesContext.title = `Notes: ${caseName} - ${titleLabel}`;
   notesContext.noteableType = noteableType;
   notesContext.noteableId = noteableId;
   notesContext.contextUrl = `${route.params.productSlug}/cases/${caseId}`;
   notesContext.currentTeamId = reminder.case_current_team_id || reminder.caseCurrentTeamId || reminder.teams_id || reminder.teamsId;
+  notesContext.fileTypeId = reminder.fileTypeId || reminder.file_type_id || null; // <--- Passes tab context
   
-  // 6. Open the Modal (The NotesPanel component will auto-fetch the data now)
+  // 6. Open Modal
   isNotesModalOpen.value = true;
 };
 

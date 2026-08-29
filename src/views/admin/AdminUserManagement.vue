@@ -10,6 +10,17 @@
       </button>
     </div>
 
+    <!-- Search / Filter Console -->
+    <div class="mb-4">
+      <input
+        v-model="searchTerm"
+        @input="handleSearchInput"
+        type="text"
+        placeholder="Filter by name or email..."
+        class="w-full sm:w-80 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-gray-50 focus:bg-white transition-colors px-3 py-2 border"
+      />
+    </div>
+
     <!-- User List -->
     <div v-if="isLoading" class="text-center text-gray-500">Loading users...</div>
     <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
@@ -49,7 +60,31 @@
               </div>
             </a>
           </li>
+          <li v-if="users.length === 0" class="px-4 py-8 text-center text-gray-500 italic">
+            No core users found matching your criteria.
+          </li>
         </ul>
+      </div>
+
+      <!-- Server-Side Pagination Controls -->
+      <div v-if="pagination.last_page > 1" class="bg-gray-50 mt-4 px-6 py-4 border border-gray-200 rounded-lg flex items-center justify-between">
+        <div class="text-sm text-gray-500 font-medium">
+          Showing <span class="font-bold">{{ pagination.from }}</span> to <span class="font-bold">{{ pagination.to }}</span> of <span class="font-bold">{{ pagination.total }}</span> results
+        </div>
+        <div class="flex gap-2">
+          <button
+            @click="changePage(pagination.current_page - 1)"
+            :disabled="pagination.current_page <= 1"
+            class="px-3 py-1 border border-gray-300 rounded-md bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            Previous
+          </button>
+          <button
+            @click="changePage(pagination.current_page + 1)"
+            :disabled="pagination.current_page >= pagination.last_page"
+            class="px-3 py-1 border border-gray-300 rounded-md bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            Next
+          </button>
+        </div>
       </div>
     </div>
 
@@ -74,7 +109,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import userService from '@/services/userService';
-import AddCoreUserModal from '@/components/admin/AddCoreUserModal.vue'; 
+import AddCoreUserModal from '@/components/admin/AddCoreUserModal.vue';
 import EditUserModal from '@/components/admin/EditUserModal.vue';
 
 const users = ref([]);
@@ -83,12 +118,43 @@ const error = ref(null);
 const isAddUserModalOpen = ref(false);
 const userToEdit = ref(null);
 
+// Server-side pagination state (backend uses Laravel's paginate())
+const currentPage = ref(1);
+const searchTerm = ref('');
+let searchTimeout = null;
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0,
+  from: 0,
+  to: 0,
+});
+
 const fetchCoreUsers = async () => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await userService.getCoreUsers();
-    users.value = response.data.data; // Assuming pagination
+    const params = { page: currentPage.value };
+    if (searchTerm.value.trim()) {
+      params.search = searchTerm.value.trim();
+    }
+    const response = await userService.getCoreUsers(params);
+    users.value = response.data.data;
+
+    // Store the pagination info from the Laravel paginator.
+    // NOTE 1: The backend's CamelCaseResponseMiddleware converts all response
+    // keys to camelCase, so accept both snake_case and camelCase keys.
+    // NOTE 2: The paginator may be serialized either wrapped ({ data, links, meta })
+    // or flat (currentPage/lastPage/total at the top level), so fall back to
+    // the whole response body when no meta wrapper is present.
+    const meta = response.data.meta || response.data;
+    pagination.value = {
+      current_page: Number(meta.current_page ?? meta.currentPage) || currentPage.value,
+      last_page: Number(meta.last_page ?? meta.lastPage) || 1,
+      total: Number(meta.total) || 0,
+      from: Number(meta.from) || 0,
+      to: Number(meta.to) || 0,
+    };
   } catch (err) {
     error.value = 'Failed to load core users.';
     console.error(err);
@@ -97,8 +163,27 @@ const fetchCoreUsers = async () => {
   }
 };
 
-const handleUserAdded = (newUser) => {
-  users.value.unshift(newUser); // Add the new user to the top of the list
+// Debounce search input to prevent spamming the database
+const handleSearchInput = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1; // Reset to page 1 whenever the search changes
+    fetchCoreUsers();
+  }, 400);
+};
+
+const changePage = (pageNumber) => {
+  if (pageNumber > 0 && pageNumber <= pagination.value.last_page) {
+    currentPage.value = pageNumber;
+    fetchCoreUsers();
+  }
+};
+
+const handleUserAdded = () => {
+  // Reset to page 1 and re-fetch so the new user is visible and counts stay accurate
+  currentPage.value = 1;
+  searchTerm.value = '';
+  fetchCoreUsers();
   isAddUserModalOpen.value = false;
 };
 
@@ -109,11 +194,14 @@ const openEditModal = (user) => {
 
 const handleUserUpdated = (updatedUser) => {
   // Find the user in the list and replace them with the updated data
-const index = users.value.findIndex(u => u.id === updatedUser.id);
+  const index = users.value.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
     users.value[index] = updatedUser;
+  } else {
+    // The updated user may live on a different page — refresh to stay in sync
+    fetchCoreUsers();
   }
-  userToEdit.value = null; 
+  userToEdit.value = null;
 };
 
 // --- Forced Password Reset by admins ---

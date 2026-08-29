@@ -24,15 +24,26 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
+const authStore = useAuthStore();
+
+// Admin roles land on the App Launcher, so "Home" is the correct root crumb for them.
+// Standard team users land on their product's Reminders dashboard, so "Reminders" stays.
+const isPlatformAdmin = computed(() =>
+  authStore.hasRole('System Admin') ||
+  authStore.hasRole('Business Admin') ||
+  authStore.hasRole('WLP Admin') ||
+  authStore.hasRole('WLPAdmin')
+);
 
 const breadcrumbs = computed(() => {
   const crumbs = [];
   let currentPath = '';
 
   // Add static breadcrumbs if needed (e.g., Dashboard)
-  crumbs.push({ label: 'Reminders', to: '/' });
+  crumbs.push({ label: isPlatformAdmin.value ? 'Home' : 'Reminders', to: '/' });
   currentPath = '/';
 
   // Add route-specific breadcrumbs

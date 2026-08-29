@@ -149,6 +149,7 @@
       <NotesPanel 
           :noteable-type="currentNoteContext.type"
           :noteable-id="currentNoteContext.id"
+          :file-type-id="props.fileTypeId"
           :context-url="`${route.params.productSlug}/cases/${props.caseId}`" 
           :current-team-id="props.currentTeamId"
           @note-added="(n) => {
@@ -176,8 +177,10 @@ import noteService from '@/services/noteService';
 
 const props = defineProps({ 
   caseId: { type: [String, Number], required: true },
-  currentTeamId: { type: [String, Number], default: null }
+  currentTeamId: { type: [String, Number], default: null },
+    fileTypeId: { type: [Number, String], default: null }
 });
+
 const authStore = useAuthStore();
 const route = useRoute();
 const { showAlert } = useAlerts();
@@ -203,13 +206,13 @@ const visibleProcesses = computed(() => {
 const fetchProcesses = async (silent = false) => {
   if (!silent) loading.value = true;
   try {
-    const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${props.caseId}/workflow`);
+    const params = props.fileTypeId ? { file_type_id: props.fileTypeId } : {};
+    const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${props.caseId}/workflow`, { params });
     processes.value = data;
     
     // Initialize inputData for active rows
     processes.value.forEach(p => {
         if (p.isActionable) {
-            // Default to empty string to ensure reactivity
             if (inputData[p.id] === undefined) {
                 inputData[p.id] = ''; 
             }

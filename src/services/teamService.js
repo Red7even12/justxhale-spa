@@ -21,8 +21,8 @@ export default {
   /**
    * Updates a team's details.
    */
-  updateTeam(id, payload) {
-    return apiClient.put(`/teams/${id}`, payload);
+  updateTeam(id, data) {
+    return apiClient.put(`/teams/${id}`, data); 
   },
 
   /**

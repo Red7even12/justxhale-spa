@@ -94,13 +94,14 @@
                         </select>
                     </div>
 
-                    <!-- RESTORED: Sourced Dropdown Logic -->
+                    <!-- RESTORED: Sourced Dropdown Logic (relational lists) -->
                     <div v-if="formObject.data.actionFieldType === 'sourced_dropdown'">
-                        <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Data Source (Global Option Lists)</label>
-                        <select v-model="formObject.data.recordsource" class="w-full border-indigo-300 bg-indigo-50 rounded-lg shadow-sm" required>
+                        <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Data Source (Global + This Product's Lists)</label>
+                        <select v-model="formObject.data.recordsourceId" class="w-full border-indigo-300 bg-indigo-50 rounded-lg shadow-sm" required>
                             <option :value="null">-- Select a Source --</option>
-                            <option v-for="source in availableRecordsourceNames" :key="source" :value="source">{{ source }}</option>
+                            <option v-for="source in availableRecordsources" :key="source.value" :value="source.value">{{ source.label }}</option>
                         </select>
+                        <p class="mt-1 text-[10px] text-gray-400">Only Global lists and lists scoped to this product are shown.</p>
                     </div>
 
                     <!-- RESTORED: Expiry Logic -->
@@ -165,7 +166,7 @@ const props = defineProps(['slug', 'packId']);
 const { showAlert, showConfirm } = useAlerts();
 
 const documentTypes = ref([]);
-const availableRecordsourceNames = ref([]);
+const availableLists = ref([]); // Relational lists from API: { id, name, productId, productName, productSlug, isActive }
 const isLoading = ref(true);
 const formObject = reactive({ data: null });
 const isCreatingNew = ref(false);
@@ -173,6 +174,17 @@ const isSyncing = ref(false);
 
 const sortedDocumentTypes = computed(() => {
   return [...documentTypes.value].sort((a, b) => (a.sortOrder || a.sort_order || 0) - (b.sortOrder || b.sort_order || 0));
+});
+
+// Scope filter: only Global lists (productId null) + lists belonging to THIS product.
+// NOTE: The API's CamelCaseResponseMiddleware converts all response keys to camelCase.
+const availableRecordsources = computed(() => {
+  return availableLists.value
+    .filter(src => src.productId === null || src.productId === undefined || src.productSlug === props.slug)
+    .map(src => ({
+      value: src.id,
+      label: `${src.name}${src.productId ? ` • ${src.productName || 'This Product'}` : ' • Global'}`,
+    }));
 });
 
 const fetchDocumentTypes = async () => {
@@ -186,13 +198,11 @@ const fetchDocumentTypes = async () => {
 
 const fetchOptionSources = async () => {
     try {
-        // Pointing to your existing global controller endpoint
-        const { data } = await apiClient.get('document-sourced-options/sources');
-        
-        // Handle both raw arrays or Laravel 'data' wrappers
-        availableRecordsourceNames.value = Array.isArray(data) ? data : data.data;
+        // Relational option lists endpoint
+        const { data } = await apiClient.get('admin/document-option-lists?include_global=1');
+        availableLists.value = Array.isArray(data) ? data : data.data;
     } catch (e) { 
-        console.error("Failed to load global dropdown sources:", e); 
+        console.error("Failed to load option lists:", e); 
     }
 };
 
@@ -205,6 +215,7 @@ const selectDocumentType = (docType) => {
       sortOrder: docType.sortOrder || docType.sort_order,
       validityDays: docType.validityDays || docType.validity_days,
       actionFieldLabel: docType.actionFieldLabel || docType.action_field_label,
+      recordsourceId: docType.recordsourceId ?? docType.recordsource_id ?? null,
       isActive: docType.isActive ?? docType.is_active,
       isOptional: docType.isOptional ?? docType.is_optional,
   };
@@ -215,12 +226,12 @@ const handleAddNew = () => {
   formObject.data = {
     name: '', label: '', sortOrder: sortedDocumentTypes.value.length + 1,
     note: '', isActive: true, isOptional: false, actionFieldType: 'none',
-    recordsource: null, validityDays: null, actionFieldLabel: '',
+    recordsourceId: null, validityDays: null, actionFieldLabel: '',
   };
 };
 
 const handleActionTypeChange = () => {
-    if (formObject.data.actionFieldType !== 'sourced_dropdown') formObject.data.recordsource = null;
+    if (formObject.data.actionFieldType !== 'sourced_dropdown') formObject.data.recordsourceId = null;
     if (formObject.data.actionFieldType !== 'expiry_date') formObject.data.validityDays = null;
 };
 
@@ -235,7 +246,7 @@ const handleSubmit = async () => {
             name: formObject.data.name,
             note: formObject.data.note,
             action_field_type: formObject.data.actionFieldType,
-            recordsource: formObject.data.recordsource,
+            recordsource_id: formObject.data.recordsourceId,
             validity_days: formObject.data.validityDays,
             action_field_label: formObject.data.actionFieldLabel,
             sort_order: formObject.data.sortOrder,

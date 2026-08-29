@@ -15,15 +15,23 @@
           <Logo class="h-12 w-auto" />
         </div>
         <nav class="flex-1 flex flex-col px-2 pb-4 space-y-1 overflow-y-auto">
-          <!-- 1. STANDARD SUBSCRIBER MENU (V1) -->
-          <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
-            <router-link @click="closeMobileMenu" to="/launcher" class="mobile-nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
-            <router-link @click="closeMobileMenu" to="/estates" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link>
-            <router-link @click="closeMobileMenu" to="/entities" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Contacts</router-link>
-          </template>
+          <!-- 1. HOME / APP LAUNCHER (All roles) -->
+          <!-- WLP Admins & System Admins land on the App Launcher, so it is their "Home" too -->
+          <router-link @click="closeMobileMenu" to="/launcher" class="mobile-nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
 
           <!-- Divider -->
-          <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="border-t border-white/10 my-2 pt-2"></div>
+          <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin') || authStore.hasRole('WLP Admin')" class="border-t border-white/10 my-2 pt-2"></div>
+
+          <!-- 2b. WLP PARTNER ADMIN MENU -->
+          <template v-if="authStore.hasRole('WLP Admin')">
+            <router-link @click="closeMobileMenu" to="/admin/products" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/products') }">
+              <span class="text-yellow-400 font-bold">Product Factory</span>
+            </router-link>
+            <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS Management</div>
+            <router-link @click="closeMobileMenu" to="/partner-admin/subscribers" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/partner-admin/subscribers') }">Subscribers</router-link>
+            <router-link @click="closeMobileMenu" to="/partner-admin/dashboard" class="mobile-nav-link ml-2 text-blue-400 font-bold" :class="{ 'active': $route.path.startsWith('/partner-admin/dashboard') }">Partner Portal</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/billing" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/billing') }">Billing Management</router-link>
+          </template>
 
           <!-- 2. SUBSCRIBER ADMIN MENU -->
           <template v-if="authStore.hasRole('Subscriber Admin')">
@@ -41,6 +49,8 @@
             <!-- SaaS Management Group -->
             <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS Management</div>
             <router-link v-if="authStore.hasRole('System Admin')" @click="closeMobileMenu" to="/admin/core-users" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/core-users') }">Core Users</router-link>
+            <!-- NEW: MOBILE WLP PARTNER PORTAL LINK -->
+            <router-link @click="closeMobileMenu" to="/partner-admin/dashboard" class="mobile-nav-link ml-2 text-yellow-400 font-bold" :class="{ 'active': $route.path.startsWith('/partner-admin') }">Partner Portal</router-link>
             <router-link @click="closeMobileMenu" to="/admin/subscribers" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/subscribers') }">Subscribers</router-link>
             <router-link @click="closeMobileMenu" to="/admin/pricing-plans" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/pricing-plans') }">Pricing</router-link>
             <router-link @click="closeMobileMenu" to="/admin/billing" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/billing') }">Billing</router-link>
@@ -48,8 +58,10 @@
             <!-- System Setup Group -->
             <template v-if="authStore.hasRole('System Admin')">
               <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">System Setup</div>
+              <router-link @click="closeMobileMenu" to="/admin/option-lists" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/option-lists') }">Option Lists</router-link>
               <router-link @click="closeMobileMenu" to="/admin/non-working-days" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/non-working-days') }">Non-Working Days</router-link>
               <router-link @click="closeMobileMenu" to="/admin/permissions" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/permissions') }">Authorization Matrix</router-link>
+              <router-link @click="closeMobileMenu" to="/admin/legal-documents" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/legal-documents') }">Legal Documents</router-link>
               <router-link @click="closeMobileMenu" :to="{ name: 'admin.report-factory' }" class="mobile-nav-link ml-2">Report Factory</router-link>
               <router-link @click="closeMobileMenu" :to="{ name: 'admin.dashboard-factory' }" class="mobile-nav-link ml-2"> Dashboard Factory</router-link>
               <router-link @click="closeMobileMenu" :to="{ name: 'admin.view-factory' }" class="mobile-nav-link ml-2"> View Factory</router-link>
@@ -80,14 +92,11 @@
           <Logo class="h-16 w-auto" />
           <nav class="hidden xl:flex items-center space-x-1">
             
-            <!-- 1. STANDARD SUBSCRIBER MENU (V1) -->
-            <template v-if="!authStore.hasRole('System Admin') && !authStore.hasRole('Business Admin')">
-              <router-link to="/launcher" class="nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
-              <!-- <router-link to="/estates" class="nav-link" :class="{ 'active': $route.path.startsWith('/estates') }">Estates</router-link> -->
-              <router-link to="/entities" class="nav-link" :class="{ 'active': $route.path.startsWith('/entities') }">Contacts</router-link>
-            </template>
+            <!-- 1. HOME / APP LAUNCHER (All roles) -->
+            <!-- WLP Admins & System Admins land on the App Launcher, so it is their "Home" too -->
+            <router-link to="/launcher" class="nav-link" :class="{ 'active': $route.name === 'AppLauncher' }">Home</router-link>
             
-            <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="border-l border-gray-500 h-6 mx-3"></div>
+            <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin') || authStore.hasRole('WLP Admin')" class="border-l border-gray-500 h-6 mx-3"></div>
             
             <!-- 2. SUBSCRIBER ADMIN MENU -->
             <template v-if="authStore.hasRole('Subscriber Admin')">
@@ -115,7 +124,19 @@
                 <div v-if="isSaaSMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
                     <router-link v-if="authStore.hasRole('System Admin')" to="/admin/core-users" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Core Users</router-link>
+
+                    <!-- SUPER ADMIN WLP MANAGEMENT & CREATOR LINK -->
+                    <router-link v-if="authStore.hasRole('System Admin')" to="/admin/wlp-partners" class="text-yellow-600 font-bold block px-4 py-2 text-sm hover:bg-gray-100 border-t border-gray-100 my-1" role="menuitem" @click="isSaaSMenuOpen = false">
+                      White-Label Partners
+                    </router-link>
+
                     <router-link to="/admin/subscribers" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Subscribers</router-link>
+
+                    <!-- WLP PARTNER PORTAL LINK -->
+                    <router-link to="/partner-admin/dashboard" class="text-blue-700 font-bold block px-4 py-2 text-sm hover:bg-gray-100 border-b border-gray-100 my-1" role="menuitem" @click="isSaaSMenuOpen = false">
+                      Partner Portal
+                    </router-link>
+
                     <router-link to="/admin/pricing-plans" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Pricing Management</router-link>
                     <router-link to="/admin/billing" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Billing Management</router-link>
                   </div>
@@ -133,8 +154,11 @@
 
                 <div v-if="isSystemMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                   <div class="py-1" role="none">
+                    <router-link to="/admin/option-lists" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" @click="isSystemMenuOpen = false">Option Lists (Global)</router-link>
                     <router-link to="/admin/non-working-days" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Non-Working Days</router-link>
                     <router-link to="/admin/permissions" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Authorization Matrix</router-link>
+                    <router-link to="/admin/legal-documents" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Legal Documents</router-link>
+
                     
                     <!-- FACTORY LINKS (V2 Protocol) -->
                     <div class="border-t border-gray-100 my-1"></div>
@@ -147,6 +171,41 @@
                     <router-link :to="{ name: 'admin.view-factory' }" class="text-blue-700 font-bold block px-4 py-2 text-sm hover:bg-gray-100" @click="isSystemMenuOpen = false">
                         View Factory
                     </router-link>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 4. WLP PARTNER ADMIN MENU -->
+            <!-- Visible ONLY to WLP Admins: Product Factory + scoped SaaS tools.
+                 Hidden by design: User Mgmt, Team Mgmt, Core Users, White-Label
+                 Partners (Super Admin only), Pricing Mgmt, System Setup. -->
+            <template v-if="authStore.hasRole('WLP Admin')">
+              
+              <!-- PRODUCT FACTORY LINK (backend scopes to this tenant's products) -->
+              <router-link to="/admin/products" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/products') }">
+                <span class="text-yellow-400 font-bold">Product Factory</span>
+              </router-link>
+
+              <!-- SAAS MANAGEMENT DROPDOWN (WLP-scoped) -->
+              <div class="relative">
+                <button @click="isSaaSMenuOpen = !isSaaSMenuOpen" class="nav-link flex items-center" type="button">
+                  <span>SaaS Management</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-1 h-5 w-5"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"></path></svg>
+                </button>
+                <!-- Backdrop to close on click-away -->
+                <div v-if="isSaaSMenuOpen" @click="isSaaSMenuOpen = false" class="fixed inset-0 z-10 cursor-default"></div>
+
+                <div v-if="isSaaSMenuOpen" class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                  <div class="py-1" role="none">
+                    <router-link to="/partner-admin/subscribers" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" @click="isSaaSMenuOpen = false">Subscribers</router-link>
+
+                    <!-- WLP PARTNER PORTAL LINK -->
+                    <router-link to="/partner-admin/dashboard" class="text-blue-700 font-bold block px-4 py-2 text-sm hover:bg-gray-100 border-t border-gray-100 my-1" role="menuitem" @click="isSaaSMenuOpen = false">
+                      Partner Portal
+                    </router-link>
+
+                    <router-link to="/admin/billing" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 border-t border-gray-100 my-1" role="menuitem" @click="isSaaSMenuOpen = false">Billing Management</router-link>
                   </div>
                 </div>
               </div>

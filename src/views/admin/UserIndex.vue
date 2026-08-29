@@ -9,6 +9,17 @@
       </button>
     </div>
 
+    <!-- Search / Filter Console -->
+    <div>
+      <input
+        v-model="searchTerm"
+        @input="handleSearchInput"
+        type="text"
+        placeholder="Filter by name or email..."
+        class="w-full sm:w-80 border-gray-300 rounded-lg focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] text-sm bg-gray-50 focus:bg-white transition-colors px-3 py-2 border"
+      />
+    </div>
+
     <div class="mt-8 flow-root">
       <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -43,6 +54,27 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- Server-Side Pagination Controls -->
+    <div v-if="pagination.last_page > 1" class="bg-gray-50 px-6 py-4 border border-gray-200 rounded-lg flex items-center justify-between">
+      <div class="text-sm text-gray-500 font-medium">
+        Showing <span class="font-bold">{{ pagination.from }}</span> to <span class="font-bold">{{ pagination.to }}</span> of <span class="font-bold">{{ pagination.total }}</span> results
+      </div>
+      <div class="flex gap-2">
+        <button
+          @click="changePage(pagination.current_page - 1)"
+          :disabled="pagination.current_page <= 1"
+          class="px-3 py-1 border border-gray-300 rounded-md bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          Previous
+        </button>
+        <button
+          @click="changePage(pagination.current_page + 1)"
+          :disabled="pagination.current_page >= pagination.last_page"
+          class="px-3 py-1 border border-gray-300 rounded-md bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          Next
+        </button>
       </div>
     </div>
   </div>
@@ -95,6 +127,18 @@ const users = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
+// Server-side pagination state (backend uses Laravel's paginate())
+const currentPage = ref(1);
+const searchTerm = ref('');
+let searchTimeout = null;
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0,
+  from: 0,
+  to: 0,
+});
+
 // State for Edit Roles Modal
 const isEditRolesModalOpen = ref(false);
 const selectedUserForRoles = ref(null);
@@ -120,13 +164,50 @@ const fetchUsers = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await apiClient.get('users');
+    const params = { page: currentPage.value };
+    if (searchTerm.value.trim()) {
+      params.search = searchTerm.value.trim();
+    }
+    const response = await apiClient.get('users', { params });
     users.value = response.data.data;
+
+    // Store the pagination info from the Laravel paginator.
+    // NOTE 1: The backend's CamelCaseResponseMiddleware converts all response
+    // keys to camelCase, so accept both snake_case and camelCase keys.
+    // NOTE 2: The paginator may be serialized either wrapped ({ data, links, meta })
+    // or flat (currentPage/lastPage/total at the top level), so fall back to
+    // the whole response body when no meta wrapper is present.
+    const meta = response.data.meta || response.data;
+    pagination.value = {
+      current_page: Number(meta.current_page ?? meta.currentPage) || currentPage.value,
+      last_page: Number(meta.last_page ?? meta.lastPage) || 1,
+      total: Number(meta.total) || 0,
+      from: Number(meta.from) || 0,
+      to: Number(meta.to) || 0,
+    };
   } catch (err) {
     console.error("Failed to fetch users:", err);
     error.value = 'Failed to load users. Please try again.';
   } finally {
     loading.value = false;
+  }
+};
+
+// Debounce search input to prevent spamming the database.
+// The backend V1 UserController@index already supports a `search`
+// parameter that filters by name or email (ILIKE).
+const handleSearchInput = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1; // Reset to page 1 whenever the search changes
+    fetchUsers();
+  }, 400);
+};
+
+const changePage = (pageNumber) => {
+  if (pageNumber > 0 && pageNumber <= pagination.value.last_page) {
+    currentPage.value = pageNumber;
+    fetchUsers();
   }
 };
 
@@ -146,6 +227,9 @@ const handleUserUpdate = (updatedUser) => {
   const index = users.value.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
     users.value[index] = updatedUser;
+  } else {
+    // The updated user may live on a different page — refresh to stay in sync
+    fetchUsers();
   }
   closeEditRolesModal();
 };
@@ -159,8 +243,11 @@ const closeAddUserModal = () => {
   isAddUserModalOpen.value = false;
 };
 
-const handleUserAdded = (newUser) => {
-  users.value.unshift(newUser);
+const handleUserAdded = () => {
+  // Reset to page 1 and re-fetch so the new user is visible and counts stay accurate
+  currentPage.value = 1;
+  searchTerm.value = '';
+  fetchUsers();
   closeAddUserModal();
 };
 
@@ -184,6 +271,9 @@ const handleUserDetailsUpdate = (updatedUser) => {
     users.value[index].lastName = updatedUser.lastName;
     users.value[index].email = updatedUser.email;
     users.value[index].cellNumber = updatedUser.cellNumber;
+  } else {
+    // The updated user may live on a different page — refresh to stay in sync
+    fetchUsers();
   }
   closeEditUserModal();
 };

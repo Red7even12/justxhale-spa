@@ -1,7 +1,7 @@
 {
   "name": "frontend-spa",
   "private": true,
-  "version": "JX-3.1.17",
+  "version": "JX-4.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

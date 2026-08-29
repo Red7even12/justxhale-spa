@@ -1,8 +1,17 @@
 <template>
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Product Management (Whitelabel Factory)</h1>
-      <button @click="openModal()" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">
+          {{ isWlpAdmin ? 'My Products (Product Owner)' : 'Product Management (Whitelabel Factory)' }}
+        </h1>
+        <p class="text-xs text-gray-500 font-medium mt-1">
+          {{ isWlpAdmin ? 'Configure workflows, document packs, and casefile types for your products.' : 'Master Platform Architecture Console' }}
+        </p>
+      </div>
+
+      <!-- Create Button: Only System Admin can create new root containers -->
+      <button v-if="!isWlpAdmin" @click="openModal()" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 text-sm font-bold">
         + Create New Product
       </button>
     </div>
@@ -47,8 +56,8 @@
                 Edit DNA
             </button>
             
-            <!-- Open the Edit Modal -->
-            <button @click="openModal(product)" 
+            <!-- Open the Edit Modal (Only for System Admins) -->
+            <button v-if="!isWlpAdmin" @click="openModal(product)" 
                 class="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded text-sm text-center font-medium hover:bg-indigo-100">
                 Edit Product
             </button>
@@ -58,7 +67,7 @@
     </div>
 
     <div v-if="products.length === 0" class="text-center py-12 bg-white rounded-lg shadow border border-dashed border-gray-300">
-        <p class="text-gray-500 italic">No products found. Create your first product above.</p>
+        <p class="text-gray-500 italic">No products assigned. Contact platform administration.</p>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -66,7 +75,6 @@
       <div class="bg-white rounded-lg w-full max-w-md p-6">
         <h2 class="text-xl font-bold mb-4">{{ isEditing ? 'Edit Product' : 'Create Product' }}</h2>
         
-        <!-- Note: No encType needed for axios, but good practice -->
         <form @submit.prevent="saveProduct" class="space-y-4">
           <div>
             <label class="block text-sm font-medium">Product Name</label>
@@ -77,7 +85,6 @@
             <input v-model="form.slug" :disabled="isEditing" type="text" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm disabled:bg-gray-100">
           </div>
           
-          <!-- File Input for Logo -->
            <div>
             <label class="block text-sm font-medium">Product Logo (Optional)</label>
             <input type="file" @change="handleFileChange" accept="image/*,.svg" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
@@ -105,13 +112,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import apiClient, { getAssetUrl } from '@/services/api';
+import { useAuthStore } from '@/store/auth';
 
+const authStore = useAuthStore();
 const products = ref([]);
 const showModal = ref(false);
 const isEditing = ref(false);
-const fileInput = ref(null); // Valid ref for file data
+const fileInput = ref(null);
+
+const isWlpAdmin = computed(() => {
+  return authStore.hasRole('WLP Admin') || authStore.hasRole('WLPAdmin');
+});
 
 const form = ref({ 
   id: null, 
@@ -122,7 +135,6 @@ const form = ref({
   currentLogo: null
 });
 
-// Helper functions to handle both snake_case and camelCase
 const getPrimaryColor = (p) => p.primaryColor || p.primary_color || '#3B82F6';
 const getIsActive = (p) => p.isActive !== undefined ? p.isActive : (p.is_active !== undefined ? p.is_active : true);
 const getSubscribersCount = (p) => p.subscribersCount !== undefined ? p.subscribersCount : (p.subscribers_count || 0);
@@ -138,17 +150,6 @@ const fetchProducts = async () => {
 
     if (Array.isArray(rawData)) {
         products.value = rawData;
-    } else if (rawData && typeof rawData === 'object') {
-        if (rawData.id) {
-            products.value = [rawData];
-        } else {
-            const values = Object.values(rawData);
-            if (values.length > 0 && (values[0].id || values[0].name)) {
-                products.value = values;
-            } else {
-                products.value = [];
-            }
-        }
     } else {
         products.value = [];
     }
@@ -158,7 +159,7 @@ const fetchProducts = async () => {
 };
 
 const openModal = (product = null) => {
-  fileInput.value = null; // Reset file input
+  fileInput.value = null;
   if (product) {
     isEditing.value = true;
     form.value = { 
@@ -181,7 +182,6 @@ const handleFileChange = (event) => {
 };
 
 const saveProduct = async () => {
-  // Use FormData for File Uploads
   const formData = new FormData();
   formData.append('name', form.value.name);
   formData.append('slug', form.value.slug);
@@ -194,9 +194,7 @@ const saveProduct = async () => {
 
   try {
     if (isEditing.value) {
-        // Method Spoofing: PHP/Laravel requires POST with _method=PUT for file uploads in updates
         formData.append('_method', 'PUT');
-        
         await apiClient.post(`admin/products/${form.value.slug}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });

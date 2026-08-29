@@ -19,11 +19,11 @@ const noteService = {
    * Get notes.
    * V2: Uses contextUrl + Query Params for filtering.
    */
-  getNotes(noteableType, noteableId, contextUrl = null) {
+  getNotes(noteableType, noteableId, contextUrl = null, additionalParams = {}) {
     if (contextUrl) {
       // V2 Path: /justxhale/cases/1/notes?noteable_type=...&noteable_id=...
       return api.get(`/${contextUrl}/notes`, {
-        params: { noteable_type: noteableType, noteable_id: noteableId }
+        params: { noteable_type: noteableType, noteable_id: noteableId, ...additionalParams }
       });
     } else {
       // V1 Legacy Path: /notes/{type}/{id}

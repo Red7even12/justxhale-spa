@@ -217,12 +217,14 @@ const props = defineProps({
   contextUrl: { type: String, required: true },
   currentTeamId: { type: [Number, String], default: null },
   isReadonly: { type: Boolean, default: false },
-  currentStatus: { type: String, default: 'open' }
+  currentStatus: { type: String, default: 'open' },
+  fileTypeId: { type: [Number, String], default: null },
+  initialNotes: { type: Array, default: () => [] }
 });
 
 const emit = defineEmits(['note-added', 'cancel']);
 
-const notes = ref([]);
+const notes = ref([...props.initialNotes]);
 const newNoteContent = ref('');
 const newCaseNumber = ref('');
 const taggedUserId = ref(null);
@@ -235,9 +237,10 @@ const authStore = useAuthStore();
 const { showAlert, showConfirm } = useAlerts();
 const selectedStatus = ref(props.currentStatus);
 
-watch(() => props.currentStatus, (newVal) => {
-    selectedStatus.value = newVal;
-});
+// Sync local notes array whenever parent passes new initialNotes (e.g. tab switch)
+watch(() => props.initialNotes, (newVal) => {
+    notes.value = [...newVal];
+}, { immediate: true, deep: true });
 
 const canManageStatus = computed(() => {
     // 1. Must be in the 'case_file' context
@@ -254,17 +257,32 @@ const handleStatusChange = async () => {
         return;
     }
 
-    // 2. First styled confirmation
+    const targetStatus = selectedStatus.value.toLowerCase();
+    const current = props.currentStatus.toLowerCase();
+
+    const isClosing = ['closed', 'cancelled'].includes(targetStatus);
+    const isReopening = ['closed', 'cancelled'].includes(current) && ['open', 'pending'].includes(targetStatus);
+
+    // Contextual Warning Message based on lifecycle transition
+    let warningMessage = `Are you sure you want to change this case status to ${targetStatus.toUpperCase()}?`;
+
+    if (isClosing) {
+        warningMessage = `WARNING: Setting status to ${targetStatus.toUpperCase()} will lock file modifications, cancel all forward-looking compliance reminders, and finalize the billing cycle record for this matter. Proceed?`;
+    } else if (isReopening) {
+        warningMessage = `REOPEN NOTICE: Reopening this file will activate a new billable state for this cycle. Cancelled reminders will NOT be automatically restored. Proceed?`;
+    }
+
+    // 2. First styled contextual confirmation
     const confirm1 = await showConfirm(
         'Change Case Status', 
-        `Are you sure you want to change this case status to ${selectedStatus.value.toUpperCase()}?`
+        warningMessage
     );
     if (!confirm1) return;
 
     // 3. Double-Warning (Second styled confirmation)
     const confirm2 = await showConfirm(
         'Final Audit Confirmation', 
-        'CRITICAL: This change will be logged in the permanent audit trail. Do you wish to proceed?'
+        'CRITICAL: This change will be logged in the permanent audit trail and billing ledger. Do you wish to proceed?'
     );
     if (!confirm2) return;
 
@@ -342,7 +360,9 @@ const fetchNotes = async (page = 1) => {
             params: {
                 noteable_type: props.noteableType,
                 noteable_id: Number(props.noteableId),
-                page: page
+                page: page,
+                // --- ADDED THIS LINE to ensure tab context is maintained during fetch & pagination ---
+                file_type_id: props.fileTypeId ? Number(props.fileTypeId) : null 
             }
         });
 
@@ -350,24 +370,19 @@ const fetchNotes = async (page = 1) => {
         console.log("Raw API Response:", response);
 
         // 2. AGGRESSIVE EXTRACTION
-        // Sometimes interceptors unwrap 'data', sometimes they don't. We check every level.
         let payloadData = [];
         let payloadMeta = {};
 
         if (response.data && response.data.data) {
-            // Standard Axios wrapped response
             payloadData = response.data.data;
             payloadMeta = response.data.meta || {};
         } else if (response.data && Array.isArray(response.data)) {
-            // Interceptor unwrapped the first 'data' layer, but it's an array?
             payloadData = response.data;
             payloadMeta = response.meta || {};
         } else if (response.data) {
-            // Interceptor unwrapped it, and it's our exact JSON object
             payloadData = response.data;
             payloadMeta = response.meta || {};
         } else {
-            // Absolute fallback
             payloadData = response;
         }
 
@@ -391,6 +406,7 @@ const fetchNotes = async (page = 1) => {
         isLoadingMore.value = false;
     }
 };
+
 const loadMore = () => {
     if (hasMore.value) fetchNotes(currentPage.value + 1);
 };
@@ -421,7 +437,8 @@ const submitNote = async () => {
     content: newNoteContent.value,
     case_number: newCaseNumber.value || null,
     tagged_user_id: taggedUserId.value,
-    due_date: (showReminderInput.value && reminderDate.value) ? reminderDate.value : null
+    due_date: (showReminderInput.value && reminderDate.value) ? reminderDate.value : null,
+    file_type_id: props.fileTypeId ? Number(props.fileTypeId) : null
   };
 
   try {

@@ -12,7 +12,7 @@
         <!-- Left Panel: Team List -->
         <div class="md:col-span-1 bg-white p-4 rounded-lg shadow">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-medium text-gray-900">Teams X</h2>
+            <h2 class="text-lg font-medium text-gray-900">Teams</h2>
             <button 
               @click="openNewTeamModal" 
               class="inline-flex items-center rounded-md bg-brand-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue-600 uppercase tracking-wider"
