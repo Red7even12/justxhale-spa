@@ -49,7 +49,7 @@
       </div>
     </div>
 
-<!-- 3. WORKSPACE CONTENT AREA (Scoped to Active Niche Tab) -->
+    <!-- 3. WORKSPACE CONTENT AREA (Scoped to Active Niche Tab) -->
     <div v-if="availableFileTypes.length > 0" class="grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 min-h-0 mt-2">
       
       <!-- Column 1: Active Tab's Document Pack -->
@@ -200,23 +200,23 @@
             <div v-if="setupTab === 'participants'" class="space-y-4">
               <div class="flex justify-between items-center">
                 <h4 class="text-xs font-black uppercase text-gray-500 tracking-wider">
-                  Niche Role Players ({{ activeFileType?.name }})
+                  Case Role Players
                 </h4>
-                <button @click="openAssignParticipantModal()" class="bg-brand-primary text-white text-[11px] px-3 py-1.5 rounded-lg font-bold shadow">
+                <button @click="openAssignParticipantModal" class="bg-brand-primary text-white text-[11px] px-3 py-1.5 rounded-lg font-bold shadow hover:opacity-90 transition-all">
                   + Add Participant
                 </button>
               </div>
 
               <div class="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
-                <div v-for="part in scopedParticipants" :key="part.id" class="p-3 flex justify-between items-center hover:bg-gray-50">
+                <div v-for="part in (caseFile.participants || [])" :key="part.id" class="p-3 flex justify-between items-center hover:bg-gray-50">
                   <div>
                     <div class="text-sm font-bold text-gray-900">{{ part.entity?.name }}</div>
                     <div class="text-[10px] text-brand-primary font-bold uppercase tracking-wider">{{ part.roleKey || part.role_key }}</div>
                   </div>
                   <button @click="deleteParticipant(part)" class="text-red-500 hover:text-red-700 text-xs font-bold">Remove</button>
                 </div>
-                <div v-if="scopedParticipants.length === 0" class="p-6 text-center text-xs text-gray-400 italic">
-                  No participants assigned for this niche yet.
+                <div v-if="!caseFile.participants || caseFile.participants.length === 0" class="p-6 text-center text-xs text-gray-400 italic">
+                  No participants assigned to this case yet.
                 </div>
               </div>
             </div>
@@ -226,6 +226,55 @@
         </div>
       </div>
     </transition>
+
+    <!-- 5. ASSIGN PARTICIPANT MODAL -->
+    <Modal :show="showAssignModal" @close="showAssignModal = false">
+      <template #title>
+        <span class="text-brand-primary font-bold">Assign Role-Player to Case</span>
+      </template>
+
+      <div class="p-6 space-y-4">
+        <!-- Step 1: Select Contact (Entity) -->
+        <div>
+          <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Select Contact / Entity</label>
+          <select v-model="assignForm.entity_id" class="w-full border-gray-200 rounded-xl font-bold text-sm text-gray-700">
+            <option :value="null" disabled>-- Choose Contact --</option>
+            <option v-for="ent in availableEntities" :key="ent.id" :value="ent.id">
+              {{ ent.name }} ({{ ent.email || ent.phone_primary || 'No Direct Contact' }})
+            </option>
+          </select>
+        </div>
+
+        <!-- Step 2: Select Role -->
+        <div>
+          <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Assign Role</label>
+          <select v-model="assignForm.role_key" class="w-full border-gray-200 rounded-xl font-bold text-sm text-gray-700">
+            <option value="" disabled>-- Choose Role --</option>
+            <option v-for="r in availableRoles" :key="r.id" :value="r.roleKey || r.role_key">
+              {{ r.name }} {{ (r.groupOnDocuments || r.group_on_documents) ? '★ (Docs Target)' : '' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Primary Contact Toggle -->
+        <div class="flex items-center gap-2 pt-2">
+          <input type="checkbox" v-model="assignForm.is_primary_contact" id="is_prim" class="h-4 w-4 text-brand-primary rounded border-gray-300">
+          <label for="is_prim" class="text-xs font-bold text-gray-700 cursor-pointer">Set as Primary Case Contact</label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <button type="button" @click="showAssignModal = false" class="px-4 py-2 text-xs font-bold text-gray-400 hover:text-gray-600">Cancel</button>
+          <button 
+            @click="submitAssignParticipant" 
+            :disabled="isAssigning || !assignForm.entity_id || !assignForm.role_key"
+            class="bg-brand-primary text-white text-xs px-6 py-2.5 rounded-xl font-bold shadow hover:opacity-90 disabled:opacity-50 transition-all"
+          >
+            {{ isAssigning ? 'Assigning...' : 'Assign Participant' }}
+          </button>
+        </div>
+      </div>
+    </Modal>
 
   </div>
 </template>
@@ -241,6 +290,7 @@ import { useAlerts } from '@/composables/useAlerts';
 import CaseWorkspaceHeader from '@/components/cases/CaseWorkspaceHeader.vue';
 import CaseDocumentsTable from '@/components/cases/CaseDocumentsTable.vue';
 import CaseWorkflowPanel from '@/components/cases/CaseWorkflowPanel.vue';
+import Modal from '@/components/common/Modal.vue';
 
 const props = defineProps({
   caseFile: { type: Object, required: true }
@@ -250,29 +300,24 @@ const route = useRoute();
 const authStore = useAuthStore();
 const { showAlert, showConfirm } = useAlerts();
 
+const teams = ref([]);
+const fileClasses = ref([]);
+
 // Filtered Ownership Teams for case_files.current_team_id
 const ownershipTeams = computed(() => {
   return teams.value.filter(t => (t.team_type || t.teamType || 'ownership') === 'ownership');
 });
 
-// --- TRUST THE BACKEND PRIVACY PAYLOAD COMPLETELY ---
+// --- AVAILABLE NICHE TABS ---
 const availableFileTypes = computed(() => {
   const product = props.caseFile.product;
-  
-  // If the backend actively loaded the file_types array, WE MUST USE IT.
-  // (Even if it is empty [] because of POPIA security filtering).
   if (product && (product.file_types !== undefined || product.fileTypes !== undefined)) {
     const types = product.file_types || product.fileTypes || [];
     return [...types].sort((a, b) => (a.sort_order || a.sortOrder || 1) - (b.sort_order || b.sortOrder || 1));
   }
-  
-  // Legacy fallback ONLY if the relation was never loaded
   return props.caseFile.fileType ? [props.caseFile.fileType] : [];
 });
 
-
-
-// --- 2. ACTIVE NICHE TAB STATE ---
 const activeFileType = ref(null);
 
 const initActiveTab = () => {
@@ -285,13 +330,10 @@ const initActiveTab = () => {
 watch(() => props.caseFile, initActiveTab, { immediate: true });
 onMounted(initActiveTab);
 
-// --- 3. INLINE SETUP DRAWER STATE & DATA ---
+// --- SETUP DRAWER STATE ---
 const showSetupDrawer = ref(false);
 const setupTab = ref('details');
 const isSaving = ref(false);
-
-const teams = ref([]);
-const fileClasses = ref([]);
 
 const detailsForm = reactive({
   file_name: '',
@@ -320,17 +362,6 @@ const currentNicheFields = computed(() => {
   });
 });
 
-const scopedParticipants = computed(() => {
-  if (!props.caseFile.participants) return [];
-  const nicheId = activeFileType.value?.id;
-  if (!nicheId) return props.caseFile.participants;
-
-  return props.caseFile.participants.filter(p => {
-    const pTypeId = p.file_type_id || p.fileTypeId || p.participantRole?.file_type_id || p.participant_role?.file_type_id;
-    return !pTypeId || pTypeId === nicheId;
-  });
-});
-
 const openSetupDrawer = async () => {
   showSetupDrawer.value = true;
   setupTab.value = 'details';
@@ -340,18 +371,16 @@ const openSetupDrawer = async () => {
   detailsForm.current_team_id = props.caseFile.currentTeamId || props.caseFile.current_team_id || null;
   detailsForm.file_class_id = props.caseFile.fileClassId || props.caseFile.file_class_id || null;
 
-  // Hydrate fields (Supports snake_case, camelCase, and Niche-Scoped keys)
   const rawMeta = props.caseFile.metaData || props.caseFile.meta_data || {};
   const nicheId = activeFileType.value?.id;
   const nicheScopedMeta = (nicheId && rawMeta[nicheId] && typeof rawMeta[nicheId] === 'object') ? rawMeta[nicheId] : {};
 
   detailsForm.meta_data = {};
   currentNicheFields.value.forEach(f => {
-    const key = f.key; // e.g. 'sa_id_number' or 'saIdNumber'
+    const key = f.key;
     const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
     const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
 
-    // Deep casing resolution
     const value = nicheScopedMeta[key] 
       ?? nicheScopedMeta[camelKey] 
       ?? nicheScopedMeta[snakeKey] 
@@ -363,7 +392,6 @@ const openSetupDrawer = async () => {
     detailsForm.meta_data[key] = value;
   });
 
-  // Fetch dropdown collections if empty
   if (teams.value.length === 0) {
     try {
       const [teamRes, classRes] = await Promise.all([
@@ -397,13 +425,38 @@ const saveMetadata = async () => {
       Object.assign(rawMeta, detailsForm.meta_data);
     }
 
-    await apiClient.put(`/${route.params.productSlug}/cases/${props.caseFile.id}`, {
+    const response = await apiClient.put(`/${route.params.productSlug}/cases/${props.caseFile.id}`, {
       file_name: detailsForm.file_name,
       file_reference: detailsForm.file_reference,
       current_team_id: detailsForm.current_team_id,
       file_class_id: detailsForm.file_class_id,
       meta_data: rawMeta
     });
+
+    // --- 1. INSTANT LIVE UI SYNC (Mutate caseFile in-place) ---
+    props.caseFile.fileName = detailsForm.file_name;
+    props.caseFile.file_name = detailsForm.file_name;
+    props.caseFile.fileReference = detailsForm.file_reference;
+    props.caseFile.file_reference = detailsForm.file_reference;
+    props.caseFile.currentTeamId = detailsForm.current_team_id;
+    props.caseFile.current_team_id = detailsForm.current_team_id;
+    props.caseFile.fileClassId = detailsForm.file_class_id;
+    props.caseFile.file_class_id = detailsForm.file_class_id;
+    props.caseFile.meta_data = rawMeta;
+    props.caseFile.metaData = rawMeta;
+
+    // Update Priority Classification Badge in real time
+    if (detailsForm.file_class_id && fileClasses.value.length > 0) {
+      const matched = fileClasses.value.find(c => c.id === detailsForm.file_class_id);
+      if (matched) {
+        props.caseFile.fileClass = matched;
+        props.caseFile.file_class = matched;
+      }
+    } else {
+      props.caseFile.fileClass = null;
+      props.caseFile.file_class = null;
+    }
+    // ---------------------------------------------------------
 
     showAlert('Success', 'Case setup updated successfully.');
     closeSetupDrawer();
@@ -414,12 +467,86 @@ const saveMetadata = async () => {
   }
 };
 
+// --- ASSIGN PARTICIPANT MODAL STATE & ACTIONS ---
+const showAssignModal = ref(false);
+const isAssigning = ref(false);
+const availableEntities = ref([]);
+const availableRoles = ref([]);
+
+const assignForm = reactive({
+  entity_id: null,
+  role_key: '',
+  is_primary_contact: false
+});
+
+const openAssignParticipantModal = async () => {
+  assignForm.entity_id = null;
+  assignForm.role_key = '';
+  assignForm.is_primary_contact = false;
+  showAssignModal.value = true;
+
+  try {
+    const [entRes, roleRes] = await Promise.all([
+      apiClient.get('/entities'),
+      apiClient.get(`/${route.params.productSlug}/participant-roles`)
+    ]);
+    availableEntities.value = entRes.data.data || entRes.data || [];
+    availableRoles.value = roleRes.data.data || roleRes.data || [];
+  } catch (err) {
+    console.error("Failed to load entities/roles", err);
+  }
+};
+
+const submitAssignParticipant = async () => {
+  if (!assignForm.entity_id || !assignForm.role_key) {
+    showAlert('Warning', 'Please select both a Contact and a Role.');
+    return;
+  }
+
+  isAssigning.value = true;
+  try {
+    const response = await apiClient.post(`/${route.params.productSlug}/cases/${props.caseFile.id}/participants`, {
+      entity_id: assignForm.entity_id,
+      role_key: assignForm.role_key,
+      is_primary_contact: assignForm.is_primary_contact
+    });
+
+    const newPart = response.data.data || response.data;
+    
+    if (!props.caseFile.participants) {
+      props.caseFile.participants = [];
+    }
+
+    const existingIndex = props.caseFile.participants.findIndex(p => p.id === newPart.id);
+    if (existingIndex > -1) {
+      props.caseFile.participants[existingIndex] = newPart;
+    } else {
+      props.caseFile.participants.push(newPart);
+    }
+
+    showAlert('Success', 'Participant assigned successfully.');
+    showAssignModal.value = false;
+
+    // Refresh workspace view to instantly show new stakeholder tabs
+    window.location.reload(); 
+  } catch (err) {
+    showAlert('Error', err.response?.data?.message || 'Failed to assign participant.');
+  } finally {
+    isAssigning.value = false;
+  }
+};
+
 const deleteParticipant = async (part) => {
   const confirmed = await showConfirm('Remove Participant', `Remove ${part.entity?.name} from this case?`);
   if (!confirmed) return;
 
   try {
     await apiClient.delete(`/${route.params.productSlug}/cases/${props.caseFile.id}/participants/${part.id}`);
+    
+    if (props.caseFile.participants) {
+      props.caseFile.participants = props.caseFile.participants.filter(p => p.id !== part.id);
+    }
+    
     showAlert('Success', 'Participant removed.');
   } catch (err) {
     showAlert('Error', 'Failed to remove participant.');
