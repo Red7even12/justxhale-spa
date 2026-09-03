@@ -3,11 +3,12 @@
     <!-- Header -->
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
       <div>
-        <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
-            ← Back to Casefile Types
+        <!-- DUAL-CONTEXT BACK LINK -->
+        <router-link :to="backDestination" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
+            ← {{ backLabel }}
         </router-link>
         <h2 class="text-xl font-bold text-gray-800">Field Definitions: {{ fileType?.name }}</h2>
-        <p class="text-sm text-gray-500">Configure custom data points and role-player metadata.</p>
+        <p class="text-sm text-gray-500">Configure custom data points and role-player metadata for this Niche Blueprint.</p>
       </div>
       <button @click="openModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold transition-all">
         + Add Data Field
@@ -50,6 +51,9 @@
               <button @click="confirmDelete(field)" class="text-red-400 hover:text-red-600">Delete</button>
             </td>
           </tr>
+          <tr v-if="fields.length === 0">
+            <td colspan="5" class="p-8 text-center text-gray-400 italic">No custom data fields defined for this Niche yet.</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -64,9 +68,7 @@
                 <input v-model="form.field_label" type="text" required class="w-full border-gray-300 rounded-lg shadow-sm">
             </div>
             <div>
-                <label class="block text-xs font-black text-gray-400 mb-1">
-                    Field Key (System)
-                </label>
+                <label class="block text-xs font-black text-gray-400 mb-1">Field Key (System)</label>
                 <input 
                     v-model="form.field_key" 
                     type="text" 
@@ -89,7 +91,7 @@
                 </select>
             </div>
             
-            <!-- LAYER 2: PARTICIPANT ROLE CONTEXT -->
+            <!-- PARTICIPANT ROLE CONTEXT -->
             <div class="col-span-2 p-4 bg-indigo-50 rounded-lg border border-indigo-100 space-y-4">
                 <div>
                     <label class="block text-xs font-black text-indigo-900 uppercase mb-2">Character Context (Optional)</label>
@@ -101,7 +103,7 @@
                     </select>
                 </div>
 
-                <!-- LAYER 3: PROJECTION MAPPING -->
+                <!-- PROJECTION MAPPING -->
                 <div v-if="form.participant_role_id">
                     <label class="block text-[12px] font-black text-indigo-400 uppercase tracking-widest mb-1 italic">
                         Projection Mapping (Optional)
@@ -112,16 +114,6 @@
                              Project Global Value: {{ eField.fieldLabel }}
                         </option>
                     </select>
-                    <div class="mt-2 space-y-1">
-                        <p class="text-[11px] text-indigo-400 font-medium leading-tight">
-                            <strong class="uppercase text-[9px] opacity-70">Manual:</strong> 
-                            Data unique to this specific Case File (e.g. Appointment Date).
-                        </p>
-                        <p class="text-[11px] text-indigo-400 font-medium leading-tight">
-                            <strong class="uppercase text-[9px] opacity-70">Global:</strong> 
-                            Permanent data that follows this Person/Business across all cases (e.g. Tax ID).
-                        </p>
-                    </div>
                 </div>
             </div>
 
@@ -149,39 +141,72 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
 
-const props = defineProps(['slug', 'fileTypeId']);
+const props = defineProps({
+  slug: { type: String, default: null },
+  fileTypeId: { type: [String, Number], required: true }
+});
+
 const { showConfirm, showAlert } = useAlerts();
 
 const fields = ref([]);
 const fileType = ref(null);
 const roles = ref([]);
-const entityFields = ref([]); // NEW: Global DNA fields
+const entityFields = ref([]);
 const showModal = ref(false);
+
+// DUAL-CONTEXT NAVIGATION HELPERS
+const backDestination = computed(() => {
+  return props.slug 
+    ? { name: 'admin.product.file-types', params: { slug: props.slug } }
+    : { name: 'admin.niche-factory' };
+});
+
+const backLabel = computed(() => {
+  return props.slug ? 'Back to Product Niches' : 'Back to Niche Foundry';
+});
+
+// DUAL-CONTEXT API URL BUILDER
+const basePath = computed(() => {
+  return props.slug 
+    ? `admin/products/${props.slug}/file-types/${props.fileTypeId}`
+    : `admin/file-types/${props.fileTypeId}`;
+});
 
 const form = reactive({ 
     id: null, field_label: '', field_key: '', field_type: 'text', 
     is_required: false, sort_order: 0, participant_role_id: null,
-    entity_field_definition_id: null, // NEW
+    entity_field_definition_id: null,
     show_in_quick_view: false
 });
 
 const load = async () => {
   try {
-    const [fieldsRes, typeRes, rolesRes, entityRes] = await Promise.all([
-      apiClient.get(`admin/products/${props.slug}/file-types/${props.fileTypeId}/fields`),
-      apiClient.get(`admin/products/${props.slug}/file-types/${props.fileTypeId}`),
-      apiClient.get(`admin/products/${props.slug}/participant-roles`),
-      apiClient.get(`admin/entity-fields`) // Fetch Subscriber DNA
-    ]);
-    fields.value = fieldsRes.data;
-    fileType.value = typeRes.data;
-    roles.value = rolesRes.data;
-    entityFields.value = entityRes.data.data;
-  } catch (e) { console.error(e); }
+    const promises = [
+      apiClient.get(`${basePath.value}/fields`),
+      apiClient.get(basePath.value),
+      apiClient.get('admin/entity-fields').catch(() => ({ data: { data: [] } }))
+    ];
+
+    // Only query product-scoped participant roles if we are in a product context
+    if (props.slug) {
+      promises.push(
+        apiClient.get(`admin/products/${props.slug}/participant-roles`).catch(() => ({ data: [] }))
+      );
+    }
+
+    const [fieldsRes, typeRes, entityRes, rolesRes] = await Promise.all(promises);
+
+    fields.value = fieldsRes.data?.data || fieldsRes.data || [];
+    fileType.value = typeRes.data?.data || typeRes.data || null;
+    entityFields.value = entityRes.data?.data || entityRes.data || [];
+    roles.value = rolesRes?.data?.data || rolesRes?.data || [];
+  } catch (e) { 
+    console.error('Failed to load field definitions context:', e); 
+  }
 };
 
 const openModal = (field = null) => {
@@ -194,7 +219,7 @@ const openModal = (field = null) => {
         is_required: !!(field.isRequired || field.is_required),
         sort_order: field.sortOrder || field.sort_order,
         participant_role_id: field.participantRoleId || field.participant_role_id,
-        entity_field_definition_id: field.entityFieldDefinitionId || field.entity_field_definition_id || null, // NEW
+        entity_field_definition_id: field.entityFieldDefinitionId || field.entity_field_definition_id || null,
         show_in_quick_view: !!(field.showInQuickView || field.show_in_quick_view)
     });
   } else {
@@ -207,30 +232,25 @@ const openModal = (field = null) => {
   showModal.value = true;
 };
 
-
-// --- NEW: Key Normalizer ---
-// This ensures that even if they copy-paste a messy string, we clean it up.
 const normalizeKey = () => {
     form.field_key = form.field_key
-        .toLowerCase()                   // Force lowercase
-        .trim()                          // Remove outer spaces
-        .replace(/[\s-]/g, '_')          // Replace spaces and hyphens with underscores
-        .replace(/[^a-z0-9_]/g, '');     // Strip any other weird characters (like @, #, etc)
+        .toLowerCase()
+        .trim()
+        .replace(/[\s-]/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
 };
 
 const save = async () => {
-    // 1. Final normalization before validation
     normalizeKey();
 
-    // 2. Strict Regex Check: Only lowercase letters, numbers, and underscores allowed
     const snakeRegex = /^[a-z0-9_]+$/;
     if (!snakeRegex.test(form.field_key)) {
-        showAlert('Invalid Key', 'The Field Key must only contain lowercase letters, numbers, and underscores (no spaces or hyphens).');
+        showAlert('Invalid Key', 'The Field Key must only contain lowercase letters, numbers, and underscores.');
         return;
     }
 
     try {
-        const url = `admin/products/${props.slug}/file-types/${props.fileTypeId}/fields${form.id ? '/' + form.id : ''}`;
+        const url = `${basePath.value}/fields${form.id ? '/' + form.id : ''}`;
         const method = form.id ? 'put' : 'post';
         
         if (form.entity_field_definition_id && !form.participant_role_id) {
@@ -241,7 +261,7 @@ const save = async () => {
         await apiClient[method](url, form);
         showModal.value = false;
         load();
-        showAlert('Success', 'DNA Field synchronized.');
+        showAlert('Success', 'Field definition saved.');
     } catch (e) { 
         showAlert('Error', e.response?.data?.message || 'Save failed.'); 
     }
@@ -250,7 +270,7 @@ const save = async () => {
 const confirmDelete = async (field) => {
   if (await showConfirm('Delete Field', `Permanent deletion of "${field.fieldLabel || field.field_label}"?`)) {
     try {
-        await apiClient.delete(`admin/products/${props.slug}/file-types/${props.fileTypeId}/fields/${field.id}`);
+        await apiClient.delete(`${basePath.value}/fields/${field.id}`);
         load();
     } catch (e) { showAlert('Error', 'Delete failed.'); }
   }

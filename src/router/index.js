@@ -229,6 +229,85 @@ const routes = [
         component: () => import('@/components/reports/ReportBuilder.vue'),
         meta: { displayName: 'Report Factory' }
       },
+
+      // STANDALONE NICHE BLUEPRINT FOUNDRY
+// 1. STANDALONE NICHE CATALOG (Top Level)
+      {
+          path: '/admin/niche-factory',
+          name: 'admin.niche-factory',
+          component: () => import('@/views/admin/niches/NicheFactoryIndex.vue'),
+          meta: { displayName: 'Niche Blueprint Factory' }
+      },
+
+      // 2. NICHE BLUEPRINT FOUNDRY WORKSHOP (Scoped to :fileTypeId)
+      {
+          path: '/admin/niche-factory/:fileTypeId/blueprints',
+          component: () => import('@/layouts/NicheBlueprintLayout.vue'),
+          props: true,
+          children: [
+              {
+                  path: '',
+                  redirect: to => ({ name: 'admin.niche-factory.fields', params: to.params })
+              },
+              {
+                  path: 'fields',
+                  name: 'admin.niche-factory.fields',
+                  component: () => import('@/views/admin/products/blueprints/CaseFieldDefinitionIndex.vue'),
+                  props: true,
+                  meta: { displayName: 'Fields DNA' }
+              },
+              {
+                  path: 'document-packs',
+                  name: 'admin.niche-factory.document-packs',
+                  component: () => import('@/views/admin/products/blueprints/DocumentPackBlueprint.vue'),
+                  props: true,
+                  meta: { displayName: 'Document Packs' }
+              },
+              {
+                  path: 'document-packs/:packId/types',
+                  name: 'admin.niche-factory.pack-types',
+                  component: () => import('@/views/admin/DocumentTypes/DocumentTypeManager.vue'),
+                  props: true,
+                  meta: { displayName: 'Manage Pack Documents' }
+              },
+              {
+                  path: 'workflows',
+                  name: 'admin.niche-factory.workflows',
+                  component: () => import('@/views/admin/products/blueprints/WorkflowBlueprint.vue'),
+                  props: true,
+                  meta: { displayName: 'Workflows' }
+              },
+              {
+                  path: 'participant-roles',
+                  name: 'admin.niche-factory.participant-roles',
+                  component: () => import('@/views/admin/products/blueprints/ParticipantRoleBlueprint.vue'),
+                  props: true,
+                  meta: { displayName: 'Participant Roles' }
+              },
+              {
+                  path: 'communication',
+                  name: 'admin.niche-factory.communication',
+                  component: () => import('@/views/admin/SystemMailsSetup.vue'),
+                  props: true,
+                  meta: { displayName: 'System Mails' }
+              },
+              {
+                  path: 'option-lists',
+                  name: 'admin.niche-factory.option-lists',
+                  component: () => import('@/views/admin/OptionListsManager.vue'),
+                  props: true,
+                  meta: { displayName: 'Option Lists' }
+              },
+              {
+                  path: 'deployment',
+                  name: 'admin.niche-factory.deployment',
+                  component: () => import('@/views/admin/niches/NicheDeploymentMatrix.vue'),
+                  props: true,
+                  meta: { displayName: 'Product Deployment' }
+              },
+          ]
+      },
+
       {
         path: 'view-factory',
         name: 'admin.view-factory',

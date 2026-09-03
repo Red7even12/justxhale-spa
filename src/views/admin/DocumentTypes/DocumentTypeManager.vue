@@ -3,25 +3,27 @@
     <!-- Context Header -->
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div>
-            <router-link :to="{ name: 'admin.product.document-packs', params: { slug } }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
+            <!-- DUAL CONTEXT BACK BUTTON -->
+            <router-link :to="backDestination" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
                 ← Back to Packs
             </router-link>
             <h2 class="text-xl font-bold text-gray-800">Pack Items Management</h2>
             <p class="text-sm text-gray-500">Configure checklist behavior and data capture for this pack.</p>
         </div>
         <div class="flex gap-3">
-            <!-- NEW SYNC BUTTON -->
+            <!-- Sync button (Available when running inside a Product context) -->
             <button 
-            @click="handleSync" 
-            :disabled="isSyncing"
-            class="bg-amber-500 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              v-if="props.slug"
+              @click="handleSync" 
+              :disabled="isSyncing"
+              class="bg-amber-500 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-            <svg v-if="isSyncing" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            {{ isSyncing ? 'Syncing...' : 'Sync Pack to Cases' }}
+              <svg v-if="isSyncing" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              {{ isSyncing ? 'Syncing...' : 'Sync Pack to Cases' }}
             </button>
 
             <button @click="handleAddNew" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-indigo-700 transition-all">
-            + Add Pack Item
+              + Add Pack Item
             </button>
         </div>
     </div>
@@ -82,7 +84,6 @@
                         <textarea v-model="formObject.data.note" class="w-full border-gray-300 rounded-lg shadow-sm text-sm" rows="2"></textarea>
                     </div>
 
-                    <!-- RESTORED: Advanced Action Types -->
                     <div>
                         <label class="block text-xs font-black text-gray-400 uppercase mb-1">Checklist Action Type</label>
                         <select v-model="formObject.data.actionFieldType" @change="handleActionTypeChange" class="w-full border-gray-300 rounded-lg shadow-sm">
@@ -94,23 +95,19 @@
                         </select>
                     </div>
 
-                    <!-- RESTORED: Sourced Dropdown Logic (relational lists) -->
                     <div v-if="formObject.data.actionFieldType === 'sourced_dropdown'">
-                        <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Data Source (Global + This Product's Lists)</label>
+                        <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Data Source</label>
                         <select v-model="formObject.data.recordsourceId" class="w-full border-indigo-300 bg-indigo-50 rounded-lg shadow-sm" required>
                             <option :value="null">-- Select a Source --</option>
                             <option v-for="source in availableRecordsources" :key="source.value" :value="source.value">{{ source.label }}</option>
                         </select>
-                        <p class="mt-1 text-[10px] text-gray-400">Only Global lists and lists scoped to this product are shown.</p>
                     </div>
 
-                    <!-- RESTORED: Expiry Logic -->
                     <div v-if="formObject.data.actionFieldType === 'expiry_date'">
                         <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Validity Period (Months)</label>
                         <input v-model="formObject.data.validityDays" type="number" class="w-full border-indigo-300 bg-indigo-50 rounded-lg shadow-sm" placeholder="e.g. 3" required>
                     </div>
 
-                    <!-- RESTORED: Placeholder Logic -->
                     <div v-if="formObject.data.actionFieldType !== 'none'">
                         <label class="block text-xs font-black text-gray-400 uppercase mb-1">Input Placeholder</label>
                         <input v-model="formObject.data.actionFieldLabel" type="text" class="w-full border-gray-300 rounded-lg shadow-sm" placeholder="e.g. Ref Number">
@@ -121,7 +118,6 @@
                         <input v-model="formObject.data.sortOrder" type="number" class="w-full border-gray-300 rounded-lg shadow-sm">
                     </div>
 
-                    <!-- Interchangeable Logic -->
                     <div class="md:col-span-2">
                         <label class="block text-xs font-black text-gray-400 uppercase mb-1">Interchangeable With</label>
                         <select v-model="formObject.data.eitherDocumentTypeId" class="w-full border-gray-300 rounded-lg shadow-sm">
@@ -162,53 +158,69 @@ import { ref, onMounted, computed, reactive } from 'vue';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
 
-const props = defineProps(['slug', 'packId']);
+const props = defineProps({
+  slug: { type: String, default: null },
+  packId: { type: [String, Number], required: true },
+  fileTypeId: { type: [String, Number], default: null }
+});
+
 const { showAlert, showConfirm } = useAlerts();
 
 const documentTypes = ref([]);
-const availableLists = ref([]); // Relational lists from API: { id, name, productId, productName, productSlug, isActive }
+const availableLists = ref([]);
 const isLoading = ref(true);
 const formObject = reactive({ data: null });
 const isCreatingNew = ref(false);
 const isSyncing = ref(false); 
 
+// DUAL-CONTEXT NAVIGATION & API PATHS
+const backDestination = computed(() => {
+  return props.fileTypeId 
+    ? { name: 'admin.niche-factory.document-packs', params: { fileTypeId: props.fileTypeId } }
+    : { name: 'admin.product.document-packs', params: { slug: props.slug } };
+});
+
+const baseApiUrl = computed(() => {
+  return props.slug 
+    ? `admin/products/${props.slug}/document-packs/${props.packId}/types`
+    : `admin/document-packs/${props.packId}/types`;
+});
+
 const sortedDocumentTypes = computed(() => {
   return [...documentTypes.value].sort((a, b) => (a.sortOrder || a.sort_order || 0) - (b.sortOrder || b.sort_order || 0));
 });
 
-// Scope filter: only Global lists (productId null) + lists belonging to THIS product.
-// NOTE: The API's CamelCaseResponseMiddleware converts all response keys to camelCase.
 const availableRecordsources = computed(() => {
   return availableLists.value
-    .filter(src => src.productId === null || src.productId === undefined || src.productSlug === props.slug)
+    .filter(src => !props.slug || src.productId === null || src.productId === undefined || src.productSlug === props.slug)
     .map(src => ({
       value: src.id,
-      label: `${src.name}${src.productId ? ` • ${src.productName || 'This Product'}` : ' • Global'}`,
+      label: `${src.name}${src.productId ? ` • ${src.productName || 'Product'}` : ' • Global'}`,
     }));
 });
 
 const fetchDocumentTypes = async () => {
   isLoading.value = true;
   try {
-    const { data } = await apiClient.get(`admin/products/${props.slug}/document-packs/${props.packId}/types`);
-    documentTypes.value = data;
-  } catch (err) { console.error(err); }
+    const { data } = await apiClient.get(baseApiUrl.value);
+    documentTypes.value = Array.isArray(data) ? data : data.data || [];
+  } catch (err) { 
+    console.error('Failed to load document types:', err); 
+  }
   isLoading.value = false;
 };
 
 const fetchOptionSources = async () => {
-    try {
-        // Relational option lists endpoint
-        const { data } = await apiClient.get('admin/document-option-lists?include_global=1');
-        availableLists.value = Array.isArray(data) ? data : data.data;
-    } catch (e) { 
-        console.error("Failed to load option lists:", e); 
-    }
+  try {
+    const { data } = await apiClient.get('admin/document-option-lists?include_global=1');
+    availableLists.value = Array.isArray(data) ? data : data.data || [];
+  } catch (e) { 
+    console.error("Failed to load option lists:", e); 
+  }
 };
 
 const selectDocumentType = (docType) => {
   isCreatingNew.value = false;
-  // Handle camelCase mapping from Laravel middleware
   formObject.data = {
       ...docType,
       actionFieldType: docType.actionFieldType || docType.action_field_type,
@@ -231,74 +243,73 @@ const handleAddNew = () => {
 };
 
 const handleActionTypeChange = () => {
-    if (formObject.data.actionFieldType !== 'sourced_dropdown') formObject.data.recordsourceId = null;
-    if (formObject.data.actionFieldType !== 'expiry_date') formObject.data.validityDays = null;
+  if (formObject.data.actionFieldType !== 'sourced_dropdown') formObject.data.recordsourceId = null;
+  if (formObject.data.actionFieldType !== 'expiry_date') formObject.data.validityDays = null;
 };
 
 const handleSubmit = async () => {
-    try {
-        const url = `admin/products/${props.slug}/document-packs/${props.packId}/types${!isCreatingNew.value ? '/' + formObject.data.id : ''}`;
-        const method = isCreatingNew.value ? 'post' : 'put';
-        
-        // Manual conversion to snake_case for the API
-        const payload = {
-            label: formObject.data.label,
-            name: formObject.data.name,
-            note: formObject.data.note,
-            action_field_type: formObject.data.actionFieldType,
-            recordsource_id: formObject.data.recordsourceId,
-            validity_days: formObject.data.validityDays,
-            action_field_label: formObject.data.actionFieldLabel,
-            sort_order: formObject.data.sortOrder,
-            either_document_type_id: formObject.data.eitherDocumentTypeId,
-            is_active: formObject.data.isActive,
-            is_optional: formObject.data.isOptional,
-        };
+  try {
+    const url = `${baseApiUrl.value}${!isCreatingNew.value ? '/' + formObject.data.id : ''}`;
+    const method = isCreatingNew.value ? 'post' : 'put';
+    
+    const payload = {
+        label: formObject.data.label,
+        name: formObject.data.name,
+        note: formObject.data.note,
+        action_field_type: formObject.data.actionFieldType,
+        recordsource_id: formObject.data.recordsourceId,
+        validity_days: formObject.data.validityDays,
+        action_field_label: formObject.data.actionFieldLabel,
+        sort_order: formObject.data.sortOrder,
+        either_document_type_id: formObject.data.eitherDocumentTypeId,
+        is_active: formObject.data.isActive,
+        is_optional: formObject.data.isOptional,
+    };
 
-        await apiClient[method](url, payload);
-        showAlert('Success', 'Template configuration updated.');
-        fetchDocumentTypes();
-        formObject.data = null;
-    } catch (err) { showAlert('Error', 'Save failed.'); }
+    await apiClient[method](url, payload);
+    showAlert('Success', 'Template configuration updated.');
+    fetchDocumentTypes();
+    formObject.data = null;
+  } catch (err) { 
+    showAlert('Error', err.response?.data?.message || 'Save failed.'); 
+  }
 };
 
 const handleDelete = async () => {
-    if (await showConfirm('Delete Definition', 'Permanent deletion?')) {
-        try {
-            await apiClient.delete(`admin/products/${props.slug}/document-packs/${props.packId}/types/${formObject.data.id}`);
-            fetchDocumentTypes();
-            formObject.data = null;
-        } catch (err) { showAlert('Error', 'Delete failed.'); }
-    }
-}
-
-/**
- * Trigger the surgical document sync
- */
-const handleSync = async () => {
-    const confirmed = await showConfirm(
-        'Sync Document Pack', 
-        'This will add any missing document requirements from this pack to all active cases in this niche. Existing documents will not be affected. Proceed?'
-    );
-
-    if (!confirmed) return;
-
-    isSyncing.value = true;
+  if (await showConfirm('Delete Definition', 'Permanent deletion?')) {
     try {
-        // Calls the new endpoint in DocumentPackController
-        const { data } = await apiClient.post(`admin/products/${props.slug}/document-packs/${props.packId}/sync`);
-        
-        showAlert('Success', data.message || 'Cases synchronized successfully.');
-    } catch (err) {
-        console.error(err);
-        showAlert('Error', err.response?.data?.message || 'Failed to sync pack items to cases.');
-    } finally {
-        isSyncing.value = false;
+      await apiClient.delete(`${baseApiUrl.value}/${formObject.data.id}`);
+      fetchDocumentTypes();
+      formObject.data = null;
+    } catch (err) { 
+      showAlert('Error', err.response?.data?.message || 'Delete failed.'); 
     }
+  }
+};
+
+const handleSync = async () => {
+  if (!props.slug) return;
+
+  const confirmed = await showConfirm(
+    'Sync Document Pack', 
+    'This will add any missing document requirements from this pack to all active cases. Proceed?'
+  );
+
+  if (!confirmed) return;
+
+  isSyncing.value = true;
+  try {
+    const { data } = await apiClient.post(`admin/products/${props.slug}/document-packs/${props.packId}/sync`);
+    showAlert('Success', data.message || 'Cases synchronized successfully.');
+  } catch (err) {
+    showAlert('Error', err.response?.data?.message || 'Failed to sync pack items.');
+  } finally {
+    isSyncing.value = false;
+  }
 };
 
 onMounted(() => {
-    fetchDocumentTypes();
-    fetchOptionSources();
+  fetchDocumentTypes();
+  fetchOptionSources();
 });
-</script>
+</script>WorkflowDefinitionController.php

@@ -27,7 +27,7 @@
             <router-link @click="closeMobileMenu" to="/admin/products" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/products') }">
               <span class="text-yellow-400 font-bold">Product Factory</span>
             </router-link>
-            <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS Management</div>
+            <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS</div>
             <router-link @click="closeMobileMenu" to="/partner-admin/subscribers" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/partner-admin/subscribers') }">Subscribers</router-link>
             <router-link @click="closeMobileMenu" to="/partner-admin/dashboard" class="mobile-nav-link ml-2 text-blue-400 font-bold" :class="{ 'active': $route.path.startsWith('/partner-admin/dashboard') }">Partner Portal</router-link>
             <router-link @click="closeMobileMenu" to="/admin/billing" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/billing') }">Billing Management</router-link>
@@ -35,8 +35,8 @@
 
           <!-- 2. SUBSCRIBER ADMIN MENU -->
           <template v-if="authStore.hasRole('Subscriber Admin')">
-            <router-link @click="closeMobileMenu" to="/admin/users" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">User Management</router-link>
-            <router-link @click="closeMobileMenu" to="/admin/teams" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Team Management</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/users" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">Users</router-link>
+            <router-link @click="closeMobileMenu" to="/admin/teams" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Teams</router-link>
           </template>
 
           <!-- 3. SYSTEM ADMIN MENU -->
@@ -46,8 +46,13 @@
               <span class="text-yellow-400 font-bold">Product Factory</span>
             </router-link>
 
+            <!-- ⭐ NEW: STANDALONE NICHE FACTORY LINK ⭐ -->
+            <router-link to="/admin/niche-factory" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/niche-factory') }">
+              <span class="text-emerald-400 font-bold">Niche Factory</span>
+            </router-link>
+
             <!-- SaaS Management Group -->
-            <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS Management</div>
+            <div class="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4">SaaS</div>
             <router-link v-if="authStore.hasRole('System Admin')" @click="closeMobileMenu" to="/admin/core-users" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/core-users') }">Core Users</router-link>
             <!-- NEW: MOBILE WLP PARTNER PORTAL LINK -->
             <router-link @click="closeMobileMenu" to="/partner-admin/dashboard" class="mobile-nav-link ml-2 text-yellow-400 font-bold" :class="{ 'active': $route.path.startsWith('/partner-admin') }">Partner Portal</router-link>
@@ -100,8 +105,8 @@
             
             <!-- 2. SUBSCRIBER ADMIN MENU -->
             <template v-if="authStore.hasRole('Subscriber Admin')">
-              <router-link to="/admin/users" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">User Management</router-link>
-              <router-link to="/admin/teams" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Team Management</router-link>
+              <router-link to="/admin/users" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">Users</router-link>
+              <router-link to="/admin/teams" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Teams</router-link>
             </template>
 
             <!-- 3. SYSTEM ADMIN MENU (Merged V1 & V2) -->
@@ -112,10 +117,15 @@
                 <span class="text-yellow-400 font-bold">Product Factory</span>
               </router-link>
 
+              <!-- NEW: V2 NICHE FACTORY LINK -->
+              <router-link to="/admin/niche-factory" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/niche-factory') }">
+                <span class="text-emerald-400 font-bold">Niche Factory</span>
+              </router-link>
+
               <!-- ORIGINAL: PAAS MANAGEMENT DROPDOWN -->
               <div class="relative">
                 <button @click="isSaaSMenuOpen = !isSaaSMenuOpen" class="nav-link flex items-center" type="button">
-                  <span>SaaS Management</span>
+                  <span>SaaS</span>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-1 h-5 w-5"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"></path></svg>
                 </button>
                 <!-- Backdrop to close on click-away -->

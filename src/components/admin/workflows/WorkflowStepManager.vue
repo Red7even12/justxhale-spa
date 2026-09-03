@@ -347,8 +347,17 @@ import { useAlerts } from '@/composables/useAlerts';
 
 const props = defineProps({
   definition: { type: Object, required: true },
-  slug: { type: String, required: true }, // Inherited from Layout
-  product: { type: Object, required: false }
+  slug: { type: String, required: false },
+  product: { type: Object, required: false },
+  fileTypeId: { type: [String, Number], required: false }
+});
+
+const isFoundryContext = computed(() => !props.slug || props.slug === 'foundry');
+
+const apiBaseUrl = computed(() => {
+  return isFoundryContext.value
+    ? `admin/workflow-definitions/${props.definition.id}`
+    : `admin/products/${props.slug}/workflow-definitions/${props.definition.id}`;
 });
 
 const formattedProductName = computed(() => {
@@ -380,8 +389,8 @@ const fetchSteps = async () => {
     loading.value = true;
     try {
         const params = { sort_by: sortState.by, sort_dir: sortState.dir };
-        const { data } = await apiClient.get(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/steps`, { params });
-        steps.value = data;
+        const { data } = await apiClient.get(`/${apiBaseUrl.value}/steps`, { params });
+        steps.value = data?.data || data || [];
     } catch (e) { console.error(e); }
     loading.value = false;
 };
@@ -395,11 +404,11 @@ const sortBy = (col) => {
 const exportSteps = async () => {
     isExporting.value = true;
     try {
-        const response = await apiClient.get(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/export`, { responseType: 'blob' });
+        const response = await apiClient.get(`/${apiBaseUrl.value}/export`, { responseType: 'blob' });
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `DNA-Steps-${props.slug}-${props.definition.id}.xlsx`);
+        link.setAttribute('download', `DNA-Steps-${props.slug || 'foundry'}-${props.definition.id}.xlsx`);
         document.body.appendChild(link);
         link.click();
     } catch (e) { showAlert('Error', 'Export failed.'); }
@@ -415,8 +424,8 @@ const handleImport = async () => {
     formData.append('file', importFile.value);
 
     try {
-        await apiClient.post(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/import`, formData);
-        showAlert('Success', 'Steps synchronized with Product DNA.');
+        await apiClient.post(`/${apiBaseUrl.value}/import`, formData);
+        showAlert('Success', 'Steps synchronized with Workflow DNA.');
         fetchSteps();
     } catch (e) {
         if (e.response?.status === 422) {
@@ -429,13 +438,19 @@ const handleImport = async () => {
 };
 
 const syncWorkflow = async () => {
-    if (!confirm("This will add any missing steps to all active cases for this niche. Proceed?")) return;
+    if (!confirm("This will add any missing steps or updates to all active cases for this Niche. Proceed?")) return;
     
     try {
-        const res = await apiClient.post(`admin/products/${props.slug}/workflow-definitions/${props.definition.id}/sync`);
-        alert(res.data.message);
+        // If in Foundry context, hit the niche sync endpoint; otherwise hit the product sync endpoint
+        const syncUrl = isFoundryContext.value
+            ? `admin/file-types/${props.fileTypeId || props.definition.fileTypeId || props.definition.file_type_id}/workflow-definitions/${props.definition.id}/sync`
+            : `admin/products/${props.slug}/workflow-definitions/${props.definition.id}/sync`;
+
+        const { data } = await apiClient.post(`/${syncUrl}`);
+        showAlert('Success', data.message || 'Workflow synchronized across active cases.');
     } catch (e) {
-        alert("Sync failed.");
+        console.error(e);
+        showAlert('Error', e.response?.data?.message || 'Sync failed.');
     }
 };
 

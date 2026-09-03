@@ -18,21 +18,28 @@
         </router-link>
       </div>
 
-      <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-        <router-link :to="{ name: 'admin.product.dashboard', params: { slug } }" class="nav-link" active-class="nav-active">Dashboard</router-link>
+<nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+        <router-link :to="{ name: 'admin.product.dashboard', params: { slug } }" class="nav-link" active-class="nav-active">
+          📊 Dashboard & Branding
+        </router-link>
         
-        <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">DNA Architecture</div>
-          <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="nav-link" active-class="nav-active">Casefile Types</router-link>
-          <router-link :to="{ name: 'admin.product.file-classes', params: { slug } }" class="nav-link" active-class="nav-active">Case Classifications</router-link>
-          <router-link :to="{ name: 'admin.product.workflows', params: { slug } }" class="nav-link" active-class="nav-active">Workflows</router-link>
-          <router-link :to="{ name: 'admin.product.document-packs', params: { slug } }" class="nav-link" active-class="nav-active">Document Packs</router-link>
-          <router-link :to="{ name: 'admin.subscriber.entity-dna' }" class="nav-link" active-class="nav-active">Entity DNA</router-link>
-          <router-link :to="{ name: 'admin.product.participant-roles', params: { slug } }" class="nav-link" active-class="nav-active">Participant Roles</router-link>
-          <router-link :to="{ name: 'admin.product.communication', params: { slug } }" class="nav-link" active-class="nav-active">System Mails</router-link>
-          <router-link :to="{ name: 'admin.product.option-lists', params: { slug } }" class="nav-link" active-class="nav-active">Option Lists</router-link>
+        <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Product Assembly</div>
+        
+        <!-- Re-labeled to Niche Assembly -->
+        <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="nav-link" active-class="nav-active">
+          🧩 Niche Assembly
+        </router-link>
+        
+        <!-- Case Classifications (Priority badges calibrated for this product) -->
+        <router-link :to="{ name: 'admin.product.file-classes', params: { slug } }" class="nav-link" active-class="nav-active">
+          🏷️ Case Classifications
+        </router-link>
 
-        <div v-if="isSystemAdmin" class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Business</div>
-          <router-link v-if="isSystemAdmin" :to="{ name: 'admin.product.licensing', params: { slug } }" class="nav-link" active-class="nav-active">License Management</router-link>
+        <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Commercial & SaaS</div>
+        
+        <router-link :to="{ name: 'admin.product.licensing', params: { slug } }" class="nav-link" active-class="nav-active">
+          💳 License Management
+        </router-link>
       </nav>
 
       <div class="p-4 border-t border-white/10 bg-black/20 space-y-2">

@@ -1,168 +1,216 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+    <!-- Header Banner -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm gap-4">
       <div>
-        <h2 class="text-xl font-bold text-gray-800">Casefile Types (Niches)</h2>
-        <p class="text-sm text-gray-500">Define and assemble niche blueprints within <span class="font-bold text-indigo-600">{{ product?.name }}</span></p>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🧩</span>
+          <h2 class="text-xl font-black text-gray-900 tracking-tight">Product Niche Assembly</h2>
+          <span class="bg-indigo-50 text-indigo-700 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-indigo-100">
+            {{ product?.name }}
+          </span>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">
+          Assemble and sequence reusable Niche blueprints into this product. Configure tab sequence, tab label overrides, and team security clearances.
+        </p>
       </div>
-      <button @click="openModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold transition-all">
-        + Add New Niche
-      </button>
+
+      <div class="flex items-center gap-3">
+        <router-link :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-gray-500 hover:text-indigo-600 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl border transition-colors">
+          Open Niche Foundry ↗
+        </router-link>
+        <button @click="openAttachModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-xs">
+          + Attach Niche from Catalog
+        </button>
+      </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+    <!-- Assembled Niches Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+        <thead class="bg-gray-50/80">
           <tr>
-            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-16">Tab Order</th>
-            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Niche Name</th>
-            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">System Slug</th>
-            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">UX Layout</th>
-            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Doc Packs</th>
-            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Workflows</th>
-            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Teams</th>
-            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider w-16">Tab Order</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Niche Blueprint</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Tab Display in Workspace</th>
+            <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Engine Specs</th>
+            <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Team Clearance</th>
+            <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Status on Product</th>
+            <th class="px-6 py-3.5 text-right text-xs font-black text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200 bg-white">
-          <tr v-for="niche in niches" :key="niche.id" class="hover:bg-indigo-50/30 transition-colors">
-            <!-- Sort Order -->
+        <tbody class="divide-y divide-gray-100 bg-white">
+          <tr v-for="niche in assembledNiches" :key="niche.id" class="hover:bg-indigo-50/20 transition-colors">
+            
+            <!-- Sort Order Badge -->
             <td class="px-4 py-4 text-center">
-              <span class="inline-flex items-center justify-center bg-gray-100 text-gray-800 rounded-lg h-6 w-6 text-xs font-black">
-                {{ niche.sort_order ?? niche.sortOrder ?? 1 }}
+              <span class="inline-flex items-center justify-center bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg h-7 w-7 text-xs font-black">
+                {{ niche.pivot?.sort_order ?? niche.pivot?.sortOrder ?? 1 }}
               </span>
             </td>
-            <td class="px-6 py-4 font-bold text-gray-900">{{ niche.name }}</td>
-            <td class="px-6 py-4 font-mono text-xs text-gray-400">{{ niche.slug }}</td>
+
+            <!-- Blueprint Identity -->
+            <td class="px-6 py-4">
+              <div class="font-bold text-gray-900 text-sm">{{ niche.name }}</div>
+              <div class="font-mono text-[11px] text-gray-400">/{{ niche.slug }}</div>
+              <span v-if="niche.category" class="inline-block bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded mt-1">
+                {{ niche.category }}
+              </span>
+            </td>
+
+            <!-- Tab Display (Default vs Override) -->
+            <td class="px-6 py-4">
+              <div v-if="niche.pivot?.tab_label_override || niche.pivot?.tabLabelOverride" class="flex items-center gap-1.5">
+                <span class="font-bold text-gray-900 text-sm">{{ niche.pivot?.tab_label_override || niche.pivot?.tabLabelOverride }}</span>
+                <span class="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.2 rounded font-black uppercase tracking-tighter">
+                  Override
+                </span>
+              </div>
+              <div v-else class="text-sm text-gray-400 italic">
+                Default: "{{ niche.name }}"
+              </div>
+            </td>
+
+            <!-- Attached Specs -->
             <td class="px-6 py-4 text-center">
-              <span class="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                {{ niche.workspaceTemplate || niche.workspace_template }}
-              </span>
+              <div class="flex items-center justify-center gap-2">
+                <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded" title="Fields">
+                  📋 {{ niche.field_definitions_count ?? niche.fieldDefinitionsCount ?? 0 }}
+                </span>
+                <span class="bg-purple-50 text-purple-700 text-xs font-bold px-2 py-1 rounded" title="Doc Packs">
+                  📦 {{ niche.document_packs_count ?? niche.documentPacksCount ?? 0 }}
+                </span>
+                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded" title="Workflows">
+                  ⚡ {{ niche.workflow_definitions_count ?? niche.workflowDefinitionsCount ?? 0 }}
+                </span>
+              </div>
             </td>
-            <!-- Attached Doc Packs -->
-            <td class="px-6 py-4 text-center">
-              <span class="inline-flex items-center justify-center bg-purple-50 text-purple-700 rounded-full h-7 px-3 text-xs font-bold border border-purple-100">
-                📦 {{ niche.document_packs_count ?? niche.documentPacks?.length ?? 0 }}
-              </span>
-            </td>
-            <!-- Attached Workflows -->
-            <td class="px-6 py-4 text-center">
-              <span class="inline-flex items-center justify-center bg-blue-50 text-blue-700 rounded-full h-7 px-3 text-xs font-bold border border-blue-100">
-                ⚡ {{ niche.workflow_definitions_count ?? niche.workflowDefinitions?.length ?? 0 }}
-              </span>
-            </td>
+
             <!-- Authorized Teams -->
             <td class="px-6 py-4 text-center">
-              <span class="inline-flex items-center justify-center bg-emerald-50 text-emerald-700 rounded-full h-7 px-3 text-xs font-bold border border-emerald-100">
-                👥 {{ niche.teams_count ?? niche.teams?.length ?? 'All' }}
+              <span v-if="(niche.teams || []).length > 0" class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-full">
+                👥 {{ niche.teams.length }} Team(s)
               </span>
+              <span v-else class="text-xs text-gray-400 font-medium italic">All Teams (Public)</span>
             </td>
+
+            <!-- Status on this Product -->
             <td class="px-6 py-4 text-center">
-              <span :class="(niche.is_active ?? niche.isActive) ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'" class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest border">
-                {{ (niche.is_active ?? niche.isActive) ? 'Active' : 'Inactive' }}
+              <span :class="Number(niche.pivot?.is_active ?? niche.pivot?.isActive ?? 1) === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider">
+                {{ Number(niche.pivot?.is_active ?? niche.pivot?.isActive ?? 1) === 1 ? 'Active' : 'Disabled' }}
               </span>
             </td>
-            <td class="px-6 py-4 text-right space-x-3 text-sm font-medium">
-                <router-link :to="{ name: 'admin.product.file-type-fields', params: { slug: slug, fileTypeId: niche.id } }" class="text-indigo-600 hover:text-indigo-900">Fields</router-link>
-                <button @click="openModal(niche)" class="text-gray-400 hover:text-gray-600">Edit</button>
-                <button @click="deleteNiche(niche)" class="text-red-400 hover:text-red-600">Archive</button>
+
+            <!-- Actions -->
+            <td class="px-6 py-4 text-right space-x-3 text-xs font-bold">
+              <router-link :to="{ name: 'admin.niche-factory.fields', params: { fileTypeId: niche.id } }" class="text-indigo-600 hover:text-indigo-900">
+                Foundry ↗
+              </router-link>
+              <button @click="openConfigModal(niche)" class="text-gray-500 hover:text-gray-700">
+                Configure Tab
+              </button>
+              <button @click="detachNiche(niche)" class="text-red-400 hover:text-red-600">
+                Detach
+              </button>
+            </td>
+          </tr>
+
+          <tr v-if="assembledNiches.length === 0">
+            <td colspan="7" class="p-10 text-center text-gray-400 italic text-sm">
+              No Niches assembled yet for {{ product?.name }}. Click "+ Attach Niche from Catalog" to assemble your first module.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Edit Niche Blueprint Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <h2 class="text-xl font-bold mb-4 text-gray-900 border-b pb-3">{{ form.id ? 'Edit' : 'Create' }} Niche Blueprint</h2>
-        
-        <div class="space-y-4">
-          <div class="grid grid-cols-3 gap-4">
-            <div class="col-span-2">
-              <label class="block text-xs font-black text-gray-500 uppercase mb-1">Display Name</label>
-              <input v-model="form.name" type="text" class="w-full border-gray-300 rounded-lg shadow-sm text-sm" placeholder="e.g. Contractor Entity">
-            </div>
+    <!-- Modal: Attach / Configure Niche -->
+    <div v-if="showModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+        <div class="border-b pb-3 flex justify-between items-center">
+          <h2 class="text-lg font-black text-gray-900">
+            {{ isEditing ? 'Configure Assembled Tab' : 'Attach Niche to Product' }}
+          </h2>
+          <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+        </div>
 
-            <div>
-              <label class="block text-xs font-black text-gray-500 uppercase mb-1">Tab Sort Order</label>
-              <input v-model.number="form.sort_order" type="number" min="1" class="w-full border-gray-300 rounded-lg shadow-sm text-sm font-bold text-center" placeholder="1">
-            </div>
+        <!-- 1. Blueprint Selection (Only when attaching new) -->
+        <div v-if="!isEditing">
+          <label class="block text-xs font-black text-gray-600 uppercase mb-1">Select Niche from Catalog</label>
+          <select v-model="form.file_type_id" class="w-full border-gray-300 rounded-lg text-sm font-medium">
+            <option :value="null" disabled>-- Choose a Niche Blueprint --</option>
+            <option v-for="c in availableCatalogNiches" :key="c.id" :value="c.id">
+              {{ c.name }} {{ c.category ? `(${c.category})` : '' }}
+            </option>
+          </select>
+          <p v-if="availableCatalogNiches.length === 0" class="text-[11px] text-amber-600 mt-1">
+            All approved catalog blueprints are already attached to this product.
+          </p>
+        </div>
+
+        <div v-else class="p-3 bg-gray-50 rounded-xl border">
+          <div class="text-[10px] font-black uppercase text-gray-400">Selected Blueprint</div>
+          <div class="font-bold text-gray-900 text-sm">{{ selectedNicheName }}</div>
+        </div>
+
+        <!-- 2. Tab Display & Sequencing -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="col-span-2">
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">
+              Tab Label Override (Optional)
+            </label>
+            <input 
+              v-model="form.tab_label_override" 
+              type="text" 
+              placeholder="Leave blank to use master name" 
+              class="w-full border-gray-300 rounded-lg text-sm" 
+            />
+            <p class="text-[10px] text-gray-400 mt-1">Renames this tab on {{ product?.name }} only.</p>
           </div>
 
           <div>
-            <label class="block text-xs font-black text-gray-500 uppercase mb-1">System Slug (Unique)</label>
-            <input v-model="form.slug" type="text" class="w-full border-gray-300 rounded-lg shadow-sm font-mono text-sm" placeholder="e.g. contractor_entity">
-          </div>
-
-          <!-- 1. ATTACH DOCUMENT PACKS -->
-          <div class="border rounded-xl p-4 bg-gray-50/50">
-            <label class="text-xs font-black text-purple-700 uppercase mb-2 flex items-center gap-1.5">
-              <span>📦 Attach Document Packs (Workspace Tabs)</span>
-            </label>
-            <div v-if="catalogDocPacks.length === 0" class="text-xs text-gray-400 italic">
-              No Document Packs created yet for this product.
-            </div>
-            <div v-else class="space-y-2 max-h-32 overflow-y-auto">
-              <label v-for="pack in catalogDocPacks" :key="pack.id" class="flex items-center gap-2 text-xs text-gray-700 font-medium cursor-pointer p-1.5 rounded hover:bg-white">
-                <input type="checkbox" :value="pack.id" v-model="form.document_pack_ids" class="rounded text-purple-600 border-gray-300">
-                <span>{{ pack.name }}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- 2. ATTACH WORKFLOWS -->
-          <div class="border rounded-xl p-4 bg-gray-50/50">
-            <label class="flex text-xs font-black text-blue-700 uppercase mb-2 items-center gap-1.5">
-              <span>⚡ Attach Workflow Processes</span>
-            </label>
-            <div v-if="catalogWorkflows.length === 0" class="text-xs text-gray-400 italic">
-              No Workflows created yet for this product.
-            </div>
-            <div v-else class="space-y-2 max-h-32 overflow-y-auto">
-              <label v-for="wf in catalogWorkflows" :key="wf.id" class="flex items-center gap-2 text-xs text-gray-700 font-medium cursor-pointer p-1.5 rounded hover:bg-white">
-                <input type="checkbox" :value="wf.id" v-model="form.workflow_ids" class="rounded text-blue-600 border-gray-300">
-                <span>{{ wf.name }}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- 3. AUTHORIZED TEAMS (RBAC / POPIA SCOPING) -->
-          <div class="border rounded-xl p-4 bg-gray-50/50">
-            <label class="text-xs font-black text-emerald-700 uppercase mb-2 flex items-center justify-between">
-              <span class="flex items-center gap-1.5">
-                <span class="material-icons text-sm">groups</span>
-                <span>Authorized Teams (Tab Access Scoping)</span>
-              </span>
-              <span class="text-[10px] font-normal text-gray-400">Optional</span>
-            </label>
-            <div v-if="subscriberTeams.length === 0" class="text-xs text-gray-400 italic">
-              No teams created yet. All users will have access by default.
-            </div>
-            <div v-else class="space-y-2 max-h-32 overflow-y-auto">
-              <label v-for="team in subscriberTeams" :key="team.id" class="flex items-center gap-2 text-xs text-gray-700 font-medium cursor-pointer p-1.5 rounded hover:bg-white">
-                <input type="checkbox" :value="team.id" v-model="form.team_ids" class="rounded text-emerald-600 border-gray-300">
-                <span>{{ team.name }}</span>
-              </label>
-            </div>
-            <p class="text-[10px] text-gray-400 mt-2 italic">
-              * Tip: Admins always have access. Leaving all unchecked grants access to all teams.
-            </p>
-          </div>
-
-          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-            <input v-model="form.is_active" type="checkbox" id="active" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-            <label for="active" class="text-xs text-gray-700 font-bold">Niche is Active</label>
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Tab Order</label>
+            <input 
+              v-model.number="form.sort_order" 
+              type="number" 
+              min="1" 
+              class="w-full border-gray-300 rounded-lg text-sm font-bold text-center" 
+            />
           </div>
         </div>
 
-        <div class="mt-6 flex justify-end gap-3 border-t pt-4">
-          <button @click="showModal = false" class="text-gray-400 font-bold text-xs px-4 py-2">Cancel</button>
-          <button @click="save" class="bg-indigo-600 text-white font-bold text-xs px-6 py-2.5 rounded-lg shadow hover:bg-indigo-700">
-            {{ form.id ? 'Update Niche' : 'Create Niche' }}
+        <!-- 3. Authorized Teams (POPIA / Tab Clearance) -->
+        <div class="border rounded-xl p-3 bg-gray-50/50 space-y-1">
+          <label class="text-xs font-black text-emerald-800 uppercase block">
+            👥 Functional Team Clearance (POPIA Scoping)
+          </label>
+          <div v-if="subscriberTeams.length === 0" class="text-xs text-gray-400 italic">
+            No teams configured. All authorized users will have access by default.
+          </div>
+          <div v-else class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto pt-1">
+            <label v-for="team in subscriberTeams" :key="team.id" class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer p-1 rounded hover:bg-white">
+              <input type="checkbox" :value="team.id" v-model="form.team_ids" class="rounded text-emerald-600">
+              <span class="truncate">{{ team.name }}</span>
+            </label>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1 italic">
+            * Leaving all unchecked makes this tab visible to all team members.
+          </p>
+        </div>
+
+        <!-- Active Toggle -->
+        <div class="flex items-center gap-3 pt-2">
+          <input v-model="form.is_active" type="checkbox" id="assembly_active" class="h-4 w-4 text-indigo-600 rounded">
+          <label for="assembly_active" class="text-xs font-bold text-gray-700">Tab is Active in Product Workspace</label>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 border-t pt-4">
+          <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-xs px-4 py-2">
+            Cancel
+          </button>
+          <button @click="saveAssembly" :disabled="!form.file_type_id" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow">
+            {{ isEditing ? 'Update Configuration' : 'Attach to Product' }}
           </button>
         </div>
       </div>
@@ -171,7 +219,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
 import teamService from '@/services/teamService';
@@ -182,112 +230,113 @@ const props = defineProps({
 });
 
 const { showConfirm, showAlert } = useAlerts();
-const niches = ref([]);
-const catalogDocPacks = ref([]);
-const catalogWorkflows = ref([]);
+
+const assembledNiches = ref([]);
+const masterCatalog = ref([]);
 const subscriberTeams = ref([]);
 const showModal = ref(false);
+const isEditing = ref(false);
+const selectedNicheName = ref('');
 
 const form = reactive({
-  id: null,
-  name: '',
-  slug: '',
-  workspace_template: 'TemplateStandard',
+  file_type_id: null,
+  tab_label_override: '',
   sort_order: 1,
   is_active: true,
-  document_pack_ids: [],
-  workflow_ids: [],
   team_ids: []
 });
 
-const loadCatalog = async () => {
-  try {
-    const [packsRes, wfRes, teamsRes] = await Promise.all([
-      apiClient.get(`admin/products/${props.slug}/document-packs`),
-      apiClient.get(`admin/products/${props.slug}/workflow-definitions`),
-      teamService.getTeams().catch(() => ({ data: [] }))
-    ]);
-    catalogDocPacks.value = packsRes.data?.data || packsRes.data || [];
-    catalogWorkflows.value = wfRes.data?.data || wfRes.data || [];
-    subscriberTeams.value = teamsRes.data?.data || teamsRes.data || [];
-  } catch (error) {
-    console.error("Catalog/Teams load failed", error);
-  }
-};
+// Filter catalog to show only niches not yet assembled into this product
+const availableCatalogNiches = computed(() => {
+  const assembledIds = assembledNiches.value.map(n => n.id);
+  return masterCatalog.value.filter(c => !assembledIds.includes(c.id));
+});
 
-const loadNiches = async () => {
+const loadAssembledNiches = async () => {
   try {
     const { data } = await apiClient.get(`admin/products/${props.slug}/file-types`);
-    niches.value = data;
+    assembledNiches.value = data?.data || data || [];
   } catch (error) {
-    console.error("Load failed", error);
+    console.error('Failed to load assembled niches', error);
   }
 };
 
-const openModal = (niche = null) => {
-  if (niche) {
-    form.id = niche.id;
-    form.name = niche.name;
-    form.slug = niche.slug;
-    form.workspace_template = niche.workspaceTemplate ?? niche.workspace_template ?? 'TemplateStandard';
-    form.sort_order = niche.sortOrder ?? niche.sort_order ?? 1;
-    form.is_active = niche.isActive ?? niche.is_active ?? true;
-    form.document_pack_ids = (niche.documentPacks || niche.document_packs || []).map(p => p.id);
-    form.workflow_ids = (niche.workflowDefinitions || niche.workflow_definitions || []).map(w => w.id);
-    form.team_ids = (niche.teams || []).map(t => t.id);
-  } else {
-    form.id = null;
-    form.name = '';
-    form.slug = '';
-    form.workspace_template = 'TemplateStandard';
-    form.sort_order = (niches.value.length + 1);
-    form.is_active = true;
-    form.document_pack_ids = [];
-    form.workflow_ids = [];
-    form.team_ids = [];
+const loadCatalogAndTeams = async () => {
+  try {
+    const [catalogRes, teamsRes] = await Promise.all([
+      apiClient.get('admin/file-types'),
+      teamService.getTeams().catch(() => ({ data: [] }))
+    ]);
+    masterCatalog.value = catalogRes.data?.data || catalogRes.data || [];
+    subscriberTeams.value = teamsRes.data?.data || teamsRes.data || [];
+  } catch (error) {
+    console.error('Failed to load catalog/teams', error);
   }
+};
+
+const openAttachModal = () => {
+  isEditing.value = false;
+  selectedNicheName.value = '';
+  form.file_type_id = availableCatalogNiches.value[0]?.id || null;
+  form.tab_label_override = '';
+  form.sort_order = assembledNiches.value.length + 1;
+  form.is_active = true;
+  form.team_ids = [];
   showModal.value = true;
 };
 
-const save = async () => {
+const openConfigModal = (niche) => {
+  isEditing.value = true;
+  selectedNicheName.value = niche.name;
+  form.file_type_id = niche.id;
+  form.tab_label_override = niche.pivot?.tab_label_override || niche.pivot?.tabLabelOverride || '';
+  form.sort_order = niche.pivot?.sort_order ?? niche.pivot?.sortOrder ?? 1;
+  form.is_active = Number(niche.pivot?.is_active ?? niche.pivot?.isActive ?? 1) === 1;
+  form.team_ids = (niche.teams || []).map(t => t.id);
+  showModal.value = true;
+};
+
+const saveAssembly = async () => {
   try {
-    const url = `admin/products/${props.slug}/file-types${form.id ? '/' + form.id : ''}`;
-    const method = form.id ? 'put' : 'post';
-    
+    const url = `admin/products/${props.slug}/file-types${isEditing.value ? '/' + form.file_type_id : ''}`;
+    const method = isEditing.value ? 'put' : 'post';
+
     const payload = {
-        name: form.name,
-        slug: form.slug,
-        workspace_template: form.workspace_template,
-        sort_order: form.sort_order,
-        is_active: form.is_active,
-        document_pack_ids: form.document_pack_ids,
-        workflow_ids: form.workflow_ids,
-        team_ids: form.team_ids
+      file_type_id: form.file_type_id,
+      tab_label_override: form.tab_label_override,
+      sort_order: form.sort_order,
+      is_active: form.is_active,
+      team_ids: form.team_ids
     };
 
     await apiClient[method](url, payload);
     showModal.value = false;
-    loadNiches();
-    showAlert('Success', 'Niche configuration and team access updated.');
+    loadAssembledNiches();
+    showAlert('Success', isEditing.value ? 'Tab configuration updated.' : 'Niche attached to product.');
   } catch (error) {
-    showAlert('Error', error.response?.data?.message || 'Save failed.');
+    showAlert('Error', error.response?.data?.message || 'Failed to update assembly.');
   }
 };
 
-const deleteNiche = async (niche) => {
-  if (await showConfirm('Archive Niche', `Archive "${niche.name}"? This will hide it from the product factory.`)) {
+const detachNiche = async (niche) => {
+  const confirmed = await showConfirm(
+    'Detach Niche',
+    `Detach "${niche.name}" from ${props.product?.name}? The blueprint will remain safe in the Niche Foundry.`
+  );
+
+  if (confirmed) {
     try {
       await apiClient.delete(`admin/products/${props.slug}/file-types/${niche.id}`);
-      loadNiches();
-      showAlert('Success', 'Niche archived.');
+      showAlert('Success', `"${niche.name}" detached from product.`);
+      loadAssembledNiches();
     } catch (error) {
-      showAlert('Error', 'Action failed.');
+      showAlert('Error', error.response?.data?.message || 'Detach failed.');
     }
   }
 };
 
 onMounted(() => {
-  loadNiches();
-  loadCatalog();
+  loadAssembledNiches();
+  loadCatalogAndTeams();
 });
 </script>
