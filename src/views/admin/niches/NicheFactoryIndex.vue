@@ -107,21 +107,21 @@
             <td class="px-6 py-4 text-center">
               <div class="flex items-center justify-center gap-2">
                 <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded-md" title="Custom Fields">
-                  📋 {{ niche.field_definitions_count ?? 0 }}
+                  📋 {{ niche.field_definitions_count ?? niche.fieldDefinitionsCount ?? niche.fields_count ?? 0 }}
                 </span>
                 <span class="bg-purple-50 text-purple-700 text-xs font-bold px-2 py-1 rounded-md" title="Attached Document Packs">
-                  📦 {{ niche.document_packs_count ?? 0 }}
+                  📦 {{ niche.document_packs_count ?? niche.documentPacksCount ?? 0 }}
                 </span>
                 <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md" title="Attached Workflows">
-                  ⚡ {{ niche.workflow_definitions_count ?? 0 }}
+                  ⚡ {{ niche.workflow_definitions_count ?? niche.workflowDefinitionsCount ?? 0 }}
                 </span>
               </div>
             </td>
 
             <!-- Product Deployment Matrix -->
             <td class="px-6 py-4 text-center">
-              <span v-if="niche.products_count > 0" class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-black px-2.5 py-1 rounded-full">
-                🚀 {{ niche.products_count }} Products
+              <span v-if="(niche.products_count ?? niche.productsCount ?? niche.products?.length ?? 0) > 0" class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-black px-2.5 py-1 rounded-full">
+                🚀 {{ niche.products_count ?? niche.productsCount ?? niche.products?.length }} Products
               </span>
               <span v-else class="text-xs text-gray-400 italic font-medium">Unassigned</span>
             </td>
