@@ -5,22 +5,22 @@
       <div>
         <div class="flex items-center gap-2">
           <span class="text-2xl">🧩</span>
-          <h2 class="text-xl font-black text-gray-900 tracking-tight">Product Niche Assembly</h2>
-          <span class="bg-indigo-50 text-indigo-700 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-indigo-100">
+          <h2 class="text-xl font-black text-gray-900 tracking-tight">Product Workspace Assembly</h2>
+          <span class="bg-blue-50 text-blue-700 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-blue-100">
             {{ product?.name }}
           </span>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          Assemble and sequence reusable Niche blueprints into this product. Configure tab sequence, tab label overrides, and team security clearances.
+          Assemble and sequence reusable Workspace modules into this product. Configure tab sequence, tab label overrides, and team security clearances.
         </p>
       </div>
 
       <div class="flex items-center gap-3">
-        <router-link :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-gray-500 hover:text-indigo-600 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl border transition-colors">
-          Open Niche Foundry ↗
+        <router-link :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-gray-500 hover:text-blue-600 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl border transition-colors">
+          Open Workspace Foundry ↗
         </router-link>
-        <button @click="openAttachModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-xs">
-          + Attach Niche from Catalog
+        <button @click="openAttachModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-xs">
+          + Attach Workspace Module from Catalog
         </button>
       </div>
     </div>
@@ -31,7 +31,7 @@
         <thead class="bg-gray-50/80">
           <tr>
             <th class="px-4 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider w-16">Tab Order</th>
-            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Niche Blueprint</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Workspace Module</th>
             <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Tab Display in Workspace</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Engine Specs</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Team Clearance</th>
@@ -40,11 +40,11 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white">
-          <tr v-for="niche in assembledNiches" :key="niche.id" class="hover:bg-indigo-50/20 transition-colors">
+          <tr v-for="niche in assembledNiches" :key="niche.id" class="hover:bg-blue-50/20 transition-colors">
             
             <!-- Sort Order Badge -->
             <td class="px-4 py-4 text-center">
-              <span class="inline-flex items-center justify-center bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg h-7 w-7 text-xs font-black">
+              <span class="inline-flex items-center justify-center bg-blue-50 text-blue-700 border border-blue-100 rounded-lg h-7 w-7 text-xs font-black">
                 {{ niche.pivot?.sort_order ?? niche.pivot?.sortOrder ?? 1 }}
               </span>
             </td>
@@ -103,7 +103,7 @@
 
             <!-- Actions -->
             <td class="px-6 py-4 text-right space-x-3 text-xs font-bold">
-              <router-link :to="{ name: 'admin.niche-factory.fields', params: { fileTypeId: niche.id } }" class="text-indigo-600 hover:text-indigo-900">
+              <router-link :to="{ name: 'admin.niche-factory.fields', params: { fileTypeId: niche.id } }" class="text-blue-600 hover:text-blue-900">
                 Foundry ↗
               </router-link>
               <button @click="openConfigModal(niche)" class="text-gray-500 hover:text-gray-700">
@@ -129,14 +129,14 @@
       <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4">
         <div class="border-b pb-3 flex justify-between items-center">
           <h2 class="text-lg font-black text-gray-900">
-            {{ isEditing ? 'Configure Assembled Tab' : 'Attach Niche to Product' }}
+            {{ isEditing ? 'Configure Assembled Tab' : 'Attach Workspace Module to Product' }}
           </h2>
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
         </div>
 
         <!-- 1. Blueprint Selection (Only when attaching new) -->
         <div v-if="!isEditing">
-          <label class="block text-xs font-black text-gray-600 uppercase mb-1">Select Niche from Catalog</label>
+          <label class="block text-xs font-black text-gray-600 uppercase mb-1">Select from Catalog</label>
           <select v-model="form.file_type_id" class="w-full border-gray-300 rounded-lg text-sm font-medium">
             <option :value="null" disabled>-- Choose a Niche Blueprint --</option>
             <option v-for="c in availableCatalogNiches" :key="c.id" :value="c.id">
@@ -200,7 +200,7 @@
 
         <!-- Active Toggle -->
         <div class="flex items-center gap-3 pt-2">
-          <input v-model="form.is_active" type="checkbox" id="assembly_active" class="h-4 w-4 text-indigo-600 rounded">
+          <input v-model="form.is_active" type="checkbox" id="assembly_active" class="h-4 w-4 text-blue-600 rounded">
           <label for="assembly_active" class="text-xs font-bold text-gray-700">Tab is Active in Product Workspace</label>
         </div>
 
@@ -209,7 +209,7 @@
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-xs px-4 py-2">
             Cancel
           </button>
-          <button @click="saveAssembly" :disabled="!form.file_type_id" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow">
+          <button @click="saveAssembly" :disabled="!form.file_type_id" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow">
             {{ isEditing ? 'Update Configuration' : 'Attach to Product' }}
           </button>
         </div>

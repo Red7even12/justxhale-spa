@@ -20,25 +20,25 @@
 
 <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
         <router-link :to="{ name: 'admin.product.dashboard', params: { slug } }" class="nav-link" active-class="nav-active">
-          📊 Dashboard & Branding
+          Dashboard
         </router-link>
         
         <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Product Assembly</div>
         
         <!-- Re-labeled to Niche Assembly -->
         <router-link :to="{ name: 'admin.product.file-types', params: { slug } }" class="nav-link" active-class="nav-active">
-          🧩 Niche Assembly
+          Workspace Assembly
         </router-link>
         
         <!-- Case Classifications (Priority badges calibrated for this product) -->
         <router-link :to="{ name: 'admin.product.file-classes', params: { slug } }" class="nav-link" active-class="nav-active">
-          🏷️ Case Classifications
+          Case Classifications
         </router-link>
 
         <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">Commercial & SaaS</div>
         
         <router-link :to="{ name: 'admin.product.licensing', params: { slug } }" class="nav-link" active-class="nav-active">
-          💳 License Management
+          License Management
         </router-link>
       </nav>
 
@@ -139,7 +139,7 @@ const backDestination = computed(() => {
 });
 
 const backLabel = computed(() => {
-    return isWlpAdmin.value ? 'Return to Partner Console' : 'Exit to Factory';
+    return isWlpAdmin.value ? 'Return to Partner Console' : 'Exit to Product List';
 });
 
 const fetchProduct = async () => {

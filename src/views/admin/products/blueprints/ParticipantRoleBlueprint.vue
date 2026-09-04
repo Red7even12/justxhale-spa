@@ -3,13 +3,13 @@
     <!-- Header -->
     <div class="flex justify-between items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
       <div>
-        <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
-          ← Back to Niche Factory
+        <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
+          ← Back to Workspace Factory
         </router-link>
         <h2 class="text-xl font-black text-gray-900 tracking-tight">Role-player Roles</h2>
-        <p class="text-sm text-gray-500 mt-1">Define the character vernacular for <span class="font-bold text-indigo-600">{{ contextTitle }}</span> case files.</p>
+        <p class="text-sm text-gray-500 mt-1">Define the character vernacular for <span class="font-bold text-blue-600">{{ contextTitle }}</span> case files.</p>
       </div>
-      <button @click="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition-all text-xs">
+      <button @click="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition-all text-xs">
         + Add Role
       </button>
     </div>
@@ -28,9 +28,9 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white">
-          <tr v-for="role in roles" :key="role.id" class="hover:bg-indigo-50/20 transition-colors">
+          <tr v-for="role in roles" :key="role.id" class="hover:bg-blue-50/20 transition-colors">
             <td class="px-6 py-4 font-bold text-gray-900 text-sm">{{ role.name }}</td>
-            <td class="px-6 py-4 font-mono text-xs text-indigo-600 font-bold">
+            <td class="px-6 py-4 font-mono text-xs text-blue-600 font-bold">
                 {{ role.roleKey || role.role_key }}
             </td>
             <!-- Group on Docs Badge -->
@@ -80,7 +80,7 @@
 
           <!-- Group on Documents Checkbox -->
           <div class="p-3 bg-blue-50/50 rounded-xl border border-blue-100 flex items-start gap-3">
-            <input v-model="form.group_on_documents" type="checkbox" id="group_docs" class="mt-0.5 h-4 w-4 text-indigo-600 rounded">
+            <input v-model="form.group_on_documents" type="checkbox" id="group_docs" class="mt-0.5 h-4 w-4 text-blue-600 rounded">
             <div>
               <label for="group_docs" class="text-xs text-gray-900 font-bold block cursor-pointer">Group on Documents</label>
               <p class="text-[10px] text-gray-500 leading-tight mt-0.5">When checked, participants with this role will appear as individual stakeholder tabs on the Documents Checklist.</p>
@@ -94,7 +94,7 @@
               </div>
               <div class="flex items-end">
                   <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-xl border w-full h-[42px]">
-                    <input v-model="form.is_active" type="checkbox" id="active" class="h-4 w-4 text-indigo-600 rounded">
+                    <input v-model="form.is_active" type="checkbox" id="active" class="h-4 w-4 text-blue-600 rounded">
                     <label for="active" class="text-xs text-gray-700 font-bold cursor-pointer">Active</label>
                   </div>
               </div>
@@ -102,7 +102,7 @@
 
           <div class="flex justify-end gap-3 border-t pt-4">
             <button type="button" @click="showModal = false" class="text-gray-400 font-bold text-xs px-4 py-2">Cancel</button>
-            <button type="submit" class="bg-indigo-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-indigo-700">
+            <button type="submit" class="bg-blue-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-blue-700">
                 {{ form.id ? 'Update Role' : 'Save Role' }}
             </button>
           </div>

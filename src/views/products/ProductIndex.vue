@@ -53,13 +53,13 @@
             <!-- Point to the Blueprint Dashboard -->
             <button @click="$router.push({ name: 'admin.product.dashboard', params: { slug: product.slug } })"  
                 class="flex-1 bg-gray-100 py-2 rounded text-sm font-medium hover:bg-gray-200">
-                Edit DNA
+                Assemble Product
             </button>
             
             <!-- Open the Edit Modal (Only for System Admins) -->
             <button v-if="!isWlpAdmin" @click="openModal(product)" 
                 class="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded text-sm text-center font-medium hover:bg-indigo-100">
-                Edit Product
+                Edit Product/Branding
             </button>
         </div>
         </div>

@@ -3,13 +3,13 @@
     <!-- Header -->
     <div class="flex justify-between items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
       <div>
-        <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
-          ← Back to Niche Factory
+        <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
+          ← Back to Workspace Factory
         </router-link>
         <h2 class="text-xl font-black text-gray-900 tracking-tight">Workflow Engine</h2>
-        <p class="text-sm text-gray-500 mt-1">Automate processes for <span class="font-bold text-indigo-600">{{ contextTitle }}</span></p>
+        <p class="text-sm text-gray-500 mt-1">Automate processes for <span class="font-bold text-blue-600">{{ contextTitle }}</span></p>
       </div>
-      <button @click="openDefModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition-all text-xs">
+      <button @click="openDefModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition-all text-xs">
         + Create Workflow
       </button>
     </div>
@@ -27,14 +27,14 @@
               @click="selectedDefinition = def"
               class="group flex justify-between items-center p-3 rounded-xl transition-all cursor-pointer border"
               :class="selectedDefinition?.id === def.id 
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-900 font-bold shadow-sm' 
+                ? 'bg-blue-50 border-blue-200 text-blue-900 font-bold shadow-sm' 
                 : 'hover:bg-gray-50 border-transparent text-gray-600'">
             <div class="flex flex-col">
                 <span class="text-sm font-bold">{{ def.name }}</span>
-                <span v-if="def.fileType" class="text-[10px] uppercase text-indigo-400 tracking-tighter">{{ def.fileType.name }}</span>
+                <span v-if="def.fileType" class="text-[10px] uppercase text-blue-400 tracking-tighter">{{ def.fileType.name }}</span>
             </div>
             <div class="opacity-0 group-hover:opacity-100 flex gap-2">
-                <button @click.stop="openDefModal(def)" class="text-gray-400 hover:text-indigo-600">
+                <button @click.stop="openDefModal(def)" class="text-gray-400 hover:text-blue-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
             </div>
@@ -56,7 +56,7 @@
         <div v-else class="h-full bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
           <div class="p-4 border-b flex justify-between items-center bg-gray-50/50">
               <h3 class="font-bold text-gray-800 text-sm">
-                Steps for: <span class="text-indigo-600">{{ selectedDefinition.name }}</span>
+                Steps for: <span class="text-blue-600">{{ selectedDefinition.name }}</span>
               </h3>
               <div class="flex gap-2">
                 <button @click="deleteDefinition(selectedDefinition)" class="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg">Delete Workflow</button>
@@ -99,14 +99,14 @@
           </div>
 
           <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border">
-            <input v-model="defForm.isActive" type="checkbox" id="active" class="h-4 w-4 text-indigo-600 rounded">
+            <input v-model="defForm.isActive" type="checkbox" id="active" class="h-4 w-4 text-blue-600 rounded">
             <label for="active" class="text-xs font-bold text-gray-700">Workflow is Active</label>
           </div>
         </div>
 
         <div class="flex justify-end gap-3 border-t pt-4">
           <button @click="closeDefModal" class="text-gray-400 font-bold text-xs px-4 py-2">Cancel</button>
-          <button @click="saveDefinition" class="bg-indigo-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-indigo-700">
+          <button @click="saveDefinition" class="bg-blue-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-blue-700">
             Save Workflow
           </button>
         </div>

@@ -236,7 +236,7 @@ const routes = [
           path: '/admin/niche-factory',
           name: 'admin.niche-factory',
           component: () => import('@/views/admin/niches/NicheFactoryIndex.vue'),
-          meta: { displayName: 'Niche Blueprint Factory' }
+          meta: { displayName: 'Workspace Factory' }
       },
 
       // 2. NICHE BLUEPRINT FOUNDRY WORKSHOP (Scoped to :fileTypeId)

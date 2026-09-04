@@ -38,7 +38,7 @@
               </span>
             </td>
             <td class="px-6 py-4 text-right">
-              <router-link :to="{ name: 'admin.product.file-types', params: { slug: product.slug } }" class="text-xs text-indigo-600 hover:text-indigo-900 font-bold">
+              <router-link :to="{ name: 'admin.product.file-types', params: { slug: product.slug } }" class="text-xs text-blue-600 hover:text-blue-900 font-bold">
                 Open Assembly Board ↗
               </router-link>
             </td>

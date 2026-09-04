@@ -4,15 +4,15 @@
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
       <div>
         <h2 class="text-xl font-bold text-gray-800">License & Ownership Management</h2>
-        <p class="text-sm text-gray-500">Manage WLP Partner ownership and subscriber client access for <span class="font-bold text-indigo-600">{{ product?.name }}</span></p>
+        <p class="text-sm text-gray-500">Manage WLP Partner ownership and subscriber client access for <span class="font-bold text-blue-600">{{ product?.name }}</span></p>
       </div>
     </div>
 
     <!-- SCENARIO A: SYSTEM ADMIN - ASSIGN WLP PARTNER (LEVEL 2) -->
-    <div v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100 shadow-sm space-y-4">
-      <h3 class="text-xs font-black text-indigo-900 uppercase tracking-widest">Level 2: WLP Partner Ownership</h3>
+    <div v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')" class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 shadow-sm space-y-4">
+      <h3 class="text-xs font-black text-blue-900 uppercase tracking-widest">Level 2: WLP Partner Ownership</h3>
       
-      <div v-if="product.wlpTenant || product.wlp_tenant" class="flex items-center justify-between p-3 bg-white rounded-lg border border-indigo-200">
+      <div v-if="product.wlpTenant || product.wlp_tenant" class="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
         <div>
           <span class="text-xs font-bold uppercase text-gray-400 block">Assigned WLP Partner</span>
           <span class="text-base font-black text-gray-900">{{ (product.wlpTenant || product.wlp_tenant).name }}</span>
@@ -23,13 +23,13 @@
 
       <form @submit.prevent="assignWlp" class="flex flex-wrap gap-4 items-end">
         <div class="flex-1 min-w-[250px]">
-          <label class="block text-[10px] font-black text-indigo-400 uppercase mb-1">Select / Change WLP Partner Owner</label>
-          <select v-model="selectedWlpId" required class="w-full border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 text-sm p-2 border">
+          <label class="block text-[10px] font-black text-blue-400 uppercase mb-1">Select / Change WLP Partner Owner</label>
+          <select v-model="selectedWlpId" required class="w-full border-blue-200 rounded-lg shadow-sm focus:ring-blue-500 text-sm p-2 border">
             <option value="">-- Choose a WLP Partner --</option>
             <option v-for="wlp in allWlps" :key="wlp.id" :value="wlp.id">{{ wlp.name }} ({{ wlp.company_email }})</option>
           </select>
         </div>
-        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-lg text-xs font-bold uppercase tracking-wider hover:bg-indigo-700 transition-all">
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-700 transition-all">
           Assign WLP Owner
         </button>
       </form>
@@ -43,14 +43,14 @@
       <form @submit.prevent="linkSubscriber" class="flex flex-wrap gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
         <div class="flex-1 min-w-[250px]">
           <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Select Subscriber Firm</label>
-          <select v-model="linkForm.subscriberId" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 text-sm p-2 border">
+          <select v-model="linkForm.subscriberId" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 text-sm p-2 border">
             <option value="">-- Choose a Subscriber Firm --</option>
             <option v-for="sub in allSubscribers" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
           </select>
         </div>
         <div class="flex-1 min-w-[250px]">
           <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Custom Brand Name (Optional)</label>
-          <input v-model="linkForm.displayName" type="text" placeholder="e.g. Estates Division" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 text-sm p-2 border">
+          <input v-model="linkForm.displayName" type="text" placeholder="e.g. Estates Division" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 text-sm p-2 border">
         </div>
         <button type="submit" class="bg-brand-primary text-white px-6 py-2 rounded-lg shadow-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all">
           Grant License

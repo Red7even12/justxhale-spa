@@ -5,7 +5,7 @@
       <div>
         <div class="flex items-center gap-2">
           <!-- <span class="text-2xl">⚡</span> -->
-          <h1 class="text-2xl font-black text-gray-900 tracking-tight">Niche Blueprint Foundry</h1>
+          <h1 class="text-2xl font-black text-gray-900 tracking-tight">Workspace Blueprinting</h1>
           <span class="bg-indigo-50 text-indigo-700 text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider border border-indigo-100">
             PaaS Modular Engine
           </span>

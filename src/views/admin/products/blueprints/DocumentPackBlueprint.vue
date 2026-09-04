@@ -4,13 +4,13 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm gap-4">
       <div>
         <!-- Context Backlink if in Foundry -->
-        <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
-          ← Back to Niche Factory
+        <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
+          ← Back to Workspace Factory
         </router-link>
         <div class="flex items-center gap-2">
           <span class="text-2xl">📦</span>
           <h2 class="text-xl font-black text-gray-900 tracking-tight">Document Packs</h2>
-          <span class="bg-indigo-50 text-indigo-700 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-indigo-100">
+          <span class="bg-blue-50 text-blue-700 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-blue-100">
             {{ contextTitle }}
           </span>
         </div>
@@ -19,7 +19,7 @@
         </p>
       </div>
 
-      <button @click="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-xs shrink-0">
+      <button @click="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-xs shrink-0">
         <span>+ Add Document Pack</span>
       </button>
     </div>
@@ -39,7 +39,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white">
-          <tr v-for="pack in packs" :key="pack.id" class="hover:bg-indigo-50/20 transition-colors">
+          <tr v-for="pack in packs" :key="pack.id" class="hover:bg-blue-50/20 transition-colors">
             
             <!-- Order -->
             <td class="px-4 py-4 text-center">
@@ -55,7 +55,7 @@
 
             <!-- Tab Override -->
             <td class="px-6 py-4 text-sm text-gray-600">
-              <span v-if="pack.pivot?.tab_label_override" class="font-bold text-indigo-900">
+              <span v-if="pack.pivot?.tab_label_override" class="font-bold text-blue-900">
                 {{ pack.pivot.tab_label_override }}
               </span>
               <span v-else class="text-gray-400 italic">Default ("{{ pack.name }}")</span>
@@ -84,7 +84,7 @@
 
             <!-- Actions -->
             <td class="px-6 py-4 text-right space-x-3 text-xs font-bold">
-              <button @click="manageDocs(pack)" class="text-indigo-600 hover:text-indigo-900">
+              <button @click="manageDocs(pack)" class="text-blue-600 hover:text-blue-900">
                 Manage Documents ↗
               </button>
               <button @click="openModal(pack)" class="text-gray-500 hover:text-gray-700">
@@ -109,13 +109,38 @@
     <div v-if="showModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
         <div class="border-b pb-3 flex justify-between items-center">
-          <h2 class="text-lg font-black text-gray-900">{{ form.id ? 'Configure Document Pack' : 'Attach Document Pack' }}</h2>
+          <h2 class="text-lg font-black text-gray-900">{{ form.id ? 'Configure Document Pack' : 'Attach / Forge Document Pack' }}</h2>
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
         </div>
 
         <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Pack Name</label>
+          <!-- 1. MODE TOGGLE (Only when attaching new) -->
+          <div v-if="!form.id" class="flex rounded-lg bg-gray-100 p-1">
+            <button type="button" @click="form.mode = 'existing'" :class="form.mode === 'existing' ? 'bg-white shadow text-gray-900 font-bold' : 'text-gray-500'" class="flex-1 py-1.5 text-xs rounded-md transition-all">
+              Select Existing
+            </button>
+            <button type="button" @click="form.mode = 'new'" :class="form.mode === 'new' ? 'bg-white shadow text-gray-900 font-bold' : 'text-gray-500'" class="flex-1 py-1.5 text-xs rounded-md transition-all">
+              + Forge New Pack
+            </button>
+          </div>
+
+          <!-- 2A. SELECT EXISTING DROPDOWN -->
+          <div v-if="!form.id && form.mode === 'existing'">
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Select from Master Catalog</label>
+            <select v-model="form.document_pack_id" class="w-full border-gray-300 rounded-lg text-sm font-medium">
+              <option :value="null" disabled>-- Choose Document Pack --</option>
+              <option v-for="pack in availableCatalogPacks" :key="pack.id" :value="pack.id">
+                {{ pack.name }}
+              </option>
+            </select>
+            <p v-if="availableCatalogPacks.length === 0" class="text-[11px] text-amber-600 mt-1">
+              All master packs are attached. Switch to "+ Forge New Pack" above.
+            </p>
+          </div>
+
+          <!-- 2B. CREATE NEW PACK INPUT -->
+          <div v-if="form.id || form.mode === 'new'">
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">New Document Pack Name</label>
             <input v-model="form.name" type="text" placeholder="e.g. Identity & KYC Documents" class="w-full border-gray-300 rounded-lg text-sm" />
           </div>
 
@@ -132,22 +157,22 @@
 
             <div class="flex items-center pt-5">
               <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-gray-700">
-                <input v-model="form.is_mandatory" type="checkbox" class="rounded text-indigo-600" />
+                <input v-model="form.is_mandatory" type="checkbox" class="rounded text-blue-600" />
                 <span>Mandatory Pack</span>
               </label>
             </div>
           </div>
 
           <div class="flex items-center gap-3 pt-2">
-            <input v-model="form.is_active" type="checkbox" id="pack_active" class="h-4 w-4 text-indigo-600 rounded" />
+            <input v-model="form.is_active" type="checkbox" id="pack_active" class="h-4 w-4 text-blue-600 rounded" />
             <label for="pack_active" class="text-xs font-bold text-gray-700">Pack is Active</label>
           </div>
         </div>
 
         <div class="flex justify-end gap-3 border-t pt-4">
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-xs px-4 py-2">Cancel</button>
-          <button @click="save" class="bg-indigo-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-indigo-700">
-            {{ form.id ? 'Save Configuration' : 'Attach Pack' }}
+          <button @click="save" :disabled="!form.id && form.mode === 'existing' && !form.document_pack_id" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow">
+            {{ form.id ? 'Save Configuration' : 'Attach / Forge Pack' }}
           </button>
         </div>
       </div>
@@ -179,7 +204,9 @@ const contextTitle = computed(() => props.niche?.name || props.product?.name || 
 
 const form = reactive({
   id: null,
+  mode: 'existing', // 'existing' or 'new'
   name: '',
+  document_pack_id: null,
   tab_label_override: '',
   display_order: 1,
   is_mandatory: true,
@@ -199,17 +226,37 @@ const loadPacks = async () => {
   }
 };
 
+const masterCatalogPacks = ref([]);
+
+const availableCatalogPacks = computed(() => {
+  const attachedIds = packs.value.map(p => p.id);
+  return masterCatalogPacks.value.filter(c => !attachedIds.includes(c.id));
+});
+
+const loadCatalogPacks = async () => {
+  try {
+    const { data } = await apiClient.get('admin/document-packs');
+    masterCatalogPacks.value = data?.data || data || [];
+  } catch (e) {
+    console.error('Failed to load master catalog packs', e);
+  }
+};
+
 const openModal = (pack = null) => {
   if (pack) {
     form.id = pack.id;
+    form.mode = 'new';
     form.name = pack.name;
+    form.document_pack_id = pack.id;
     form.tab_label_override = pack.pivot?.tab_label_override || '';
     form.display_order = pack.pivot?.display_order ?? 1;
     form.is_mandatory = pack.pivot?.is_mandatory ?? true;
     form.is_active = pack.is_active ?? true;
   } else {
     form.id = null;
+    form.mode = availableCatalogPacks.value.length > 0 ? 'existing' : 'new';
     form.name = '';
+    form.document_pack_id = availableCatalogPacks.value[0]?.id || null;
     form.tab_label_override = '';
     form.display_order = packs.value.length + 1;
     form.is_mandatory = true;
@@ -217,6 +264,14 @@ const openModal = (pack = null) => {
   }
   showModal.value = true;
 };
+
+// Ensure loadCatalogPacks() is called onMounted alongside loadPacks()
+onMounted(() => {
+  loadPacks();
+  loadCatalogPacks();
+});
+
+
 
 const save = async () => {
   if (!form.name) return showAlert('Error', 'Pack name is required.');

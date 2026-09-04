@@ -6,12 +6,12 @@
       <!-- Top Niche Identity Box -->
       <div class="p-6 border-b border-white/10">
         <div v-if="niche" class="flex flex-col items-center gap-2 mb-3">
-          <div class="w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-2xl shadow-inner">
+          <div class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-2xl shadow-inner">
             ⚡
           </div>
           <div class="text-center overflow-hidden w-full">
             <h1 class="font-black truncate text-sm tracking-tight text-white">{{ niche.name }}</h1>
-            <p class="text-[10px] text-indigo-400 uppercase tracking-widest font-black">
+            <p class="text-[10px] text-blue-400 uppercase tracking-widest font-black">
               {{ niche.category || 'Niche Blueprint' }}
             </p>
           </div>
@@ -19,7 +19,7 @@
 
         <!-- Exit link back to Foundry Catalog -->
         <router-link :to="{ name: 'admin.niche-factory' }" class="text-xs text-white/50 hover:text-white font-bold flex items-center justify-center gap-1 mt-2 transition-colors">
-          ← Exit to Niche Factory
+          ← Exit to Workspace Factory
         </router-link>
       </div>
 
@@ -120,13 +120,13 @@
       <!-- Breadcrumb Header -->
       <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shrink-0 shadow-sm z-10">
         <div class="flex items-center gap-2 text-sm text-gray-400">
-          <router-link :to="{ name: 'admin.niche-factory' }" class="font-medium hover:text-indigo-600 transition-colors">
-            Niche Foundry
+          <router-link :to="{ name: 'admin.niche-factory' }" class="font-medium hover:text-blue-600 transition-colors">
+            Workspace Foundry
           </router-link> 
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
           <span class="text-gray-900 font-bold">{{ niche?.name }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-          <span class="text-indigo-600 font-black uppercase text-[10px] tracking-widest">{{ $route.meta.displayName || 'Blueprint' }}</span>
+          <span class="text-blue-600 font-black uppercase text-[10px] tracking-widest">{{ $route.meta.displayName || 'Blueprint' }}</span>
         </div>
 
         <!-- IP Tier Badge -->
@@ -134,7 +134,7 @@
           <span v-if="niche?.is_public" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black px-3 py-1 rounded-full uppercase">
             ● Public Core Blueprint
           </span>
-          <span v-else-if="!niche?.wlp_tenant_id" class="bg-purple-50 text-purple-700 border border-purple-200 text-xs font-black px-3 py-1 rounded-full uppercase">
+          <span v-else-if="!niche?.wlp_tenant_id" class="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black px-3 py-1 rounded-full uppercase">
             🔒 Licensed Platform IP
           </span>
           <span v-else class="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black px-3 py-1 rounded-full uppercase">
@@ -147,7 +147,7 @@
       <div class="flex-1 overflow-y-auto p-8 bg-gray-50/50">
         <router-view v-if="niche" :niche="niche" :fileTypeId="fileTypeId" :key="fileTypeId" />
         <div v-else class="flex flex-col items-center justify-center h-full text-gray-400 animate-pulse">
-          <div class="w-12 h-12 rounded-full border-4 border-gray-200 border-t-indigo-500 animate-spin mb-4"></div>
+          <div class="w-12 h-12 rounded-full border-4 border-gray-200 border-t-blue-500 animate-spin mb-4"></div>
           <p class="font-bold text-sm uppercase tracking-widest">Loading Niche Blueprint...</p>
         </div>
       </div>
@@ -188,6 +188,6 @@ onMounted(fetchNiche);
   @apply flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-all border border-transparent;
 }
 .nav-active {
-  @apply bg-indigo-600/40 text-white border-indigo-500/30 font-black shadow-md;
+  @apply bg-blue-600/40 text-white border-blue-500/30 font-black shadow-md;
 }
 </style>

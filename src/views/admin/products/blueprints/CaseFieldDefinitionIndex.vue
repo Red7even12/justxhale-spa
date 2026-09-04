@@ -4,13 +4,13 @@
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
       <div>
         <!-- DUAL-CONTEXT BACK LINK -->
-        <router-link :to="backDestination" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
+        <router-link :to="backDestination" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
             ← {{ backLabel }}
         </router-link>
         <h2 class="text-xl font-bold text-gray-800">Field Definitions: {{ fileType?.name }}</h2>
         <p class="text-sm text-gray-500">Configure custom data points and role-player metadata for this Niche Blueprint.</p>
       </div>
-      <button @click="openModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow hover:bg-indigo-700 font-bold transition-all">
+      <button @click="openModal()" class="bg-blue-600 text-white px-5 py-2 rounded-lg shadow hover:bg-blue-700 font-bold transition-all">
         + Add Data Field
       </button>
     </div>
@@ -28,11 +28,11 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
-          <tr v-for="field in fields" :key="field.id" class="hover:bg-indigo-50/30 transition-colors">
+          <tr v-for="field in fields" :key="field.id" class="hover:bg-blue-50/30 transition-colors">
             <td class="px-6 py-4">
                 <div class="font-bold text-gray-900">{{ field.fieldLabel || field.field_label }}</div>
                 <div class="flex flex-col gap-1 mt-1">
-                    <div v-if="field.participantRole" class="text-[10px] text-indigo-500 font-black uppercase tracking-tighter flex items-center gap-1">
+                    <div v-if="field.participantRole" class="text-[10px] text-blue-500 font-black uppercase tracking-tighter flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         Role: {{ field.participantRole.name }}
                     </div>
@@ -47,7 +47,7 @@
             <td class="px-6 py-4 text-center text-xs font-medium uppercase">{{ field.fieldType || field.field_type }}</td>
             <td class="px-6 py-4 text-center text-sm text-gray-500">{{ field.sortOrder || field.sort_order }}</td>
             <td class="px-6 py-4 text-right space-x-3 text-sm font-medium">
-              <button @click="openModal(field)" class="text-gray-400 hover:text-indigo-600">Edit</button>
+              <button @click="openModal(field)" class="text-gray-400 hover:text-blue-600">Edit</button>
               <button @click="confirmDelete(field)" class="text-red-400 hover:text-red-600">Delete</button>
             </td>
           </tr>
@@ -75,7 +75,7 @@
                     required 
                     @input="normalizeKey"
                     placeholder="e.g. tax_no_executor"
-                    class="w-full border-gray-300 rounded-lg shadow-sm font-mono text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full border-gray-300 rounded-lg shadow-sm font-mono text-sm focus:ring-blue-500 focus:border-blue-500"
                 >
                 <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">
                     Automatically normalized to snake_case
@@ -92,10 +92,10 @@
             </div>
             
             <!-- PARTICIPANT ROLE CONTEXT -->
-            <div class="col-span-2 p-4 bg-indigo-50 rounded-lg border border-indigo-100 space-y-4">
+            <div class="col-span-2 p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-4">
                 <div>
-                    <label class="block text-xs font-black text-indigo-900 uppercase mb-2">Character Context (Optional)</label>
-                    <select v-model="form.participant_role_id" class="w-full border-indigo-200 rounded-lg shadow-sm text-sm">
+                    <label class="block text-xs font-black text-blue-900 uppercase mb-2">Character Context (Optional)</label>
+                    <select v-model="form.participant_role_id" class="w-full border-blue-200 rounded-lg shadow-sm text-sm">
                         <option :value="null">-- General Case Field --</option>
                         <option v-for="role in roles" :key="role.id" :value="role.id">
                              Metadata for character: {{ role.name }}
@@ -105,10 +105,10 @@
 
                 <!-- PROJECTION MAPPING -->
                 <div v-if="form.participant_role_id">
-                    <label class="block text-[12px] font-black text-indigo-400 uppercase tracking-widest mb-1 italic">
+                    <label class="block text-[12px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">
                         Projection Mapping (Optional)
                     </label>
-                    <select v-model="form.entity_field_definition_id" class="w-full border-indigo-200 rounded-lg shadow-sm text-xs bg-white">
+                    <select v-model="form.entity_field_definition_id" class="w-full border-blue-200 rounded-lg shadow-sm text-xs bg-white">
                         <option :value="null">-- No Projection (Manual Data) --</option>
                         <option v-for="eField in entityFields" :key="eField.id" :value="eField.id">
                              Project Global Value: {{ eField.fieldLabel }}
@@ -118,11 +118,11 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <input v-model="form.is_required" type="checkbox" id="req" class="rounded text-indigo-600">
+                <input v-model="form.is_required" type="checkbox" id="req" class="rounded text-blue-600">
                 <label for="req" class="text-xs font-bold text-gray-700">Mandatory?</label>
             </div>
             <div class="flex items-center gap-2">
-                <input v-model="form.show_in_quick_view" type="checkbox" id="sqv" class="rounded text-indigo-600">
+                <input v-model="form.show_in_quick_view" type="checkbox" id="sqv" class="rounded text-blue-600">
                 <label for="sqv" class="text-xs font-bold text-gray-700">Show in Quickview?</label>
             </div>
             <div class="flex items-center gap-2">
@@ -132,7 +132,7 @@
 
             <div class="col-span-2 mt-4 flex justify-end gap-3 pt-5 border-t">
                 <button type="button" @click="showModal = false" class="text-gray-400 font-bold px-4 py-2">Cancel</button>
-                <button type="submit" class="bg-indigo-600 text-white font-bold px-8 py-2 rounded-lg shadow hover:bg-indigo-700">Save Field</button>
+                <button type="submit" class="bg-blue-600 text-white font-bold px-8 py-2 rounded-lg shadow hover:bg-blue-700">Save Field</button>
             </div>
         </form>
       </div>
@@ -166,7 +166,7 @@ const backDestination = computed(() => {
 });
 
 const backLabel = computed(() => {
-  return props.slug ? 'Back to Product Niches' : 'Back to Niche Foundry';
+  return props.slug ? 'Back to Workspace Modules' : 'Back to Workspace Modules';
 });
 
 // DUAL-CONTEXT API URL BUILDER
