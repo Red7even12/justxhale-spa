@@ -4,10 +4,10 @@
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div>
             <!-- DUAL CONTEXT BACK BUTTON -->
-            <router-link :to="backDestination" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 mb-2">
+            <router-link :to="backDestination" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
                 ← Back to Packs
             </router-link>
-            <h2 class="text-xl font-bold text-gray-800">Pack Items Management</h2>
+            <h2 class="text-xl font-bold text-gray-800">Document Pack Items Management</h2>
             <p class="text-sm text-gray-500">Configure checklist behavior and data capture for this pack.</p>
         </div>
         <div class="flex gap-3">
@@ -22,7 +22,7 @@
               {{ isSyncing ? 'Syncing...' : 'Sync Pack to Cases' }}
             </button>
 
-            <button @click="handleAddNew" class="bg-indigo-600 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-indigo-700 transition-all">
+            <button @click="handleAddNew" class="bg-blue-600 text-white px-5 py-2 rounded-lg shadow font-bold hover:bg-blue-700 transition-all">
               + Add Pack Item
             </button>
         </div>
@@ -42,7 +42,7 @@
             @click="selectDocumentType(docType)"
             :class="[
               'w-full text-left p-3 rounded-lg transition-all text-sm border',
-              formObject.data?.id === docType.id ? 'bg-indigo-50 border-indigo-200 text-indigo-900 font-bold shadow-sm' : 'hover:bg-gray-50 border-transparent text-gray-600'
+              formObject.data?.id === docType.id ? 'bg-blue-50 border-blue-200 text-blue-900 font-bold shadow-sm' : 'hover:bg-gray-50 border-transparent text-gray-600'
             ]"
           >
             <div class="flex justify-between items-center">
@@ -63,7 +63,7 @@
         
         <div v-else class="flex flex-col h-full">
             <div class="p-4 border-b bg-gray-50/50 flex justify-between items-center">
-                <h3 class="font-bold text-gray-800">{{ isCreatingNew ? 'New Template' : 'Edit Template' }}</h3>
+                <h3 class="font-bold text-gray-800">{{ isCreatingNew ? 'New Document Pack Item' : 'Edit Document Pack Item' }}</h3>
                 <button v-if="!isCreatingNew" @click="handleDelete" class="text-xs font-bold text-red-500 hover:underline">Delete Definition</button>
             </div>
 
@@ -96,16 +96,16 @@
                     </div>
 
                     <div v-if="formObject.data.actionFieldType === 'sourced_dropdown'">
-                        <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Data Source</label>
-                        <select v-model="formObject.data.recordsourceId" class="w-full border-indigo-300 bg-indigo-50 rounded-lg shadow-sm" required>
+                        <label class="block text-xs font-black text-blue-600 uppercase mb-1">Data Source</label>
+                        <select v-model="formObject.data.recordsourceId" class="w-full border-blue-300 bg-blue-50 rounded-lg shadow-sm" required>
                             <option :value="null">-- Select a Source --</option>
                             <option v-for="source in availableRecordsources" :key="source.value" :value="source.value">{{ source.label }}</option>
                         </select>
                     </div>
 
                     <div v-if="formObject.data.actionFieldType === 'expiry_date'">
-                        <label class="block text-xs font-black text-indigo-600 uppercase mb-1">Validity Period (Months)</label>
-                        <input v-model="formObject.data.validityDays" type="number" class="w-full border-indigo-300 bg-indigo-50 rounded-lg shadow-sm" placeholder="e.g. 3" required>
+                        <label class="block text-xs font-black text-blue-600 uppercase mb-1">Validity Period (Months)</label>
+                        <input v-model="formObject.data.validityDays" type="number" class="w-full border-blue-300 bg-blue-50 rounded-lg shadow-sm" placeholder="e.g. 3" required>
                     </div>
 
                     <div v-if="formObject.data.actionFieldType !== 'none'">
@@ -129,21 +129,21 @@
                     </div>
                 </div>
 
-                <div class="flex gap-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                <div class="flex gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" v-model="formObject.data.isActive" class="rounded text-indigo-600">
-                        <span class="text-xs font-bold text-indigo-900 uppercase">Active</span>
+                        <input type="checkbox" v-model="formObject.data.isActive" class="rounded text-blue-600">
+                        <span class="text-xs font-bold text-blue-900 uppercase">Active</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" v-model="formObject.data.isOptional" class="rounded text-indigo-600">
-                        <span class="text-xs font-bold text-indigo-900 uppercase">Optional</span>
+                        <input type="checkbox" v-model="formObject.data.isOptional" class="rounded text-blue-600">
+                        <span class="text-xs font-bold text-blue-900 uppercase">Optional</span>
                     </label>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-6 border-t">
                     <button type="button" @click="formObject.data = null" class="text-gray-400 font-bold px-4 py-2">Cancel</button>
-                    <button type="submit" class="bg-indigo-600 text-white font-bold px-8 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all">
-                        {{ isCreatingNew ? 'Create Template' : 'Save Template' }}
+                    <button type="submit" class="bg-blue-600 text-white font-bold px-8 py-2 rounded-lg shadow hover:bg-blue-700 transition-all">
+                        {{ isCreatingNew ? 'Create Pack Item' : 'Save Pack Item' }}
                     </button>
                 </div>
             </form>

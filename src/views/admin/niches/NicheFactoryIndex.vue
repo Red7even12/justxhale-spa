@@ -5,7 +5,7 @@
       <div>
         <div class="flex items-center gap-2">
           <!-- <span class="text-2xl">⚡</span> -->
-          <h1 class="text-2xl font-black text-gray-900 tracking-tight">Workspace Blueprinting</h1>
+          <h1 class="text-2xl font-black text-gray-900 tracking-tight">Workspace Module Index</h1>
           <span class="bg-blue-50 text-blue-700 text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider border border-blue-100">
             PaaS Modular Engine
           </span>
@@ -16,7 +16,7 @@
       </div>
 
       <button @click="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm shrink-0">
-        <span>+ Forge New Niche</span>
+        <span>+ New Workspace Module</span>
       </button>
     </div>
 
@@ -129,7 +129,7 @@
             <!-- Actions -->
             <td class="px-6 py-4 text-right space-x-3 text-xs font-bold">
               <router-link :to="{ name: 'admin.niche-factory.fields', params: { fileTypeId: niche.id } }" class="text-blue-600 hover:text-blue-900">
-                Fields DNA
+                Build
               </router-link>
               <button @click="openModal(niche)" class="text-gray-500 hover:text-gray-700">Configure</button>
               <button @click="deleteNiche(niche)" class="text-red-400 hover:text-red-600">Archive</button>
@@ -138,7 +138,7 @@
 
           <tr v-if="niches.length === 0">
             <td colspan="6" class="p-8 text-center text-gray-400 italic">
-              No Niche blueprints match your search criteria.
+              No Workspace Modules match your search criteria.
             </td>
           </tr>
         </tbody>
@@ -149,7 +149,7 @@
     <div v-if="showModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
         <div class="border-b pb-3 flex justify-between items-center">
-          <h2 class="text-lg font-black text-gray-900">{{ form.id ? 'Configure Niche Blueprint' : 'Forge New Niche' }}</h2>
+          <h2 class="text-lg font-black text-gray-900">{{ form.id ? 'Configure Workspace Module' : 'Forge New Workspace Module' }}</h2>
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
         </div>
 

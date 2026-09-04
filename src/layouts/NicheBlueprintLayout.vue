@@ -19,7 +19,7 @@
 
         <!-- Exit link back to Foundry Catalog -->
         <router-link :to="{ name: 'admin.niche-factory' }" class="text-xs text-white/50 hover:text-white font-bold flex items-center justify-center gap-1 mt-2 transition-colors">
-          ← Exit to Workspace Factory
+          ← Exit to Workspace Index
         </router-link>
       </div>
 

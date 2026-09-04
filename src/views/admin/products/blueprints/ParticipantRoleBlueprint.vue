@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
       <div>
         <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
-          ← Back to Workspace Factory
+          ← Back to Workspace Index
         </router-link>
         <h2 class="text-xl font-black text-gray-900 tracking-tight">Role-player Roles</h2>
         <p class="text-sm text-gray-500 mt-1">Define the character vernacular for <span class="font-bold text-blue-600">{{ contextTitle }}</span> case files.</p>

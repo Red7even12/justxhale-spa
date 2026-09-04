@@ -5,7 +5,7 @@
       <div>
         <!-- Context Backlink if in Foundry -->
         <router-link v-if="isFoundryContext" :to="{ name: 'admin.niche-factory' }" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mb-2">
-          ← Back to Workspace Factory
+          ← Back to Workspace Index
         </router-link>
         <div class="flex items-center gap-2">
           <span class="text-2xl">📦</span>
@@ -31,7 +31,7 @@
           <tr>
             <th class="px-4 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider w-16">Order</th>
             <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Pack Name</th>
-            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Workspace Tab Label</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Tab Label</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Doc Count</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Mandatory</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Status</th>
@@ -85,7 +85,7 @@
             <!-- Actions -->
             <td class="px-6 py-4 text-right space-x-3 text-xs font-bold">
               <button @click="manageDocs(pack)" class="text-blue-600 hover:text-blue-900">
-                Manage Documents ↗
+                Compile
               </button>
               <button @click="openModal(pack)" class="text-gray-500 hover:text-gray-700">
                 Edit
@@ -274,7 +274,12 @@ onMounted(() => {
 
 
 const save = async () => {
-  if (!form.name) return showAlert('Error', 'Pack name is required.');
+  if (form.mode === 'existing' && !form.document_pack_id) {
+    return showAlert('Error', 'Please select a document pack.');
+  }
+  if (form.mode === 'new' && !form.name) {
+    return showAlert('Error', 'Document pack name is required.');
+  }
 
   try {
     const url = isFoundryContext.value
@@ -283,12 +288,22 @@ const save = async () => {
 
     const method = form.id ? 'put' : 'post';
 
-    await apiClient[method](url, form);
+    const payload = {
+      document_pack_id: form.mode === 'existing' ? form.document_pack_id : null,
+      name: form.mode === 'new' || form.id ? form.name : null,
+      tab_label_override: form.tab_label_override,
+      display_order: form.display_order,
+      is_mandatory: form.is_mandatory,
+      is_active: form.is_active
+    };
+
+    await apiClient[method](url, payload);
     showModal.value = false;
     loadPacks();
-    showAlert('Success', 'Document Pack saved.');
+    loadCatalogPacks();
+    showAlert('Success', 'Document Pack saved successfully.');
   } catch (error) {
-    showAlert('Error', error.response?.data?.message || 'Failed to save pack.');
+    showAlert('Error', error.response?.data?.message || 'Failed to save document pack.');
   }
 };
 
