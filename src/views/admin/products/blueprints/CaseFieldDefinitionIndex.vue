@@ -88,7 +88,22 @@
                     <option value="date">Date Picker</option>
                     <option value="number">Numeric</option>
                     <option value="textarea">Long Text</option>
+                    <option value="select">Dropdown (Option List)</option>
                 </select>
+            </div>
+
+            <!-- OPTION LIST SELECTOR (Appears when 'select' is chosen) -->
+            <div v-if="form.field_type === 'select'" class="col-span-2 p-4 bg-purple-50 rounded-lg border border-purple-100 space-y-2">
+                <label class="block text-xs font-black text-purple-900 uppercase">Select Option List Source</label>
+                <select v-model="form.document_option_list_id" class="w-full border-purple-200 rounded-lg shadow-sm text-sm bg-white">
+                    <option :value="null">-- Select a Global Option List --</option>
+                    <option v-for="list in optionLists" :key="list.id" :value="list.id">
+                        {{ list.name }}
+                    </option>
+                </select>
+                <p class="text-[11px] text-purple-600">
+                    Dropdown options will be dynamically loaded from this list.
+                </p>
             </div>
             
             <!-- PARTICIPANT ROLE CONTEXT -->
@@ -156,6 +171,7 @@ const fields = ref([]);
 const fileType = ref(null);
 const roles = ref([]);
 const entityFields = ref([]);
+const optionLists = ref([]); // NEW
 const showModal = ref(false);
 
 // DUAL-CONTEXT NAVIGATION HELPERS
@@ -180,6 +196,7 @@ const form = reactive({
     id: null, field_label: '', field_key: '', field_type: 'text', 
     is_required: false, sort_order: 0, participant_role_id: null,
     entity_field_definition_id: null,
+    document_option_list_id: null, // NEW
     show_in_quick_view: false
 });
 
@@ -188,21 +205,22 @@ const load = async () => {
     const promises = [
       apiClient.get(`${basePath.value}/fields`),
       apiClient.get(basePath.value),
-      apiClient.get('admin/entity-fields').catch(() => ({ data: { data: [] } }))
+      apiClient.get('admin/entity-fields').catch(() => ({ data: { data: [] } })),
+      apiClient.get('admin/document-option-lists').catch(() => ({ data: [] })) // NEW
     ];
 
-    // Only query product-scoped participant roles if we are in a product context
     if (props.slug) {
       promises.push(
         apiClient.get(`admin/products/${props.slug}/participant-roles`).catch(() => ({ data: [] }))
       );
     }
 
-    const [fieldsRes, typeRes, entityRes, rolesRes] = await Promise.all(promises);
+    const [fieldsRes, typeRes, entityRes, optionsRes, rolesRes] = await Promise.all(promises);
 
     fields.value = fieldsRes.data?.data || fieldsRes.data || [];
     fileType.value = typeRes.data?.data || typeRes.data || null;
     entityFields.value = entityRes.data?.data || entityRes.data || [];
+    optionLists.value = optionsRes.data?.data || optionsRes.data || [];
     roles.value = rolesRes?.data?.data || rolesRes?.data || [];
   } catch (e) { 
     console.error('Failed to load field definitions context:', e); 
@@ -220,13 +238,14 @@ const openModal = (field = null) => {
         sort_order: field.sortOrder || field.sort_order,
         participant_role_id: field.participantRoleId || field.participant_role_id,
         entity_field_definition_id: field.entityFieldDefinitionId || field.entity_field_definition_id || null,
+        document_option_list_id: field.documentOptionListId || field.document_option_list_id || null, // NEW
         show_in_quick_view: !!(field.showInQuickView || field.show_in_quick_view)
     });
   } else {
     Object.assign(form, { 
         id: null, field_label: '', field_key: '', field_type: 'text', 
         is_required: false, sort_order: fields.value.length + 1, 
-        participant_role_id: null, entity_field_definition_id: null, show_in_quick_view: false 
+        participant_role_id: null, entity_field_definition_id: null, document_option_list_id: null, show_in_quick_view: false 
     });
   }
   showModal.value = true;

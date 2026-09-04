@@ -6,7 +6,7 @@
         <div class="flex items-center gap-2">
           <!-- <span class="text-2xl">⚡</span> -->
           <h1 class="text-2xl font-black text-gray-900 tracking-tight">Workspace Blueprinting</h1>
-          <span class="bg-indigo-50 text-indigo-700 text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider border border-indigo-100">
+          <span class="bg-blue-50 text-blue-700 text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider border border-blue-100">
             PaaS Modular Engine
           </span>
         </div>
@@ -15,7 +15,7 @@
         </p>
       </div>
 
-      <button @click="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm shrink-0">
+      <button @click="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm shrink-0">
         <span>+ Forge New Niche</span>
       </button>
     </div>
@@ -30,7 +30,7 @@
             @input="debouncedFetch" 
             type="text" 
             placeholder="Search niches, slugs, keywords..." 
-            class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <span class="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
         </div>
@@ -39,7 +39,7 @@
         <select 
           v-model="filters.category" 
           @change="fetchNiches" 
-          class="border border-gray-300 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 focus:ring-indigo-500"
+          class="border border-gray-300 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 focus:ring-blue-500"
         >
           <option value="">All Categories</option>
           <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
@@ -70,7 +70,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white">
-          <tr v-for="niche in niches" :key="niche.id" class="hover:bg-indigo-50/20 transition-colors">
+          <tr v-for="niche in niches" :key="niche.id" class="hover:bg-blue-50/20 transition-colors">
             <!-- Identity -->
             <td class="px-6 py-4">
               <div class="font-bold text-gray-900 text-sm">{{ niche.name }}</div>
@@ -84,7 +84,7 @@
                 {{ niche.category || 'General' }}
               </span>
               <div class="flex flex-wrap gap-1 max-w-xs">
-                <span v-for="tag in (niche.tags || [])" :key="tag" class="text-[10px] bg-indigo-50 text-indigo-600 font-semibold px-1.5 py-0.5 rounded">
+                <span v-for="tag in (niche.tags || [])" :key="tag" class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-1.5 py-0.5 rounded">
                   #{{ tag }}
                 </span>
               </div>
@@ -95,7 +95,7 @@
               <span v-if="niche.is_public" class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
                 ● Public Core
               </span>
-              <span v-else-if="!niche.wlp_tenant_id" class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider" :title="`Licensed to ${niche.licensed_wlp_tenants?.length || 0} Partners`">
+              <span v-else-if="!niche.wlp_tenant_id" class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider" :title="`Licensed to ${niche.licensed_wlp_tenants?.length || 0} Partners`">
                 🔒 Licensed IP
               </span>
               <span v-else class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
@@ -109,7 +109,7 @@
                 <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded-md" title="Custom Fields">
                   📋 {{ niche.field_definitions_count ?? niche.fieldDefinitionsCount ?? niche.fields_count ?? 0 }}
                 </span>
-                <span class="bg-purple-50 text-purple-700 text-xs font-bold px-2 py-1 rounded-md" title="Attached Document Packs">
+                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md" title="Attached Document Packs">
                   📦 {{ niche.document_packs_count ?? niche.documentPacksCount ?? 0 }}
                 </span>
                 <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md" title="Attached Workflows">
@@ -128,7 +128,7 @@
 
             <!-- Actions -->
             <td class="px-6 py-4 text-right space-x-3 text-xs font-bold">
-              <router-link :to="{ name: 'admin.niche-factory.fields', params: { fileTypeId: niche.id } }" class="text-indigo-600 hover:text-indigo-900">
+              <router-link :to="{ name: 'admin.niche-factory.fields', params: { fileTypeId: niche.id } }" class="text-blue-600 hover:text-blue-900">
                 Fields DNA
               </router-link>
               <button @click="openModal(niche)" class="text-gray-500 hover:text-gray-700">Configure</button>
@@ -155,13 +155,13 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Blueprint Name</label>
-            <input v-model="form.name" type="text" placeholder="e.g. Professional Heavy Vehicle Driver" class="w-full border-gray-300 rounded-lg text-sm" />
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Workspace Name</label>
+            <input v-model="form.name" type="text" placeholder="e.g. SHEQ Medical" class="w-full border-gray-300 rounded-lg text-sm" />
           </div>
 
           <div>
             <label class="block text-xs font-black text-gray-600 uppercase mb-1">System Slug (Unique)</label>
-            <input v-model="form.slug" type="text" placeholder="e.g. heavy_vehicle_driver" class="w-full border-gray-300 rounded-lg text-sm font-mono" />
+            <input v-model="form.slug" type="text" placeholder="e.g. sheq_medical" class="w-full border-gray-300 rounded-lg text-sm font-mono" />
           </div>
         </div>
 
@@ -173,37 +173,37 @@
 
           <div>
             <label class="block text-xs font-black text-gray-600 uppercase mb-1">Keywords / Tags (Comma-separated)</label>
-            <input v-model="rawTags" type="text" placeholder="driver, pdp, forklift, logistics" class="w-full border-gray-300 rounded-lg text-sm" />
+            <input v-model="rawTags" type="text" placeholder="driver, pdp, forklift, logistics, tax, bonds" class="w-full border-gray-300 rounded-lg text-sm" />
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-black text-gray-600 uppercase mb-1">Compliance Description / Scope</label>
-          <textarea v-model="form.description" rows="2" placeholder="Briefly describe what legal compliance or operational workflow this niche covers..." class="w-full border-gray-300 rounded-lg text-sm"></textarea>
+          <textarea v-model="form.description" rows="2" placeholder="Briefly describe what legal compliance or operational workflow this workspace covers..." class="w-full border-gray-300 rounded-lg text-sm"></textarea>
         </div>
 
         <!-- IP Protection Settings (System Admin Only) -->
-        <div v-if="isSystemAdmin" class="p-4 bg-purple-50/60 rounded-xl border border-purple-100 space-y-3">
+        <div v-if="isSystemAdmin" class="p-4 bg-blue-50/60 rounded-xl border border-blue-100 space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-xs font-black text-purple-900 uppercase">Commercial IP Governance</span>
-              <p class="text-[11px] text-purple-700">Determine who has clearance to assemble this compliance engine.</p>
+              <span class="text-xs font-black text-blue-900 uppercase">Commercial IP Governance</span>
+              <p class="text-[11px] text-blue-700">Determine who has clearance to assemble this compliance engine.</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" v-model="form.is_public" class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-              <span class="ml-2 text-xs font-bold" :class="form.is_public ? 'text-emerald-700' : 'text-purple-700'">
+              <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              <span class="ml-2 text-xs font-bold" :class="form.is_public ? 'text-emerald-700' : 'text-blue-700'">
                 {{ form.is_public ? 'Public Platform Core' : 'Restricted / Licensed' }}
               </span>
             </label>
           </div>
 
           <!-- License to Specific WLPs if not public -->
-          <div v-if="!form.is_public && wlpPartners.length > 0" class="pt-2 border-t border-purple-200/50">
-            <label class="block text-[11px] font-black text-purple-800 uppercase mb-1">License Access to Partner Tenants:</label>
-            <div class="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto bg-white p-2 rounded-lg border border-purple-200">
-              <label v-for="partner in wlpPartners" :key="partner.id" class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer p-1 rounded hover:bg-purple-50">
-                <input type="checkbox" :value="partner.id" v-model="form.licensed_wlp_tenant_ids" class="rounded text-purple-600">
+          <div v-if="!form.is_public && wlpPartners.length > 0" class="pt-2 border-t border-blue-200/50">
+            <label class="block text-[11px] font-black text-blue-800 uppercase mb-1">License Access to Partner Tenants:</label>
+            <div class="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto bg-white p-2 rounded-lg border border-blue-200">
+              <label v-for="partner in wlpPartners" :key="partner.id" class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer p-1 rounded hover:bg-blue-50">
+                <input type="checkbox" :value="partner.id" v-model="form.licensed_wlp_tenant_ids" class="rounded text-blue-600">
                 <span>{{ partner.name }}</span>
               </label>
             </div>
@@ -212,11 +212,11 @@
 
         <!-- Attached Doc Packs -->
         <div class="border rounded-xl p-3 bg-gray-50/50">
-          <label class="text-xs font-black text-purple-700 uppercase mb-1.5 block">📦 Default Document Packs</label>
+          <label class="text-xs font-black text-blue-700 uppercase mb-1.5 block">📦 Default Document Packs</label>
           <div v-if="catalogDocPacks.length === 0" class="text-xs text-gray-400 italic">No Document Packs available.</div>
           <div v-else class="grid grid-cols-2 gap-2 max-h-28 overflow-y-auto">
             <label v-for="pack in catalogDocPacks" :key="pack.id" class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer p-1 rounded hover:bg-white">
-              <input type="checkbox" :value="pack.id" v-model="form.document_pack_ids" class="rounded text-purple-600">
+              <input type="checkbox" :value="pack.id" v-model="form.document_pack_ids" class="rounded text-blue-600">
               <span class="truncate">{{ pack.name }}</span>
             </label>
           </div>
@@ -235,13 +235,13 @@
         </div>
 
         <div class="flex items-center gap-3 pt-2">
-          <input v-model="form.is_active" type="checkbox" id="niche_active" class="h-4 w-4 text-indigo-600 rounded">
+          <input v-model="form.is_active" type="checkbox" id="niche_active" class="h-4 w-4 text-blue-600 rounded">
           <label for="niche_active" class="text-xs font-bold text-gray-700">Blueprint is Active in Foundry</label>
         </div>
 
         <div class="flex justify-end gap-3 border-t pt-4">
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-xs px-4 py-2">Cancel</button>
-          <button @click="save" class="bg-indigo-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-indigo-700">
+          <button @click="save" class="bg-blue-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow hover:bg-blue-700">
             {{ form.id ? 'Save Blueprint' : 'Forge Blueprint' }}
           </button>
         </div>
