@@ -163,13 +163,14 @@
                 <!-- Dynamic Niche Custom Fields -->
                 <div v-for="field in currentNicheFields.filter(f => !f.participantRoleId)" :key="field.id" class="col-span-2">
                   <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                    {{ field.label }}
-                    <span v-if="field.showInQuickView" class="text-brand-primary ml-1">★</span>
+                    {{ field.fieldLabel || field.field_label || field.label }}
+                    <span v-if="field.showInQuickView || field.show_in_quick_view" class="text-indigo-600 ml-1">★</span>
                   </label>
 
-                  <div v-if="field.fieldType === 'date'" class="relative group">
-                    <div class="flex items-center justify-between w-full px-3 h-[42px] bg-white border border-gray-200 rounded-xl shadow-sm group-hover:border-brand-primary transition-colors">
-                      <span class="text-sm font-bold uppercase tracking-tight" :class="detailsForm.meta_data[field.key] ? 'text-brand-blue-700' : 'text-gray-400'">
+                  <!-- 1. DATE PICKER (Finesse Pattern) -->
+                  <div v-if="field.fieldType === 'date' || field.field_type === 'date'" class="relative group">
+                    <div class="flex items-center justify-between w-full px-3 h-[42px] bg-white border border-gray-200 rounded-xl shadow-sm group-hover:border-indigo-500 transition-colors">
+                      <span class="text-sm font-bold uppercase tracking-tight" :class="detailsForm.meta_data[field.key] ? 'text-indigo-700' : 'text-gray-400'">
                         {{ detailsForm.meta_data[field.key] ? $formatDate(detailsForm.meta_data[field.key]) : 'Select Date...' }}
                       </span>
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,11 +180,48 @@
                     <input type="date" v-model="detailsForm.meta_data[field.key]" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                   </div>
 
+                  <!-- 2. CHECKBOX GROUP (Multi-Select driven by Option Lists) -->
+                  <div v-else-if="field.fieldType === 'checkbox_group' || field.field_type === 'checkbox_group'" class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm space-y-2">
+                    <div v-if="!getOptionListOptions(field)?.length" class="text-xs text-gray-400 italic">
+                      No options found in linked list.
+                    </div>
+                    <label v-for="opt in getOptionListOptions(field)" :key="opt.id" class="flex items-center gap-2.5 text-xs font-bold text-gray-700 cursor-pointer hover:bg-gray-50 p-1.5 rounded-lg">
+                      <input 
+                        type="checkbox" 
+                        :value="opt.optionValue || opt.option_value" 
+                        v-model="detailsForm.meta_data[field.key]" 
+                        class="rounded text-indigo-600 h-4 w-4 border-gray-300"
+                      >
+                      <span>{{ opt.optionValue || opt.option_value }}</span>
+                    </label>
+                  </div>
+
+                  <!-- 3. SELECT DROPDOWN (Single Select driven by Option Lists) -->
+                  <select 
+                    v-else-if="field.fieldType === 'select' || field.field_type === 'select'"
+                    v-model="detailsForm.meta_data[field.key]"
+                    class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700 h-[42px] bg-white shadow-sm"
+                  >
+                    <option :value="null">-- Select Option --</option>
+                    <option v-for="opt in getOptionListOptions(field)" :key="opt.id" :value="opt.optionValue || opt.option_value">
+                      {{ opt.optionValue || opt.option_value }}
+                    </option>
+                  </select>
+
+                  <!-- 4. TEXTAREA -->
+                  <textarea 
+                    v-else-if="field.fieldType === 'textarea' || field.field_type === 'textarea'"
+                    v-model="detailsForm.meta_data[field.key]"
+                    rows="3"
+                    class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700 shadow-sm"
+                  ></textarea>
+
+                  <!-- 5. STANDARD TEXT / NUMBER INPUT -->
                   <input 
                     v-else 
                     v-model="detailsForm.meta_data[field.key]" 
-                    :type="field.fieldType === 'number' ? 'number' : 'text'"
-                    class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700 h-[42px]"
+                    :type="(field.fieldType === 'number' || field.field_type === 'number') ? 'number' : 'text'"
+                    class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700 h-[42px] shadow-sm"
                   >
                 </div>
 
@@ -303,6 +341,74 @@ const { showAlert, showConfirm } = useAlerts();
 const teams = ref([]);
 const fileClasses = ref([]);
 
+const optionListOptions = reactive({});
+
+const fetchOptionListOptions = async () => {
+  const productSlug = props.slug || route.params.productSlug || route.params.slug;
+  const listIds = [...new Set(
+    currentNicheFields.value
+      .filter(f => f.fieldType === 'select' || f.fieldType === 'checkbox_group')
+      .map(f => f.optionListId)
+      .filter(Boolean)
+  )];
+
+  await Promise.all(listIds.map(async (listId) => {
+    if (optionListOptions[listId]) return;
+    try {
+      const { data } = await apiClient.get(`products/${productSlug}/option-lists/${listId}`);
+      // tenantScopedOptions returns a flat array of { id, option_value } (or [] when out of scope)
+      const options = Array.isArray(data) ? data : (data?.data || []);
+      optionListOptions[listId] = options;
+      console.log(`[OptionList] list ${listId} -> ${options.length} options`, options);
+    } catch (e) {
+      console.error(`Failed to load options for list ${listId}`, e);
+      optionListOptions[listId] = [];
+    }
+  }));
+};
+
+const getOptionListOptions = (field) => {
+  if (!field) return [];
+  const listId = field.optionListId;
+  if (listId) return optionListOptions[listId] || [];
+
+  // Legacy fallback: options stored inline on the field (no linked list).
+  const inline = field.inlineOptions;
+  if (Array.isArray(inline) && inline.length) {
+    return inline.map(opt => {
+      if (typeof opt === 'string' || typeof opt === 'number') {
+        const value = String(opt);
+        return { id: value, option_value: value };
+      }
+      return opt;
+    });
+  }
+  return [];
+};
+
+// Normalize a stored checkbox_group value into an array of option values.
+// Handles arrays, JSON-encoded arrays, comma-separated strings, and discards
+// the buggy boolean collapse ('true'/'false') that used to overwrite the field.
+const normalizeMultiselectValue = (v) => {
+  if (v === true || v === 'true' || v === false || v === 'false'
+      || v === null || v === undefined || v === '') {
+    return [];
+  }
+  if (Array.isArray(v)) {
+    return v.filter(x => x !== null && x !== undefined && x !== '').map(String);
+  }
+  if (typeof v === 'string') {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(x => x !== null && x !== undefined && x !== '').map(String);
+      }
+    } catch (_) { /* not JSON; fall through to CSV split */ }
+    return v.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 // Filtered Ownership Teams for case_files.current_team_id
 const ownershipTeams = computed(() => {
   return teams.value.filter(t => (t.team_type || t.teamType || 'ownership') === 'ownership');
@@ -319,11 +425,32 @@ const availableFileTypes = computed(() => {
 });
 
 const activeFileType = ref(null);
+const currentNicheFields = computed(() => {
+  const fields = activeFileType.value?.fields || props.caseFile.fileType?.fields || [];
+  return fields.map(f => {
+    const key = f.fieldKey || f.field_key || f.key || '';
+    const label = f.fieldLabel || f.field_label || f.label || key;
+    const pRoleId = f.participantRoleId || f.participant_role_id;
+    const showStar = f.showInQuickView === true || f.show_in_quick_view === true || f.show_in_quick_view === 1;
 
-const initActiveTab = () => {
+    return {
+      id: f.id,
+      label: label,
+      key: key,
+      fieldType: f.fieldType || f.field_type || 'text',
+      showInQuickView: showStar,
+      participantRoleId: (pRoleId && pRoleId !== "0") ? pRoleId : null,
+      optionListId: f.documentOptionListId || f.document_option_list_id || null,
+      inlineOptions: Array.isArray(f.options) ? f.options : []
+    };
+  });
+});
+
+const initActiveTab = async () => {
   if (availableFileTypes.value.length > 0 && !activeFileType.value) {
     const matched = availableFileTypes.value.find(ft => ft.id === props.caseFile.file_type_id);
     activeFileType.value = matched || availableFileTypes.value[0];
+    await fetchOptionListOptions();
   }
 };
 
@@ -341,25 +468,6 @@ const detailsForm = reactive({
   current_team_id: null,
   file_class_id: null,
   meta_data: {}
-});
-
-const currentNicheFields = computed(() => {
-  const fields = activeFileType.value?.fields || props.caseFile.fileType?.fields || [];
-  return fields.map(f => {
-    const key = f.fieldKey || f.field_key || f.key || '';
-    const label = f.fieldLabel || f.field_label || f.label || key;
-    const pRoleId = f.participantRoleId || f.participant_role_id;
-    const showStar = f.showInQuickView === true || f.show_in_quick_view === true || f.show_in_quick_view === 1;
-
-    return {
-      id: f.id,
-      label: label,
-      key: key,
-      fieldType: f.fieldType || f.field_type || 'text',
-      showInQuickView: showStar,
-      participantRoleId: (pRoleId && pRoleId !== "0") ? pRoleId : null
-    };
-  });
 });
 
 const openSetupDrawer = async () => {
@@ -389,8 +497,17 @@ const openSetupDrawer = async () => {
       ?? rawMeta[snakeKey] 
       ?? '';
 
-    detailsForm.meta_data[key] = value;
+    // checkbox_group stores an ARRAY of selected option values so each
+    // checkbox toggles independently. Normalize any legacy scalar/JSON/CSV
+    // value (including the buggy boolean collapse) into an array.
+    detailsForm.meta_data[key] = (f.fieldType === 'checkbox_group')
+      ? normalizeMultiselectValue(value)
+      : value;
   });
+
+  // Belt-and-suspenders: ensure option lists are fetched/resolved now that the
+  // active tab + fields are guaranteed present (covers mount-time races).
+  await fetchOptionListOptions();
 
   if (teams.value.length === 0) {
     try {

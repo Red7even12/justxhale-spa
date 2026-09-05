@@ -89,11 +89,12 @@
                     <option value="number">Numeric</option>
                     <option value="textarea">Long Text</option>
                     <option value="select">Dropdown (Option List)</option>
+                    <option value="checkbox_group">Multi-select Checkboxes</option>
                 </select>
             </div>
 
-            <!-- OPTION LIST SELECTOR (Appears when 'select' is chosen) -->
-            <div v-if="form.field_type === 'select'" class="col-span-2 p-4 bg-purple-50 rounded-lg border border-purple-100 space-y-2">
+            <!-- OPTION LIST SELECTOR (Appears for both 'select' and 'checkbox_group') -->
+            <div v-if="form.field_type === 'select' || form.field_type === 'checkbox_group'" class="col-span-2 p-4 bg-purple-50 rounded-lg border border-purple-100 space-y-2">
                 <label class="block text-xs font-black text-purple-900 uppercase">Select Option List Source</label>
                 <select v-model="form.document_option_list_id" class="w-full border-purple-200 rounded-lg shadow-sm text-sm bg-white">
                     <option :value="null">-- Select a Global Option List --</option>
@@ -102,7 +103,7 @@
                     </option>
                 </select>
                 <p class="text-[11px] text-purple-600">
-                    Dropdown options will be dynamically loaded from this list.
+                    {{ form.field_type === 'checkbox_group' ? 'Each option in this list will render as a selectable checkbox.' : 'Dropdown options will be dynamically loaded from this list.' }}
                 </p>
             </div>
             
