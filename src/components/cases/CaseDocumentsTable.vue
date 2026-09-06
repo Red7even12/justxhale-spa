@@ -90,7 +90,7 @@
                 <div>
                   <div class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
                     {{ req.documentType?.label || req.documentType?.name }}
-                    <span v-if="req.is_required" class="text-[9px] text-red-500 font-bold uppercase tracking-wide border border-red-100 px-1 rounded">Req</span>
+                    <span v-if="req.is_required || req.isRequired" class="text-[9px] text-red-500 font-bold uppercase tracking-wide border border-red-100 px-1 rounded">Req</span>
                   </div>
                   
                   <!-- Participant Tag if viewing in "All Docs" mode -->
@@ -105,39 +105,88 @@
 
             <!-- Status Badge -->
             <td class="px-3 py-2 whitespace-nowrap align-top">
-              <span :class="[getStatusInfo(req.currentStatus).class, getStatusInfo(req.currentStatus).textClass]" 
+              <span v-if="isRenewalUrgent(req)"
+                    class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 animate-pulse">
+                ⚠ Renew Now
+              </span>
+              <span v-else :class="[getStatusInfo(req.currentStatus || req.current_status).class, getStatusInfo(req.currentStatus || req.current_status).textClass]"
                     class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                {{ (req.currentStatus || 'pending').replace('_', ' ') }}
+                {{ (req.currentStatus || req.current_status || 'pending').replace('_', ' ') }}
               </span>
             </td>
 
             <!-- Input Fields -->
             <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 align-top">
-              <div v-if="req.currentStatus !== 'not_applicable' && submissionData[req.id]">
+              <div v-if="(req.currentStatus || req.current_status) !== 'not_applicable' && submissionData[req.id]">
                 
-                <!-- Date Inputs -->
-                <div v-if="['expiry_date', 'date'].includes(req.documentType?.actionFieldType)" class="relative group max-w-[180px]">
-                  <div class="flex items-center justify-between w-full px-3 py-1 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
-                      <span class="text-[11px] font-black uppercase tracking-tight" :class="submissionData[req.id].value ? 'text-brand-blue-700' : 'text-gray-400'">
-                      {{ submissionData[req.id].value ? $formatDate(submissionData[req.id].value) : 'Select Date...' }}
+                <!-- Dual-Date / Coverage Period Input (Archetype 4) -->
+                <div v-if="(req.documentType?.dateRuleType || req.documentType?.date_rule_type) === 'dual_coverage_period'" class="space-y-1.5 max-w-[200px]">
+                  <!-- Issue Date -->
+                  <div class="relative group">
+                    <div class="flex items-center justify-between w-full px-2 py-0.5 bg-white border border-gray-300 rounded shadow-xs text-[10px]">
+                      <span class="text-gray-400 font-bold uppercase">Issued:</span>
+                      <span class="font-black" :class="getDualDate(submissionData[req.id].value, 'issue_date') ? 'text-brand-blue-700' : 'text-gray-400'">
+                        {{ getDualDate(submissionData[req.id].value, 'issue_date') ? $formatDate(getDualDate(submissionData[req.id].value, 'issue_date')) : 'Set Date' }}
                       </span>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                  </div>
-                  <input 
+                    </div>
+                    <input 
                       type="date"
-                      v-model="submissionData[req.id].value" 
-                      @change="handleInputChange(req.id)"
+                      :value="getDualDate(submissionData[req.id].value, 'issue_date')"
+                      @change="(e) => updateDualDate(req.id, 'issue_date', e.target.value)"
                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  >
+                    >
+                  </div>
+
+                  <!-- Expiry Date -->
+                  <div class="relative group">
+                    <div class="flex items-center justify-between w-full px-2 py-0.5 bg-white border border-gray-300 rounded shadow-xs text-[10px]">
+                      <span class="text-gray-400 font-bold uppercase">Expires:</span>
+                      <span class="font-black" :class="getDualDate(submissionData[req.id].value, 'expiry_date') ? 'text-brand-blue-700' : 'text-gray-400'">
+                        {{ getDualDate(submissionData[req.id].value, 'expiry_date') ? $formatDate(getDualDate(submissionData[req.id].value, 'expiry_date')) : 'Set Date' }}
+                      </span>
+                    </div>
+                    <input 
+                      type="date"
+                      :value="getDualDate(submissionData[req.id].value, 'expiry_date')"
+                      @change="(e) => updateDualDate(req.id, 'expiry_date', e.target.value)"
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    >
+                  </div>
+                </div>
+
+                <!-- Standard Single Date Inputs (Archetypes 1, 2, 3) -->
+                <div v-else-if="['expiry_date', 'date'].includes(req.documentType?.actionFieldType || req.documentType?.action_field_type)" class="max-w-[190px]">
+                  <div class="relative group">
+                    <div class="flex items-center justify-between w-full px-3 py-1 bg-white border border-gray-300 rounded shadow-sm group-hover:border-brand-primary transition-colors">
+                        <span class="text-[11px] font-black uppercase tracking-tight" :class="submissionData[req.id].value ? 'text-brand-blue-700' : 'text-gray-400'">
+                        {{ submissionData[req.id].value ? $formatDate(submissionData[req.id].value) : getDatePlaceholder(req.documentType) }}
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <input 
+                        type="date"
+                        v-model="submissionData[req.id].value" 
+                        @change="handleInputChange(req.id)"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    >
+                  </div>
+
+                  <!-- Calculated Expiry Display -->
+                  <div v-if="req.expires_at || req.expiresAt" class="text-[10px] font-bold mt-1 tracking-tight flex items-center gap-1">
+                    <span class="text-gray-400">Expires:</span>
+                    <span :class="(req.currentStatus === 'expired' || req.current_status === 'expired') ? 'text-red-600 font-black' : (isRenewalUrgent(req) ? 'text-amber-600 font-black' : 'text-gray-700')">
+                      {{ $formatDate(req.expires_at || req.expiresAt) }}
+                    </span>
+                  </div>
                 </div>
 
                 <!-- Text Input -->
-                <div v-else-if="req.documentType?.actionFieldType === 'text'">
+                <div v-else-if="(req.documentType?.actionFieldType || req.documentType?.action_field_type) === 'text'">
                   <input 
                     type="text" 
-                    :placeholder="req.documentType.actionFieldLabel || 'Enter value'"
+                    :placeholder="req.documentType?.actionFieldLabel || req.documentType?.action_field_label || 'Enter value'"
                     v-model="submissionData[req.id].value"
                     @input="handleInputChange(req.id)"
                     class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-xs"
@@ -145,7 +194,7 @@
                 </div>
 
                 <!-- Sourced Dropdown -->
-                <div v-else-if="req.documentType?.actionFieldType === 'sourced_dropdown'">
+                <div v-else-if="(req.documentType?.actionFieldType || req.documentType?.action_field_type) === 'sourced_dropdown'">
                   <select
                     v-model="submissionData[req.id].value"
                     @change="handleInputChange(req.id)"
@@ -174,6 +223,19 @@
             <!-- Actions: Files & Notes -->
             <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium align-top">
              <div class="flex items-center justify-end gap-2">
+                <!-- URGENT: immediate magic-link request for imminent expiry -->
+                <button
+                    v-if="isRenewalUrgent(req)"
+                    @click="openRequestModal(req)"
+                    class="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-amber-500 text-white border border-amber-600 hover:bg-amber-600 transition-colors shadow-sm"
+                    title="Expiry imminent — request renewal now via secure Magic Link"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Request Now
+                </button>
+
                 <button 
                     @click="openFiles(req)" 
                     class="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold transition-colors border"
@@ -324,7 +386,7 @@
             Select the required documents and choose who should receive the secure upload link. They will receive a passwordless Magic Link to upload these files directly from their phone or computer.
         </p>
 
-<!-- Step 1: Select Recipient -->
+        <!-- Step 1: Select Recipient -->
         <div class="mb-6">
             <label class="block text-sm font-bold text-gray-700 mb-2">1. Who are you requesting these from?</label>
             <div v-if="isLoadingParticipants" class="text-xs text-gray-500 font-bold animate-pulse">Loading contacts...</div>
@@ -500,17 +562,30 @@ const getParticipantDocCount = (participantId) => {
 };
 
 const pendingDocuments = computed(() => {
-    return filteredRequirements.value.filter(doc => 
-        (doc.currentStatus === 'pending' || 
-         doc.currentStatus === 'stale' || 
-         doc.currentStatus === 'requested' 
-        ) && 
-        doc.isRequired !== false
-    );
+    return filteredRequirements.value.filter(doc => {
+        const status = doc.currentStatus || doc.current_status || 'pending';
+        return (status === 'pending' || status === 'stale' || status === 'requested' || status === 'expired') && 
+               doc.isRequired !== false && doc.is_required !== false;
+    });
 });
 
 const selectAllDocs = () => {
     requestPayload.documentIds = pendingDocuments.value.map(doc => doc.id);
+};
+
+// Helper for date placeholder hints
+const getDatePlaceholder = (docType) => {
+    if (!docType) return 'Select Date...';
+    if (docType.actionFieldLabel || docType.action_field_label) {
+        return docType.actionFieldLabel || docType.action_field_label;
+    }
+    const rule = docType.dateRuleType || docType.date_rule_type;
+    if (rule === 'hard_printed_expiry') return 'Expiry Date...';
+    if (rule === 'recency_max_age') return 'Issue Date...';
+    if (rule === 'rolling_interval') return 'Exam / Event Date...';
+    if (rule === 'project_bound') return 'Project End Date...';
+    if (rule === 'cadence_recurring') return 'Submission Date...';
+    return 'Select Date...';
 };
 
 // --- PARTICIPANT / STAKEHOLDER FETCHING ---
@@ -523,10 +598,8 @@ const fetchParticipants = async () => {
         const response = await apiClient.get(`/${targetSlug}/cases/${targetCaseId}/participants`);
         const allParticipants = response.data?.data || response.data || [];
         
-        // Full list for the Request Modal
         availableParticipants.value = allParticipants;
 
-        // ONLY display in the top pill bar if flagged in Blueprint OR has documents attached
         stakeholders.value = allParticipants.filter(p => {
             const isFlagged = p.group_on_documents === true || p.groupOnDocuments === true;
             const hasAssignedDocs = requirements.value.some(req => {
@@ -542,17 +615,49 @@ const fetchParticipants = async () => {
     }
 };
 
-const openRequestModal = async () => {
+const openRequestModal = async (req = null) => {
     isRequestModalOpen.value = true;
+
+    if (req) {
+        // Urgent renewal shortcut: pre-target this specific document and its participant.
+        requestPayload.documentIds = [req.id];
+        const reqParticipant = req.caseParticipantId ?? req.case_participant_id;
+        if (reqParticipant) {
+            requestPayload.participantId = reqParticipant;
+        } else if (typeof selectedParticipantId.value === 'number') {
+            requestPayload.participantId = selectedParticipantId.value;
+        } else {
+            const primary = availableParticipants.value.find(p => p.isPrimaryContact || p.is_primary_contact);
+            requestPayload.participantId = primary ? primary.id : null;
+        }
+        return;
+    }
+
     requestPayload.documentIds = [];
     
-    // Auto-select stakeholder if one is actively selected in the table
     if (typeof selectedParticipantId.value === 'number') {
         requestPayload.participantId = selectedParticipantId.value;
     } else {
         const primary = availableParticipants.value.find(p => p.isPrimaryContact || p.is_primary_contact);
         requestPayload.participantId = primary ? primary.id : null;
     }
+};
+
+// Urgent-renewal flag: the doc is still 'valid' but its reminder lead-window has
+// already started (backend sends is_renewal_urgent; client-side fallback for safety).
+const isRenewalUrgent = (req) => {
+    const flag = req.isRenewalUrgent ?? req.is_renewal_urgent;
+    if (flag !== undefined && flag !== null) return flag === true;
+
+    const status = req.currentStatus || req.current_status;
+    const exp = req.expires_at || req.expiresAt;
+    if (status !== 'valid' || !exp) return false;
+
+    const lead = Number(req.documentType?.reminderLeadDays ?? req.documentType?.reminder_lead_days ?? 0);
+    if (lead <= 0) return false;
+
+    const daysToExpiry = (new Date(exp).getTime() - Date.now()) / 86400000;
+    return daysToExpiry <= lead;
 };
 
 const closeRequestModal = () => {
@@ -571,7 +676,10 @@ const sendDocumentRequest = async () => {
         
         requestPayload.documentIds.forEach(id => {
             const doc = requirements.value.find(d => d.id === id);
-            if (doc) doc.currentStatus = 'requested';
+            if (doc) {
+                doc.currentStatus = 'requested';
+                doc.current_status = 'requested';
+            }
         });
 
         closeRequestModal();
@@ -605,7 +713,7 @@ const fetchRequirements = async () => {
   try {
     const params = props.fileTypeId ? { file_type_id: props.fileTypeId } : {};
     const { data } = await apiClient.get(`/${route.params.productSlug}/cases/${props.caseId}/documents`, { params });
-    requirements.value = data;
+    requirements.value = Array.isArray(data) ? data : data.data || [];
     dirtyRequirementIds.clear();
     
     requirements.value.forEach(req => {
@@ -624,6 +732,27 @@ const fetchRequirements = async () => {
   } finally {
     isLoading.value = false;
   }
+};
+
+const getDualDate = (val, key) => {
+    if (!val) return '';
+    try {
+        const parsed = typeof val === 'string' && val.startsWith('{') ? JSON.parse(val) : null;
+        return parsed ? (parsed[key] || '') : '';
+    } catch {
+        return '';
+    }
+};
+
+const updateDualDate = (reqId, key, dateValue) => {
+    let current = {};
+    const existingVal = submissionData[reqId]?.value;
+    if (existingVal && typeof existingVal === 'string' && existingVal.startsWith('{')) {
+        try { current = JSON.parse(existingVal); } catch {}
+    }
+    current[key] = dateValue;
+    submissionData[reqId].value = JSON.stringify(current);
+    handleInputChange(reqId);
 };
 
 const handleInputChange = (requirementId) => {
@@ -655,6 +784,7 @@ const getStatusInfo = (status) => {
         pending: { class: 'bg-gray-100', textClass: 'text-gray-600' },
         received: { class: 'bg-blue-100', textClass: 'text-blue-700' },
         valid: { class: 'bg-green-100', textClass: 'text-green-700' },
+        expired: { class: 'bg-red-100', textClass: 'text-red-700' },
         stale: { class: 'bg-red-100', textClass: 'text-red-700' },
         not_applicable: { class: 'bg-gray-200', textClass: 'text-gray-500' },
         requested: { class: 'bg-orange-100', textClass: 'text-orange-700' },

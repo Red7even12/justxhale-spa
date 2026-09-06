@@ -8,7 +8,7 @@
                 ← Back to Packs
             </router-link>
             <h2 class="text-xl font-bold text-gray-800">Document Pack Items Management</h2>
-            <p class="text-sm text-gray-500">Configure checklist behavior and data capture for this pack.</p>
+            <p class="text-sm text-gray-500">Configure checklist behavior and compliance rules for this pack.</p>
         </div>
         <div class="flex gap-3">
             <!-- Sync button (Available when running inside a Product context) -->
@@ -89,7 +89,7 @@
                         <select v-model="formObject.data.actionFieldType" @change="handleActionTypeChange" class="w-full border-gray-300 rounded-lg shadow-sm">
                             <option value="none">Checkbox Only (Received)</option>
                             <option value="date">Date Input</option>
-                            <option value="expiry_date">Date with Expiry Validation</option>
+                            <option value="expiry_date">Date with Expiry / Compliance Validation</option>
                             <option value="text">Manual Text/Reference Input</option>
                             <option value="sourced_dropdown">Sourced Dropdown (Global Lists)</option>
                         </select>
@@ -103,14 +103,68 @@
                         </select>
                     </div>
 
-                    <div v-if="formObject.data.actionFieldType === 'expiry_date'">
-                        <label class="block text-xs font-black text-blue-600 uppercase mb-1">Validity Period (Months)</label>
-                        <input v-model="formObject.data.validityDays" type="number" class="w-full border-blue-300 bg-blue-50 rounded-lg shadow-sm" placeholder="e.g. 3" required>
-                    </div>
+                    <!-- Compliance Archetype Selection -->
+                    <!-- Compliance Archetype Selection (Always visible for date-related inputs) -->
+                    <div v-if="formObject.data.actionFieldType === 'expiry_date' || formObject.data.actionFieldType === 'date'" class="md:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                        <div>
+                            <label class="block text-xs font-black text-blue-700 uppercase mb-1">Compliance Date Logic Archetype</label>
+                            <select v-model="formObject.data.dateRuleType" class="w-full border-blue-300 bg-white rounded-lg shadow-sm font-medium">
+                                <option value="recency_max_age">1. Recency Rule (Not Older than X at ingestion - e.g. Bank Letter, Proof of Res)</option>
+                                <option value="rolling_interval">2. Rolling Interval (Valid for X from Event Date - e.g. Medicals, Load Tests)</option>
+                                <option value="hard_printed_expiry">3. Hard Printed Expiry (Strict Calendar Date - e.g. Driver's License, Visas)</option>
+                                <option value="dual_coverage_period">4. Dual-Date / Coverage Period (e.g. COIDA, Tax PIN)</option>
+                                <option value="project_bound">5. Event / Milestone-Bound (Valid for Duration of Project/Phase)</option>
+                                <option value="static_permanent">6. Static / Permanent (Indefinite - e.g. ID Book, Company Registration)</option>
+                                <option value="cadence_recurring">7. Cadence / Periodic Target (Weekly / Monthly recurring evidence)</option>
+                            </select>
+                        </div>
+
+                        <!-- Validity / Recurrence Duration for Archetypes 1, 2, 4, and 7 -->
+                        <div v-if="['recency_max_age', 'rolling_interval', 'dual_coverage_period', 'cadence_recurring'].includes(formObject.data.dateRuleType)" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                            <div>
+                                <label class="block text-xs font-black text-blue-600 uppercase mb-1">
+                                    {{ formObject.data.dateRuleType === 'cadence_recurring' ? 'Recurring Every' : (formObject.data.dateRuleType === 'recency_max_age' ? 'Max Allowed Age' : 'Validity Duration') }}
+                                </label>
+                                <input v-model.number="formObject.data.validityIntervalValue" type="number" min="1" class="w-full border-blue-300 bg-white rounded-lg shadow-sm font-bold" placeholder="e.g. 1" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-blue-600 uppercase mb-1">
+                                    {{ formObject.data.dateRuleType === 'cadence_recurring' ? 'Cadence Frequency' : 'Time Unit' }}
+                                </label>
+                                <select v-model="formObject.data.validityIntervalUnit" class="w-full border-blue-300 bg-white rounded-lg shadow-sm">
+                                    <option value="days">Days</option>
+                                    <option value="weeks">Weeks</option>
+                                    <option value="months">Months</option>
+                                    <option value="quarterly">Quarterly (Every 3 Months)</option>
+                                    <option value="years">Years</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Reminder Lead Days & Email Template Key for Archetypes 2, 3, 4, 5, and 7 -->
+                        <div v-if="['rolling_interval', 'hard_printed_expiry', 'dual_coverage_period', 'project_bound', 'cadence_recurring'].includes(formObject.data.dateRuleType)" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                            <div>
+                                <label class="block text-xs font-black text-gray-600 uppercase mb-1">
+                                    {{ formObject.data.dateRuleType === 'cadence_recurring' ? 'Reminder Lead (Days Before Target)' : 'Reminder Lead (Days Before Expiry)' }}
+                                </label>
+                                <input v-model.number="formObject.data.reminderLeadDays" type="number" min="1" class="w-full border-gray-300 rounded-lg shadow-sm" placeholder="e.g. 30">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-gray-600 uppercase mb-1">Email Template Key (Optional)</label>
+                                <select v-model="formObject.data.emailTemplateKey" class="w-full border-gray-300 rounded-lg shadow-sm">
+                                    <option value="">-- None --</option>
+                                    <option v-for="t in emailTemplateOptions" :key="t.triggerKey || t.trigger_key" :value="t.triggerKey || t.trigger_key">
+                                        {{ (t.useCase || t.use_case) ? (t.useCase || t.use_case) + ' — ' : '' }}{{ t.triggerKey || t.trigger_key }}
+                                    </option>
+                                </select>
+                                <p class="text-[10px] text-gray-400 mt-1">Automated email template triggered for this document item.</p>
+                            </div>
+                        </div>
+                        </div>
 
                     <div v-if="formObject.data.actionFieldType !== 'none'">
-                        <label class="block text-xs font-black text-gray-400 uppercase mb-1">Input Placeholder</label>
-                        <input v-model="formObject.data.actionFieldLabel" type="text" class="w-full border-gray-300 rounded-lg shadow-sm" placeholder="e.g. Ref Number">
+                        <label class="block text-xs font-black text-gray-400 uppercase mb-1">Input Placeholder / UI Note</label>
+                        <input v-model="formObject.data.actionFieldLabel" type="text" class="w-full border-gray-300 rounded-lg shadow-sm" placeholder="e.g. Issue Date or Expiry Date">
                     </div>
 
                     <div>
@@ -168,6 +222,7 @@ const { showAlert, showConfirm } = useAlerts();
 
 const documentTypes = ref([]);
 const availableLists = ref([]);
+const emailTemplateOptions = ref([]);
 const isLoading = ref(true);
 const formObject = reactive({ data: null });
 const isCreatingNew = ref(false);
@@ -187,7 +242,7 @@ const baseApiUrl = computed(() => {
 });
 
 const sortedDocumentTypes = computed(() => {
-  return [...documentTypes.value].sort((a, b) => (a.sortOrder || a.sort_order || 0) - (b.sortOrder || b.sort_order || 0));
+  return [...documentTypes.value].sort((a, b) => (a.sortOrder ?? a.sort_order ?? 0) - (b.sortOrder ?? b.sort_order ?? 0));
 });
 
 const availableRecordsources = computed(() => {
@@ -219,32 +274,64 @@ const fetchOptionSources = async () => {
   }
 };
 
+const fetchEmailTemplateOptions = async () => {
+  try {
+    const { data } = await apiClient.get('/admin/communication-setup/templates');
+    emailTemplateOptions.value = Array.isArray(data) ? data : (data.data || []);
+  } catch (e) {
+    console.error("Failed to load email templates:", e);
+  }
+};
+
 const selectDocumentType = (docType) => {
   isCreatingNew.value = false;
   formObject.data = {
       ...docType,
-      actionFieldType: docType.actionFieldType || docType.action_field_type,
-      sortOrder: docType.sortOrder || docType.sort_order,
-      validityDays: docType.validityDays || docType.validity_days,
-      actionFieldLabel: docType.actionFieldLabel || docType.action_field_label,
+      actionFieldType: docType.actionFieldType || docType.action_field_type || 'none',
+      dateRuleType: docType.dateRuleType || docType.date_rule_type || 'static_permanent',
+      validityIntervalValue: docType.validityIntervalValue ?? docType.validity_interval_value ?? null,
+      validityIntervalUnit: docType.validityIntervalUnit || docType.validity_interval_unit || 'months',
+      reminderLeadDays: docType.reminderLeadDays ?? docType.reminder_lead_days ?? null,
+      emailTemplateKey: docType.emailTemplateKey || docType.email_template_key || '',
+      sortOrder: docType.sortOrder ?? docType.sort_order ?? 0,
+      actionFieldLabel: docType.actionFieldLabel || docType.action_field_label || '',
       recordsourceId: docType.recordsourceId ?? docType.recordsource_id ?? null,
-      isActive: docType.isActive ?? docType.is_active,
-      isOptional: docType.isOptional ?? docType.is_optional,
+      isActive: docType.isActive ?? docType.is_active ?? true,
+      isOptional: docType.isOptional ?? docType.is_optional ?? false,
+      eitherDocumentTypeId: docType.eitherDocumentTypeId ?? docType.either_document_type_id ?? null,
   };
 };
 
 const handleAddNew = () => {
   isCreatingNew.value = true;
   formObject.data = {
-    name: '', label: '', sortOrder: sortedDocumentTypes.value.length + 1,
-    note: '', isActive: true, isOptional: false, actionFieldType: 'none',
-    recordsourceId: null, validityDays: null, actionFieldLabel: '',
+    name: '',
+    label: '',
+    sortOrder: sortedDocumentTypes.value.length + 1,
+    note: '',
+    isActive: true,
+    isOptional: false,
+    actionFieldType: 'none',
+    dateRuleType: 'static_permanent',
+    validityIntervalValue: null,
+    validityIntervalUnit: 'months',
+    reminderLeadDays: 30,
+    emailTemplateKey: '',
+    recordsourceId: null,
+    actionFieldLabel: '',
+    eitherDocumentTypeId: null,
   };
 };
 
 const handleActionTypeChange = () => {
-  if (formObject.data.actionFieldType !== 'sourced_dropdown') formObject.data.recordsourceId = null;
-  if (formObject.data.actionFieldType !== 'expiry_date') formObject.data.validityDays = null;
+  if (formObject.data.actionFieldType !== 'sourced_dropdown') {
+    formObject.data.recordsourceId = null;
+  }
+  if (formObject.data.actionFieldType === 'expiry_date' && formObject.data.dateRuleType === 'static_permanent') {
+    formObject.data.dateRuleType = 'rolling_interval';
+  } else if (formObject.data.actionFieldType === 'none' || formObject.data.actionFieldType === 'text') {
+    formObject.data.dateRuleType = 'static_permanent';
+  }
 };
 
 const handleSubmit = async () => {
@@ -257,8 +344,12 @@ const handleSubmit = async () => {
         name: formObject.data.name,
         note: formObject.data.note,
         action_field_type: formObject.data.actionFieldType,
+        date_rule_type: formObject.data.dateRuleType,
+        validity_interval_value: formObject.data.validityIntervalValue,
+        validity_interval_unit: formObject.data.validityIntervalUnit,
+        reminder_lead_days: formObject.data.reminderLeadDays,
+        email_template_key: formObject.data.emailTemplateKey,
         recordsource_id: formObject.data.recordsourceId,
-        validity_days: formObject.data.validityDays,
         action_field_label: formObject.data.actionFieldLabel,
         sort_order: formObject.data.sortOrder,
         either_document_type_id: formObject.data.eitherDocumentTypeId,
@@ -311,5 +402,6 @@ const handleSync = async () => {
 onMounted(() => {
   fetchDocumentTypes();
   fetchOptionSources();
+  fetchEmailTemplateOptions();
 });
-</script>WorkflowDefinitionController.php
+</script>
