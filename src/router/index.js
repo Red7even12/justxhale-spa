@@ -68,6 +68,15 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword,
   },
+  {
+  path: '/scan/:qrUuid',
+  name: 'public.telemetry.ingest',
+  component: () => import('@/views/telemetry/MobileLogIngest.vue'),
+  meta: {
+    requiresAuth: false,
+    title: 'Asset Field Logbook'
+  }
+},
   
 
   {
@@ -231,7 +240,7 @@ const routes = [
       },
 
       // STANDALONE NICHE BLUEPRINT FOUNDRY
-// 1. STANDALONE NICHE CATALOG (Top Level)
+      // 1. STANDALONE NICHE CATALOG (Top Level)
       {
           path: '/admin/niche-factory',
           name: 'admin.niche-factory',
@@ -278,6 +287,13 @@ const routes = [
                   meta: { displayName: 'Workflows' }
               },
               {
+                  path: 'log-definitions',
+                  name: 'admin.niche-factory.log-definitions',
+                  component: () => import('@/views/admin/niches/LogDefinitionBlueprint.vue'),
+                  props: true,
+                  meta: { displayName: 'Operational Logbooks', title: 'Operational Logbooks Blueprint' }
+              },
+              {
                   path: 'participant-roles',
                   name: 'admin.niche-factory.participant-roles',
                   component: () => import('@/views/admin/products/blueprints/ParticipantRoleBlueprint.vue'),
@@ -306,6 +322,17 @@ const routes = [
                   meta: { displayName: 'Product Deployment' }
               },
           ]
+      },
+
+      // STANDALONE OPERATIONAL TELEMETRY (Daily Exception Pulse)
+      // Must live OUTSIDE the :fileTypeId foundry parent (which requires the
+      // fileTypeId param) — otherwise Vue Router warns that the absolute path
+      // doesn't carry the parent's params.
+      {
+        path: '/telemetry/pulse',
+        name: 'telemetry.pulse',
+        component: () => import('@/views/telemetry/OperationalPulseDashboard.vue'),
+        meta: { requiresAuth: true, title: 'Daily Exception Pulse' }
       },
 
       {

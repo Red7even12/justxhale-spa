@@ -21,6 +21,9 @@
           <tr>
             <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">UI Label</th>
             <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">System Key</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Role Category</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Statutory Context</th>
+            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Primary Function in JustXhale</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Group on Docs</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Order</th>
             <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Status</th>
@@ -33,6 +36,9 @@
             <td class="px-6 py-4 font-mono text-xs text-blue-600 font-bold">
                 {{ role.roleKey || role.role_key }}
             </td>
+            <td class="px-6 py-4 text-xs text-gray-700">{{ role.role_category ?? role.roleCategory }}</td>
+            <td class="px-6 py-4 text-xs text-gray-500">{{ role.statutory_context ?? role.statutoryContext }}</td>
+            <td class="px-6 py-4 text-xs text-gray-500">{{ role.system_function ?? role.systemFunction }}</td>
             <!-- Group on Docs Badge -->
             <td class="px-6 py-4 text-center">
               <span :class="(role.groupOnDocuments || role.group_on_documents) ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-400 border-gray-200'" class="px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider border">
@@ -53,7 +59,7 @@
             </td>
           </tr>
           <tr v-if="roles.length === 0">
-            <td colspan="6" class="p-10 text-center text-gray-400 italic text-sm">
+            <td colspan="9" class="p-10 text-center text-gray-400 italic text-sm">
               No participant roles defined for this Niche yet.
             </td>
           </tr>
@@ -76,6 +82,22 @@
             <label class="block text-xs font-black text-gray-600 uppercase mb-1">System Key (Unique)</label>
             <input v-model="form.role_key" :disabled="!!form.id" type="text" required class="w-full border-gray-300 rounded-lg text-sm font-mono disabled:bg-gray-100" placeholder="e.g. company_shareholder">
             <p class="text-[10px] text-gray-400 mt-1">This key is used by the logic engine and cannot be changed after creation.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Role Category <span class="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <input v-model="form.role_category" type="text" class="w-full border-gray-300 rounded-lg text-sm" placeholder="e.g. Clinical">
+          </div>
+
+          <div>
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Statutory Context <span class="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <textarea v-model="form.statutory_context" rows="3" class="w-full border-gray-300 rounded-lg text-sm" placeholder="e.g. Registered medical doctor with HPCSA DOH credentials."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Primary Function in JustXhale <span class="text-gray-300 normal-case font-normal">(optional)</span></label>
+            <textarea v-model="form.system_function" rows="2" class="w-full border-gray-300 rounded-lg text-sm" placeholder="e.g. Signs functional capacity evaluations and medical boarding recommendations."></textarea>
+            <p class="text-[10px] text-gray-400 mt-1">Descriptive context only — will be surfaced in help documentation later.</p>
           </div>
 
           <!-- Group on Documents Checkbox -->
@@ -143,7 +165,10 @@ const form = reactive({
   role_key: '',
   group_on_documents: false,
   sort_order: 0,
-  is_active: true
+  is_active: true,
+  role_category: '',
+  statutory_context: '',
+  system_function: ''
 });
 
 const loadRoles = async () => {
@@ -161,6 +186,9 @@ const openModal = (role = null) => {
         form.group_on_documents = !!(role.groupOnDocuments ?? role.group_on_documents);
         form.sort_order = role.sortOrder ?? role.sort_order ?? 0;
         form.is_active = !!(role.isActive ?? role.is_active ?? true);
+        form.role_category = role.role_category ?? role.roleCategory ?? '';
+        form.statutory_context = role.statutory_context ?? role.statutoryContext ?? '';
+        form.system_function = role.system_function ?? role.systemFunction ?? '';
     } else {
         form.id = null;
         form.name = '';
@@ -168,6 +196,9 @@ const openModal = (role = null) => {
         form.group_on_documents = false;
         form.sort_order = roles.value.length;
         form.is_active = true;
+        form.role_category = '';
+        form.statutory_context = '';
+        form.system_function = '';
     }
     showModal.value = true;
 };

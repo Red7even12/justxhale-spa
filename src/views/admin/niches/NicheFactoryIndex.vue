@@ -61,11 +61,21 @@
       <table v-else class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50/80">
           <tr>
-            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Blueprint Identity</th>
-            <th class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Category & Tags</th>
-            <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">IP Tier</th>
-            <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Engine Specs</th>
-            <th class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Deployed In</th>
+            <th @click="toggleSort('name')" class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors select-none" :class="sortActiveClass('name')">
+              Blueprint Identity <span class="text-[10px] ml-1" :class="sortGlyph('name').cls">{{ sortGlyph('name').char }}</span>
+            </th>
+            <th @click="toggleSort('category')" class="px-6 py-3.5 text-left text-xs font-black text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors select-none" :class="sortActiveClass('category')">
+              Category &amp; Tags <span class="text-[10px] ml-1" :class="sortGlyph('category').cls">{{ sortGlyph('category').char }}</span>
+            </th>
+            <th @click="toggleSort('is_public')" class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors select-none" :class="sortActiveClass('is_public')">
+              IP Tier <span class="text-[10px] ml-1" :class="sortGlyph('is_public').cls">{{ sortGlyph('is_public').char }}</span>
+            </th>
+            <th @click="toggleSort('specs')" class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors select-none" :class="sortActiveClass('specs')">
+              Engine Specs <span class="text-[10px] ml-1" :class="sortGlyph('specs').cls">{{ sortGlyph('specs').char }}</span>
+            </th>
+            <th @click="toggleSort('products')" class="px-6 py-3.5 text-center text-xs font-black text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors select-none" :class="sortActiveClass('products')">
+              Deployed In <span class="text-[10px] ml-1" :class="sortGlyph('products').cls">{{ sortGlyph('products').char }}</span>
+            </th>
             <th class="px-6 py-3.5 text-right text-xs font-black text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
@@ -272,7 +282,9 @@ const rawTags = ref('');
 
 const filters = reactive({
   search: '',
-  category: ''
+  category: '',
+  sort_by: 'name',
+  sort_dir: 'asc'
 });
 
 const form = reactive({
@@ -303,14 +315,42 @@ const fetchNiches = async () => {
     const params = {};
     if (filters.search) params.search = filters.search;
     if (filters.category) params.category = filters.category;
+    params.sort_by = filters.sort_by || 'name';
+    params.sort_dir = filters.sort_dir || 'asc';
 
     const { data } = await apiClient.get('admin/file-types', { params });
-    niches.value = data?.data || [];
+    const payload = data?.data ?? data ?? [];
+    niches.value = Array.isArray(payload) ? payload : Object.values(payload);
   } catch (error) {
     console.error('Failed to load niche catalog', error);
   } finally {
     loading.value = false;
   }
+};
+
+// Sortable column headers: toggle direction when re-clicking the active column.
+const toggleSort = (column) => {
+  if (filters.sort_by === column) {
+    filters.sort_dir = filters.sort_dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    filters.sort_by = column;
+    filters.sort_dir = 'asc';
+  }
+  fetchNiches();
+};
+
+// Returns the arrow glyph + styling for a column based on the current sort state.
+const sortGlyph = (column) => {
+  if (filters.sort_by === column) {
+    return filters.sort_dir === 'asc'
+      ? { char: '▲', cls: 'text-blue-600' }
+      : { char: '▼', cls: 'text-blue-600' };
+  }
+  return { char: '⇅', cls: 'text-gray-300' };
+};
+
+const sortActiveClass = (column) => {
+  return filters.sort_by === column ? 'text-blue-700' : '';
 };
 
 const fetchCategories = async () => {

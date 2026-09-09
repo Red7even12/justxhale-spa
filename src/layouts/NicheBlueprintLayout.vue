@@ -56,7 +56,16 @@
           <span class="text-base mr-1">⚡</span> Workflows
         </router-link>
 
-        <!-- 4. Participant Roles -->
+        <!-- 4. Operational Logbooks (Pillar 3) -->
+        <router-link 
+          :to="{ name: 'admin.niche-factory.log-definitions', params: { fileTypeId } }" 
+          class="nav-link" 
+          active-class="nav-active"
+        >
+          <span class="text-base mr-1">⏱️</span> Operational Logbooks
+        </router-link>
+
+        <!-- 5. Participant Roles -->
         <router-link 
           :to="{ name: 'admin.niche-factory.participant-roles', params: { fileTypeId } }" 
           class="nav-link" 
@@ -65,7 +74,7 @@
           <span class="text-base mr-1">👥</span> Participant Roles
         </router-link>
 
-        <!-- 5. System Mails -->
+        <!-- 6. System Mails -->
         <router-link 
           :to="{ name: 'admin.niche-factory.communication', params: { fileTypeId } }" 
           class="nav-link" 
@@ -74,7 +83,7 @@
           <span class="text-base mr-1">✉️</span> System Mails
         </router-link>
 
-        <!-- 6. Option Lists -->
+        <!-- 7. Option Lists -->
         <router-link 
           :to="{ name: 'admin.niche-factory.option-lists', params: { fileTypeId } }" 
           class="nav-link" 
@@ -88,7 +97,7 @@
           Commercial Usage
         </div>
 
-        <!-- 7. Product Deployment Matrix -->
+        <!-- 8. Product Deployment Matrix -->
         <router-link 
           :to="{ name: 'admin.niche-factory.deployment', params: { fileTypeId } }" 
           class="nav-link" 
@@ -126,7 +135,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
           <span class="text-gray-900 font-bold">{{ niche?.name }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-          <span class="text-blue-600 font-black uppercase text-[10px] tracking-widest">{{ $route.meta.displayName || 'Blueprint' }}</span>
+          <span class="text-blue-600 font-black uppercase text-[10px] tracking-widest">{{ $route.meta.displayName || 'Operational Logbooks' }}</span>
         </div>
 
         <!-- IP Tier Badge -->

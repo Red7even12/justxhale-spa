@@ -13,7 +13,7 @@
 
     <!-- 2. STATUS WARNING BANNER (Read-only guard) -->
     <div v-if="['cancelled', 'closed', 'pending'].includes(caseFile.status)" 
-        class="my-4 border-l-4 p-4 rounded-r-lg shadow-sm shrink-0"
+        class="my-3 border-l-4 p-4 rounded-r-lg shadow-sm shrink-0"
         :class="caseFile.status === 'cancelled' ? 'bg-red-50 border-red-400' : 'bg-blue-50 border-blue-400'">
       <div class="flex items-center">
         <div class="flex-shrink-0">
@@ -33,6 +33,43 @@
       </div>
     </div>
 
+    <!-- 2.1. OPERATIONAL GROUNDING & DEFECT WARNING BANNER (PILLAR 3) -->
+    <div 
+      v-if="(caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') || 
+            (caseFile.operational_status === 'advisory' || caseFile.operationalStatus === 'advisory')" 
+      class="my-3 border-l-4 p-4 rounded-r-xl shadow-sm shrink-0 flex items-center justify-between"
+      :class="(caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') 
+        ? 'bg-rose-50 border-rose-500 text-rose-900' 
+        : 'bg-amber-50 border-amber-500 text-amber-900'"
+    >
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">
+          {{ (caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') ? '🚨' : '⚠️' }}
+        </span>
+        <div>
+          <h4 class="text-xs font-black uppercase tracking-wider">
+            {{ (caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') 
+                ? 'OPERATIONAL EXCEPTION: ASSET GROUNDED (RED-TAG)' 
+                : 'OPERATIONAL ADVISORY ACTIVE' }}
+          </h4>
+          <p class="text-xs opacity-90">
+            {{ (caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') 
+                ? 'A safety-critical defect was reported during field telemetry inspection. Operational usage is restricted until CAPA resolution.' 
+                : 'An operational advisory issue has been logged against this casefile.' }}
+          </p>
+        </div>
+      </div>
+      <button 
+        @click="workspaceView = 'telemetry'" 
+        class="px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg bg-white border shadow-sm hover:bg-slate-50 transition"
+        :class="(caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') 
+          ? 'border-rose-300 text-rose-700' 
+          : 'border-amber-300 text-amber-700'"
+      >
+        View Log History →
+      </button>
+    </div>
+
     <!-- 2.5. POPIA NO ACCESS BANNER -->
     <div v-if="availableFileTypes.length === 0" class="my-4 border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg shadow-sm shrink-0">
       <div class="flex items-center">
@@ -49,9 +86,50 @@
       </div>
     </div>
 
-    <!-- 3. WORKSPACE CONTENT AREA (Scoped to Active Niche Tab) -->
-    <div v-if="availableFileTypes.length > 0" class="grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 min-h-0 mt-2">
-      
+    <!-- 2.8. WORKSPACE VIEW MODE SWITCHER (Compliance Matrix vs Telemetry) -->
+    <div v-if="availableFileTypes.length > 0" class="flex items-center justify-between my-2 border-b border-gray-200 pb-2">
+      <div class="flex items-center gap-2">
+        <button
+          @click="workspaceView = 'compliance'"
+          class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5"
+          :class="workspaceView === 'compliance' 
+            ? 'bg-slate-900 text-white shadow-sm' 
+            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
+        >
+          <span>📦</span> Compliance Vault & Workflows
+        </button>
+
+        <button
+          @click="workspaceView = 'telemetry'"
+          class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5"
+          :class="workspaceView === 'telemetry' 
+            ? 'bg-slate-900 text-white shadow-sm' 
+            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
+        >
+          <span>⏱️</span> Operational Logbooks & Telemetry
+          <span v-if="caseLogs.length > 0" class="ml-1 bg-blue-100 text-blue-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            {{ caseLogs.length }}
+          </span>
+        </button>
+      </div>
+
+      <!-- QR Quick Link Token -->
+      <div v-if="caseFile.qr_uuid" class="hidden sm:flex items-center gap-2 text-[11px] text-gray-500 font-mono">
+        <span>Field QR:</span>
+        <a 
+          :href="`/scan/${caseFile.qr_uuid}`" 
+          target="_blank" 
+          class="text-blue-600 hover:underline bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-bold"
+        >
+          Scan Endpoint ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- 3. WORKSPACE CONTENT AREA (Scoped to Active View Mode) -->
+    
+    <!-- VIEW A: COMPLIANCE & WORKFLOWS -->
+    <div v-if="availableFileTypes.length > 0 && workspaceView === 'compliance'" class="grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 min-h-0 mt-2">
       <!-- Column 1: Active Tab's Document Pack -->
       <div class="lg:col-span-6 relative group">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
@@ -79,8 +157,87 @@
           </div>
         </div>
       </div>
-
     </div> 
+
+    <!-- VIEW B: OPERATIONAL LOGBOOK & TELEMETRY STREAM (PILLAR 3) -->
+    <div v-else-if="availableFileTypes.length > 0 && workspaceView === 'telemetry'" class="flex-1 min-h-0 mt-2 overflow-y-auto space-y-4">
+      <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+          <h3 class="text-sm font-bold text-gray-900">Historical Operational Stream</h3>
+          <p class="text-xs text-gray-500">Chronological telemetry, pre-trip walkarounds, and logged exceptions.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button 
+            @click="fetchCaseLogs" 
+            :disabled="isLoadingLogs"
+            class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+          >
+            {{ isLoadingLogs ? 'Refreshing...' : '↻ Refresh Stream' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoadingLogs" class="py-12 flex justify-center items-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="caseLogs.length === 0" class="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
+        <div class="mx-auto w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-xl mb-3">
+          ⏱️
+        </div>
+        <h4 class="text-sm font-bold text-gray-800">No Operational Logs Recorded</h4>
+        <p class="text-xs text-gray-500 max-w-sm mx-auto mt-1">
+          Scan the physical QR token on the asset to submit daily pre-trips or inspections.
+        </p>
+      </div>
+
+      <!-- Log Entries Stream -->
+      <div v-else class="space-y-3">
+        <div
+          v-for="log in caseLogs"
+          :key="log.id"
+          class="bg-white p-5 rounded-2xl border transition shadow-sm"
+          :class="log.has_flagged_issue ? 'border-rose-300 bg-rose-50/10' : 'border-gray-200'"
+        >
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-gray-900">{{ log.log_definition?.name || 'Operational Log' }}</span>
+              <span class="text-xs text-gray-400 font-mono">({{ log.log_definition?.category }})</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500">
+                {{ formatLogDate(log.logged_at) }} by <strong>{{ log.logged_by_name }}</strong> ({{ log.logged_by_role || 'Operator' }})
+              </span>
+              <span
+                class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full"
+                :class="log.has_flagged_issue ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'"
+              >
+                {{ log.has_flagged_issue ? log.defect_severity : 'Clean' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Payload Answers Grid -->
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+            <div v-for="(val, key) in log.payload" :key="key" class="truncate">
+              <span class="text-gray-500">{{ key }}:</span>
+              <span class="ml-1 font-bold" :class="val === false ? 'text-rose-600' : 'text-gray-800'">
+                {{ val === false ? 'FAIL' : (val === true ? 'PASS' : val) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- CAPA Resolution Notes (if closed) -->
+          <div v-if="log.is_resolved && log.has_flagged_issue" class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+            <strong>✓ CAPA Resolved by {{ log.resolver?.name || 'Supervisor' }} on {{ formatLogDate(log.resolved_at) }}:</strong>
+            <p class="mt-0.5">{{ log.resolution_notes }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 4. INLINE CASE SETUP SLIDE-OVER DRAWER -->
     <transition
@@ -338,6 +495,37 @@ const route = useRoute();
 const authStore = useAuthStore();
 const { showAlert, showConfirm } = useAlerts();
 
+// --- PILLAR 3: OPERATIONAL TELEMETRY STATE ---
+const workspaceView = ref('compliance'); // 'compliance' | 'telemetry'
+const caseLogs = ref([]);
+const isLoadingLogs = ref(false);
+
+const fetchCaseLogs = async () => {
+  if (!props.caseFile?.id) return;
+  isLoadingLogs.value = true;
+  try {
+    const res = await apiClient.get(`/case-files/${props.caseFile.id}/logs`);
+    caseLogs.value = res.data?.data?.data || res.data?.data || [];
+  } catch (err) {
+    console.error('Failed to load case logs', err);
+  } finally {
+    isLoadingLogs.value = false;
+  }
+};
+
+const formatLogDate = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+watch(() => workspaceView.value, (newVal) => {
+  if (newVal === 'telemetry' && caseLogs.value.length === 0) {
+    fetchCaseLogs();
+  }
+});
+// ----------------------------------------------
+
 const teams = ref([]);
 const fileClasses = ref([]);
 
@@ -356,10 +544,8 @@ const fetchOptionListOptions = async () => {
     if (optionListOptions[listId]) return;
     try {
       const { data } = await apiClient.get(`products/${productSlug}/option-lists/${listId}`);
-      // tenantScopedOptions returns a flat array of { id, option_value } (or [] when out of scope)
       const options = Array.isArray(data) ? data : (data?.data || []);
       optionListOptions[listId] = options;
-      console.log(`[OptionList] list ${listId} -> ${options.length} options`, options);
     } catch (e) {
       console.error(`Failed to load options for list ${listId}`, e);
       optionListOptions[listId] = [];
@@ -372,7 +558,6 @@ const getOptionListOptions = (field) => {
   const listId = field.optionListId;
   if (listId) return optionListOptions[listId] || [];
 
-  // Legacy fallback: options stored inline on the field (no linked list).
   const inline = field.inlineOptions;
   if (Array.isArray(inline) && inline.length) {
     return inline.map(opt => {
@@ -386,9 +571,6 @@ const getOptionListOptions = (field) => {
   return [];
 };
 
-// Normalize a stored checkbox_group value into an array of option values.
-// Handles arrays, JSON-encoded arrays, comma-separated strings, and discards
-// the buggy boolean collapse ('true'/'false') that used to overwrite the field.
 const normalizeMultiselectValue = (v) => {
   if (v === true || v === 'true' || v === false || v === 'false'
       || v === null || v === undefined || v === '') {
@@ -409,12 +591,10 @@ const normalizeMultiselectValue = (v) => {
   return [];
 };
 
-// Filtered Ownership Teams for case_files.current_team_id
 const ownershipTeams = computed(() => {
   return teams.value.filter(t => (t.team_type || t.teamType || 'ownership') === 'ownership');
 });
 
-// --- AVAILABLE NICHE TABS ---
 const availableFileTypes = computed(() => {
   const product = props.caseFile.product;
   if (product && (product.file_types !== undefined || product.fileTypes !== undefined)) {
@@ -451,6 +631,9 @@ const initActiveTab = async () => {
     const matched = availableFileTypes.value.find(ft => ft.id === props.caseFile.file_type_id);
     activeFileType.value = matched || availableFileTypes.value[0];
     await fetchOptionListOptions();
+  }
+  if (props.caseFile?.id) {
+    fetchCaseLogs();
   }
 };
 
@@ -497,16 +680,11 @@ const openSetupDrawer = async () => {
       ?? rawMeta[snakeKey] 
       ?? '';
 
-    // checkbox_group stores an ARRAY of selected option values so each
-    // checkbox toggles independently. Normalize any legacy scalar/JSON/CSV
-    // value (including the buggy boolean collapse) into an array.
     detailsForm.meta_data[key] = (f.fieldType === 'checkbox_group')
       ? normalizeMultiselectValue(value)
       : value;
   });
 
-  // Belt-and-suspenders: ensure option lists are fetched/resolved now that the
-  // active tab + fields are guaranteed present (covers mount-time races).
   await fetchOptionListOptions();
 
   if (teams.value.length === 0) {
@@ -542,7 +720,7 @@ const saveMetadata = async () => {
       Object.assign(rawMeta, detailsForm.meta_data);
     }
 
-    const response = await apiClient.put(`/${route.params.productSlug}/cases/${props.caseFile.id}`, {
+    await apiClient.put(`/${route.params.productSlug}/cases/${props.caseFile.id}`, {
       file_name: detailsForm.file_name,
       file_reference: detailsForm.file_reference,
       current_team_id: detailsForm.current_team_id,
@@ -550,7 +728,6 @@ const saveMetadata = async () => {
       meta_data: rawMeta
     });
 
-    // --- 1. INSTANT LIVE UI SYNC (Mutate caseFile in-place) ---
     props.caseFile.fileName = detailsForm.file_name;
     props.caseFile.file_name = detailsForm.file_name;
     props.caseFile.fileReference = detailsForm.file_reference;
@@ -562,7 +739,6 @@ const saveMetadata = async () => {
     props.caseFile.meta_data = rawMeta;
     props.caseFile.metaData = rawMeta;
 
-    // Update Priority Classification Badge in real time
     if (detailsForm.file_class_id && fileClasses.value.length > 0) {
       const matched = fileClasses.value.find(c => c.id === detailsForm.file_class_id);
       if (matched) {
@@ -573,7 +749,6 @@ const saveMetadata = async () => {
       props.caseFile.fileClass = null;
       props.caseFile.file_class = null;
     }
-    // ---------------------------------------------------------
 
     showAlert('Success', 'Case setup updated successfully.');
     closeSetupDrawer();
@@ -584,7 +759,6 @@ const saveMetadata = async () => {
   }
 };
 
-// --- ASSIGN PARTICIPANT MODAL STATE & ACTIONS ---
 const showAssignModal = ref(false);
 const isAssigning = ref(false);
 const availableEntities = ref([]);
@@ -604,11 +778,29 @@ const openAssignParticipantModal = async () => {
 
   try {
     const [entRes, roleRes] = await Promise.all([
-      apiClient.get('/entities'),
+      apiClient.get('/entities', { params: { per_page: 100 } }),
       apiClient.get(`/${route.params.productSlug}/participant-roles`)
     ]);
-    availableEntities.value = entRes.data.data || entRes.data || [];
     availableRoles.value = roleRes.data.data || roleRes.data || [];
+
+    const pageRecords = (res) => {
+      const body = res && res.data;
+      return (body && body.data) || (Array.isArray(body) ? body : []);
+    };
+
+    const allEntities = [...pageRecords(entRes)];
+    const perPage = Number(entRes.data?.per_page) || 100;
+    const total = Number(entRes.data?.total) || allEntities.length;
+    const pages = total > 0 ? Math.ceil(total / perPage) : 1;
+
+    const rest = await Promise.all(
+      Array.from({ length: Math.max(0, pages - 1) }, (_, i) =>
+        apiClient.get('/entities', { params: { page: i + 2, per_page: 100 } })
+      )
+    );
+    rest.forEach(res => allEntities.push(...pageRecords(res)));
+
+    availableEntities.value = allEntities;
   } catch (err) {
     console.error("Failed to load entities/roles", err);
   }
@@ -643,8 +835,6 @@ const submitAssignParticipant = async () => {
 
     showAlert('Success', 'Participant assigned successfully.');
     showAssignModal.value = false;
-
-    // Refresh workspace view to instantly show new stakeholder tabs
     window.location.reload(); 
   } catch (err) {
     showAlert('Error', err.response?.data?.message || 'Failed to assign participant.');

@@ -249,13 +249,16 @@ const form = reactive({
 // Filter catalog to show only niches not yet assembled into this product
 const availableCatalogNiches = computed(() => {
   const assembledIds = assembledNiches.value.map(n => n.id);
-  return masterCatalog.value.filter(c => !assembledIds.includes(c.id));
+  return masterCatalog.value
+    .filter(c => !assembledIds.includes(c.id))
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 });
 
 const loadAssembledNiches = async () => {
   try {
     const { data } = await apiClient.get(`admin/products/${props.slug}/file-types`);
-    assembledNiches.value = data?.data || data || [];
+    const niches = data?.data || data || [];
+    assembledNiches.value = niches.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   } catch (error) {
     console.error('Failed to load assembled niches', error);
   }

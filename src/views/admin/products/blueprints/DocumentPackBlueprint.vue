@@ -44,7 +44,7 @@
             <!-- Order -->
             <td class="px-4 py-4 text-center">
               <span class="inline-flex items-center justify-center bg-gray-100 text-gray-800 rounded-lg h-7 w-7 text-xs font-black">
-                {{ pack.pivot?.display_order ?? pack.sort_order ?? 1 }}
+                {{ pack.pivot?.display_order ?? pack.pivot?.displayOrder ?? pack.sort_order ?? pack.sortOrder ?? 1 }}
               </span>
             </td>
 
@@ -55,8 +55,8 @@
 
             <!-- Tab Override -->
             <td class="px-6 py-4 text-sm text-gray-600">
-              <span v-if="pack.pivot?.tab_label_override" class="font-bold text-blue-900">
-                {{ pack.pivot.tab_label_override }}
+              <span v-if="pack.pivot?.tab_label_override ?? pack.pivot?.tabLabelOverride" class="font-bold text-blue-900">
+                {{ pack.pivot?.tab_label_override ?? pack.pivot?.tabLabelOverride }}
               </span>
               <span v-else class="text-gray-400 italic">Default ("{{ pack.name }}")</span>
             </td>
@@ -70,15 +70,15 @@
 
             <!-- Mandatory -->
             <td class="px-6 py-4 text-center">
-              <span :class="(pack.pivot?.is_mandatory ?? true) ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-gray-100 text-gray-600 border-gray-200'" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border">
-                {{ (pack.pivot?.is_mandatory ?? true) ? 'Required' : 'Optional' }}
+              <span :class="(pack.pivot?.is_mandatory ?? pack.pivot?.isMandatory ?? true) ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-gray-100 text-gray-600 border-gray-200'" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border">
+                {{ (pack.pivot?.is_mandatory ?? pack.pivot?.isMandatory ?? true) ? 'Required' : 'Optional' }}
               </span>
             </td>
 
             <!-- Status -->
             <td class="px-6 py-4 text-center">
-              <span :class="(pack.is_active ?? true) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
-                {{ (pack.is_active ?? true) ? 'Active' : 'Inactive' }}
+              <span :class="(pack.is_active ?? pack.isActive ?? true) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                {{ (pack.is_active ?? pack.isActive ?? true) ? 'Active' : 'Inactive' }}
               </span>
             </td>
 
@@ -248,10 +248,10 @@ const openModal = (pack = null) => {
     form.mode = 'new';
     form.name = pack.name;
     form.document_pack_id = pack.id;
-    form.tab_label_override = pack.pivot?.tab_label_override || '';
-    form.display_order = pack.pivot?.display_order ?? 1;
-    form.is_mandatory = pack.pivot?.is_mandatory ?? true;
-    form.is_active = pack.is_active ?? true;
+    form.tab_label_override = pack.pivot?.tab_label_override ?? pack.pivot?.tabLabelOverride ?? '';
+    form.display_order = pack.pivot?.display_order ?? pack.pivot?.displayOrder ?? 1;
+    form.is_mandatory = pack.pivot?.is_mandatory ?? pack.pivot?.isMandatory ?? true;
+    form.is_active = pack.is_active ?? pack.isActive ?? true;
   } else {
     form.id = null;
     form.mode = availableCatalogPacks.value.length > 0 ? 'existing' : 'new';
