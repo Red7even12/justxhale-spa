@@ -163,30 +163,46 @@
           <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
         </div>
 
+        <!-- Row 1: Name & Slug -->
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Workspace Name</label>
-            <input v-model="form.name" type="text" placeholder="e.g. SHEQ Medical" class="w-full border-gray-300 rounded-lg text-sm" />
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Workspace Name *</label>
+            <input v-model="form.name" type="text" placeholder="e.g. Heavy Vehicle Driver" class="w-full border-gray-300 rounded-lg text-sm" required />
           </div>
 
           <div>
-            <label class="block text-xs font-black text-gray-600 uppercase mb-1">System Slug (Unique)</label>
-            <input v-model="form.slug" type="text" placeholder="e.g. sheq_medical" class="w-full border-gray-300 rounded-lg text-sm font-mono" />
+            <label class="block text-xs font-black text-gray-600 uppercase mb-1">System Slug (Unique) *</label>
+            <input v-model="form.slug" type="text" placeholder="e.g. heavy_vehicle_driver" class="w-full border-gray-300 rounded-lg text-sm font-mono" required />
           </div>
         </div>
 
+        <!-- Row 2: Subject Archetype (NEW) & Category -->
         <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-black text-blue-600 uppercase mb-1">Subject Archetype *</label>
+            <select v-model="form.subject_archetype" required class="w-full border-blue-300 bg-blue-50/20 rounded-lg text-sm font-bold text-gray-800 focus:ring-blue-500">
+              <option value="human_individual">👤 Human Individual (Driver, Patient, Employee)</option>
+              <option value="asset_equipment">🚜 Physical Asset (Vehicle, Forklift, Crane, Plant)</option>
+              <option value="corporate_entity">🏢 Corporate Entity (Vendor, Subcontractor, Firm)</option>
+              <option value="fiduciary_estate">📜 Fiduciary Estate (Deceased Estate, Trust, Curator)</option>
+              <option value="transactional_matter">💼 Transactional Matter (Bond App, Conveyancing, Tax)</option>
+            </select>
+            <p class="text-[10px] text-gray-400 mt-1">Controls QR vs User PIN identity bindings.</p>
+          </div>
+
           <div>
             <label class="block text-xs font-black text-gray-600 uppercase mb-1">Industry Category</label>
             <input v-model="form.category" type="text" placeholder="e.g. Fleet & Transport, Health & Medical" class="w-full border-gray-300 rounded-lg text-sm" />
           </div>
-
-          <div>
-            <label class="block text-xs font-black text-gray-600 uppercase mb-1">Keywords / Tags (Comma-separated)</label>
-            <input v-model="rawTags" type="text" placeholder="driver, pdp, forklift, logistics, tax, bonds" class="w-full border-gray-300 rounded-lg text-sm" />
-          </div>
         </div>
 
+        <!-- Row 3: Tags -->
+        <div>
+          <label class="block text-xs font-black text-gray-600 uppercase mb-1">Keywords / Tags (Comma-separated)</label>
+          <input v-model="rawTags" type="text" placeholder="driver, pdp, forklift, logistics, tax, bonds" class="w-full border-gray-300 rounded-lg text-sm" />
+        </div>
+
+        <!-- Row 4: Description -->
         <div>
           <label class="block text-xs font-black text-gray-600 uppercase mb-1">Compliance Description / Scope</label>
           <textarea v-model="form.description" rows="2" placeholder="Briefly describe what legal compliance or operational workflow this workspace covers..." class="w-full border-gray-300 rounded-lg text-sm"></textarea>
@@ -292,6 +308,7 @@ const form = reactive({
   name: '',
   slug: '',
   category: '',
+  subject_archetype: 'transactional_matter',
   description: '',
   tags: [],
   is_active: true,
@@ -385,6 +402,7 @@ const openModal = (niche = null) => {
     form.name = niche.name;
     form.slug = niche.slug;
     form.category = niche.category || '';
+    form.subject_archetype = niche.subject_archetype || niche.subjectArchetype || 'transactional_matter';
     form.description = niche.description || '';
     form.tags = niche.tags || [];
     rawTags.value = (niche.tags || []).join(', ');
@@ -398,6 +416,7 @@ const openModal = (niche = null) => {
     form.name = '';
     form.slug = '';
     form.category = '';
+    form.subject_archetype = 'human_individual';
     form.description = '';
     form.tags = [];
     rawTags.value = '';
@@ -421,6 +440,7 @@ const save = async () => {
       name: form.name,
       slug: form.slug,
       category: form.category,
+      subject_archetype: form.subject_archetype,
       description: form.description,
       tags: tagsArray,
       is_active: form.is_active,

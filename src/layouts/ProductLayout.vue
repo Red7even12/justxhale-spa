@@ -34,8 +34,11 @@
           <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/dashboard`" class="mobile-nav-link" active-class="mobile-nav-active">
             Reminders
           </router-link>
-          <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/cases`" class="mobile-nav-link" active-class="mobile-nav-active">
+          <router-link v-if="canViewCaseFiles" @click="isMobileMenuOpen = false" :to="`/${productSlug}/cases`" class="mobile-nav-link" active-class="mobile-nav-active">
             Case Files
+          </router-link>
+          <router-link v-if="authStore.hasPermission(PERMISSIONS.COMPLIANCE_VIEW_OWN)" @click="isMobileMenuOpen = false" :to="`/${productSlug}/compliance`" class="mobile-nav-link" active-class="mobile-nav-active">
+            My Compliance
           </router-link>
           <router-link @click="isMobileMenuOpen = false" :to="`/${productSlug}/registry`" class="mobile-nav-link" active-class="mobile-nav-active">
             People
@@ -147,8 +150,11 @@
             <router-link :to="`/${productSlug}/dashboard`" class="top-nav-link" active-class="top-nav-active">
               Reminders
             </router-link>
-            <router-link :to="`/${productSlug}/cases`" class="top-nav-link" active-class="top-nav-active">
+            <router-link v-if="canViewCaseFiles" :to="`/${productSlug}/cases`" class="top-nav-link" active-class="top-nav-active">
               Case Files
+            </router-link>
+            <router-link v-if="authStore.hasPermission(PERMISSIONS.COMPLIANCE_VIEW_OWN)" :to="`/${productSlug}/compliance`" class="top-nav-link" active-class="top-nav-active">
+              My Compliance
             </router-link>
             <router-link :to="`/${productSlug}/registry`" class="top-nav-link" active-class="top-nav-active">
               Contacts
@@ -302,6 +308,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import apiClient, { getAssetUrl } from '@/services/api';
+import { PERMISSIONS } from '@/constants/permissions';
 
 const route = useRoute();
 const router = useRouter();
@@ -309,6 +316,10 @@ const authStore = useAuthStore();
 const product = ref(null);
 const isMobileMenuOpen = ref(false); // Added for mobile navigation
 const productSlug = computed(() => route.params.productSlug);
+
+// Field Operators (and any role lacking 'view case files') must not access the
+// case file registry — the nav link is hidden accordingly (server also enforces).
+const canViewCaseFiles = computed(() => authStore.hasPermission(PERMISSIONS.CASEFILES_VIEW));
 
 // --- Dropdown States & Toggles ---
 const isAdminOpen = ref(false);

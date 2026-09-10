@@ -500,6 +500,25 @@
             </select>
           </div>
 
+          <!-- 2. Dynamic Linked User (Appears ONLY if Niche is Human Individual) -->
+          <div v-if="isHumanSelectedNiche" class="p-3 bg-blue-50/60 border border-blue-200 rounded-xl space-y-1">
+            <label class="block text-xs font-black text-blue-700 uppercase">
+              👤 Bind to System User (Operator / Driver Login)
+            </label>
+            <select 
+              v-model="form.subjectUserId" 
+              class="w-full border-blue-300 rounded-lg text-sm bg-white font-bold text-gray-800 focus:ring-blue-500"
+            >
+              <option :value="null">-- No Direct User Account Linked --</option>
+              <option v-for="user in subscriberUsers" :key="user.id" :value="user.id">
+                {{ user.name }} ({{ user.email }})
+              </option>
+            </select>
+            <p class="text-[10px] text-blue-600/80">
+              Enables mobile PIN identity cross-checks when operating physical machinery.
+            </p>
+          </div>
+
           <div>
             <label class="block text-sm font-bold text-gray-700 uppercase mb-1">Assigned Team</label>
             <select v-model="form.currentTeamId" required class="w-full border-gray-300 rounded-lg focus:ring-brand-primary focus:border-brand-primary text-sm font-medium">
@@ -664,6 +683,43 @@ const toggleSort = (column) => {
   fetchCases();
 };
 
+// State for users
+const subscriberUsers = ref([]);
+
+const isHumanSelectedNiche = computed(() => {
+  if (!form.value.fileTypeId) return false;
+  const selected = fileTypes.value.find(t => t.id === form.value.fileTypeId);
+  const archetype = selected?.subject_archetype || selected?.subjectArchetype;
+  return archetype === 'human_individual';
+});
+
+const formatArchetypeLabel = (arch) => {
+  const map = {
+    human_individual: 'Human',
+    asset_equipment: 'Asset',
+    corporate_entity: 'Corporate',
+    fiduciary_estate: 'Estate',
+    transactional_matter: 'Matter'
+  };
+  return map[arch] || 'Matter';
+};
+
+const onNicheChange = () => {
+  if (!isHumanSelectedNiche.value) {
+    form.value.subjectUserId = null;
+  }
+};
+
+// In initializePage(), fetch users for the subscriber dropdown
+const fetchSubscriberUsers = async () => {
+  try {
+    const res = await apiClient.get('/users', { params: { per_page: 100 } });
+    subscriberUsers.value = res.data.data || res.data || [];
+  } catch (err) {
+    console.error('Failed to load subscriber users for binding', err);
+  }
+};
+
 const getNicheMilestones = (caseFile) => {
   let matrix = caseFile.milestoneMatrix || caseFile.milestone_matrix;
   if (typeof matrix === 'string') {
@@ -797,7 +853,7 @@ const createCase = async () => {
   try {
     await caseService.createCase(productSlug.value, form.value);
     showModal.value = false;
-    form.value = { fileTypeId: '', currentTeamId: '', fileName: '', fileReference: '' };
+    form.value = { fileTypeId: '', currentTeamId: '', fileName: '', fileReference: '', subjectUserId: null };
     filters.value.page = 1;
     fetchCases();
   } catch (error) {

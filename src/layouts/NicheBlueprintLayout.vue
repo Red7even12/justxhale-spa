@@ -7,11 +7,23 @@
       <div class="p-6 border-b border-white/10">
         <div v-if="niche" class="flex flex-col items-center gap-2 mb-3">
           <div class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-2xl shadow-inner">
-            ⚡
+            <!-- Dynamic Archetype Icon -->
+            <span v-if="niche.subject_archetype === 'human_individual' || niche.subjectArchetype === 'human_individual'">👤</span>
+            <span v-else-if="niche.subject_archetype === 'asset_equipment' || niche.subjectArchetype === 'asset_equipment'">🚜</span>
+            <span v-else-if="niche.subject_archetype === 'corporate_entity' || niche.subjectArchetype === 'corporate_entity'">🏢</span>
+            <span v-else-if="niche.subject_archetype === 'fiduciary_estate' || niche.subjectArchetype === 'fiduciary_estate'">📜</span>
+            <span v-else>💼</span>
           </div>
-          <div class="text-center overflow-hidden w-full">
+
+          <div class="text-center overflow-hidden w-full space-y-1">
             <h1 class="font-black truncate text-sm tracking-tight text-white">{{ niche.name }}</h1>
-            <p class="text-[10px] text-blue-400 uppercase tracking-widest font-black">
+            
+            <!-- Archetype Tag -->
+            <div class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30">
+              {{ formatArchetype(niche.subject_archetype || niche.subjectArchetype) }}
+            </div>
+
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
               {{ niche.category || 'Niche Blueprint' }}
             </p>
           </div>
@@ -172,6 +184,17 @@ import apiClient from '@/services/api';
 const route = useRoute();
 const fileTypeId = ref(route.params.fileTypeId);
 const niche = ref(null);
+
+const formatArchetype = (archetype) => {
+  const map = {
+    human_individual: 'Human Subject',
+    asset_equipment: 'Physical Asset',
+    corporate_entity: 'Corporate Entity',
+    fiduciary_estate: 'Fiduciary Estate',
+    transactional_matter: 'Transactional Matter'
+  };
+  return map[archetype] || 'Standard Matter';
+};
 
 const fetchNiche = async () => {
   try {

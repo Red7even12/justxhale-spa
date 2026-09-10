@@ -447,6 +447,12 @@ const routes = [
             component: CaseIndex,
             meta: { displayName: 'Case Files' }
           },
+          {
+            path: 'compliance',
+            name: 'ProductCompliance',
+            component: () => import('@/views/telemetry/ComplianceProfile.vue'),
+            meta: { displayName: 'My Compliance Profile', requiresCompliance: true }
+          },
           // --- THE BULK IMPORT WIZARD ---
           {
             path: 'import',
@@ -616,6 +622,8 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !token) {
     next({ name: 'Login' });
   } else if (to.name === 'Login' && token) {
+    next({ name: 'AppLauncher' });
+  } else if (to.meta.requiresCompliance && !authStore.hasPermission('view own compliance profile')) {
     next({ name: 'AppLauncher' });
   } else {
     next();

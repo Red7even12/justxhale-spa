@@ -278,6 +278,8 @@
             </button>
           </div>
 
+
+
           <!-- Drawer Body -->
           <div class="p-6 overflow-y-auto flex-1">
             
@@ -314,6 +316,22 @@
                   <select v-model="detailsForm.file_class_id" class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700">
                     <option :value="null">-- Standard (No Class) --</option>
                     <option v-for="cls in fileClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                  </select>
+                </div>
+
+                <!-- Linked System User (Human Individuals Only) -->
+                <div 
+                  v-if="activeFileType?.subject_archetype === 'human_individual' || activeFileType?.subjectArchetype === 'human_individual'" 
+                  class="col-span-2 p-3 bg-blue-50/60 border border-blue-200 rounded-xl space-y-1"
+                >
+                  <label class="block text-[10px] font-black text-blue-700 uppercase tracking-widest">
+                    👤 Linked System User (Driver / Operator Identity)
+                  </label>
+                  <select v-model="detailsForm.subject_user_id" class="w-full border-blue-300 rounded-xl text-sm font-bold text-gray-800 bg-white shadow-sm">
+                    <option :value="null">-- No Direct User Account Linked --</option>
+                    <option v-for="u in availableUsers" :key="u.id" :value="u.id">
+                      {{ u.name }} ({{ u.email }})
+                    </option>
                   </select>
                 </div>
 
@@ -491,6 +509,8 @@ const props = defineProps({
   caseFile: { type: Object, required: true }
 });
 
+const availableUsers = ref([]);
+
 const route = useRoute();
 const authStore = useAuthStore();
 const { showAlert, showConfirm } = useAlerts();
@@ -525,6 +545,7 @@ watch(() => workspaceView.value, (newVal) => {
   }
 });
 // ----------------------------------------------
+
 
 const teams = ref([]);
 const fileClasses = ref([]);
@@ -661,6 +682,7 @@ const openSetupDrawer = async () => {
   detailsForm.file_reference = props.caseFile.fileReference || props.caseFile.file_reference || '';
   detailsForm.current_team_id = props.caseFile.currentTeamId || props.caseFile.current_team_id || null;
   detailsForm.file_class_id = props.caseFile.fileClassId || props.caseFile.file_class_id || null;
+  detailsForm.subject_user_id = props.caseFile.subjectUserId || props.caseFile.subject_user_id || null;
 
   const rawMeta = props.caseFile.metaData || props.caseFile.meta_data || {};
   const nicheId = activeFileType.value?.id;
@@ -699,6 +721,16 @@ const openSetupDrawer = async () => {
       console.error("Failed to load setup collections", err);
     }
   }
+
+  // 👉 Load Users here (inside the function):
+  if (availableUsers.value.length === 0) {
+    try {
+      const res = await apiClient.get('/users', { params: { per_page: 100 } });
+      availableUsers.value = res.data.data || res.data || [];
+    } catch (e) {
+      console.error('Failed to load users for setup drawer', e);
+    }
+  }
 };
 
 const closeSetupDrawer = () => {
@@ -725,6 +757,7 @@ const saveMetadata = async () => {
       file_reference: detailsForm.file_reference,
       current_team_id: detailsForm.current_team_id,
       file_class_id: detailsForm.file_class_id,
+      subject_user_id: detailsForm.subject_user_id,
       meta_data: rawMeta
     });
 
@@ -736,6 +769,8 @@ const saveMetadata = async () => {
     props.caseFile.current_team_id = detailsForm.current_team_id;
     props.caseFile.fileClassId = detailsForm.file_class_id;
     props.caseFile.file_class_id = detailsForm.file_class_id;
+    props.caseFile.subject_user_id = detailsForm.subject_user_id;
+    props.caseFile.subjectUserId = detailsForm.subject_user_id;
     props.caseFile.meta_data = rawMeta;
     props.caseFile.metaData = rawMeta;
 

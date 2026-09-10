@@ -3,9 +3,11 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import { useAuthStore } from './store/auth' // Assuming @ alias is set up
-import { formatDate } from '@/utils/date'; // 1. Import the utility
-import { formatDateTime} from '@/utils/date'; // 1. Import the utility
+import { useAuthStore } from './store/auth' 
+import { formatDate } from '@/utils/date'; 
+import { formatDateTime} from '@/utils/date'; 
+import { registerSW } from 'virtual:pwa-register';
+
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -23,3 +25,6 @@ authStore.checkAuth().then(() => {
   app.config.globalProperties.$formatDateTime = formatDateTime; 
   app.mount('#app')
 });
+
+// Auto-register service worker updates
+registerSW({ immediate: true });
