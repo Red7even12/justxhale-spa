@@ -76,8 +76,8 @@
           ? 'bg-brand-primary text-white shadow-sm' 
           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'"
       >
-        <span class="material-icons text-sm">{{ ft.icon || 'folder' }}</span>
-        <span>{{ ft.name }}</span>
+        <!-- span class="material-icons text-sm">{{ ft.icon || 'folder' }}</span -->
+        <span>>> {{ ft.name }}</span>
       </button>
     </div>
 

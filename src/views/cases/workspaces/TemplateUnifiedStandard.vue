@@ -96,7 +96,7 @@
             ? 'bg-slate-900 text-white shadow-sm' 
             : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
         >
-          <span>📦</span> Compliance Vault & Workflows
+          <span>>></span> Compliance Vault & Workflows
         </button>
 
         <button
@@ -106,7 +106,7 @@
             ? 'bg-slate-900 text-white shadow-sm' 
             : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
         >
-          <span>⏱️</span> Operational Logbooks & Telemetry
+          <span>>></span> Operational Logbooks & Telemetry
           <span v-if="caseLogs.length > 0" class="ml-1 bg-blue-100 text-blue-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">
             {{ caseLogs.length }}
           </span>
@@ -131,29 +131,33 @@
     <!-- VIEW A: COMPLIANCE & WORKFLOWS -->
     <div v-if="availableFileTypes.length > 0 && workspaceView === 'compliance'" class="grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 min-h-0 mt-2">
       <!-- Column 1: Active Tab's Document Pack -->
-      <div class="lg:col-span-6 relative group">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
-          <div class="p-6 h-full overflow-hidden">
-            <CaseDocumentsTable 
-              :key="`docs-${activeFileType?.id || 'default'}`"
-              :case-id="caseFile.id" 
-              :file-type-id="activeFileType?.id"
-              :current-team-id="caseFile.current_team_id || caseFile.currentTeamId" 
-            />
+      <div :class="hasActiveWorkflow ? 'lg:col-span-6' : 'lg:col-span-10'" class="relative group transition-all duration-300">
+        <div class="lg:col-span-6 relative group">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
+            <div class="p-6 h-full overflow-hidden">
+              <CaseDocumentsTable 
+                :key="`docs-${activeFileType?.id || 'default'}`"
+                :case-id="caseFile.id" 
+                :file-type-id="activeFileType?.id"
+                :current-team-id="caseFile.current_team_id || caseFile.currentTeamId" 
+              />
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Column 2: Active Tab's Workflow Checklist -->
-      <div class="lg:col-span-4 relative group">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
-          <div class="p-6 h-full overflow-hidden">
-            <CaseWorkflowPanel 
-              :key="`wf-${activeFileType?.id || 'default'}`"
-              :case-id="caseFile.id" 
-              :file-type-id="activeFileType?.id"
-              :current-team-id="caseFile.current_team_id || caseFile.currentTeamId" 
-            />
+      <div v-if="hasActiveWorkflow" class="lg:col-span-4 relative group">
+        <div class="lg:col-span-4 relative group">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
+            <div class="p-6 h-full overflow-hidden">
+              <CaseWorkflowPanel 
+                :key="`wf-${activeFileType?.id || 'default'}`"
+                :case-id="caseFile.id" 
+                :file-type-id="activeFileType?.id"
+                :current-team-id="caseFile.current_team_id || caseFile.currentTeamId" 
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -335,6 +339,21 @@
                   </select>
                 </div>
 
+                <div v-if="availableNicheLogDefinitions.length > 0" class="col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                <label class="block text-[10px] font-black text-slate-700 uppercase tracking-widest">
+                  ⏱️ Assigned Operational Logbook Routine
+                </label>
+                <select v-model="detailsForm.log_definition_id" class="w-full border-slate-300 rounded-xl text-sm font-bold text-slate-800 bg-white shadow-sm">
+                  <option :value="null">-- No Logbook Routine Assigned --</option>
+                  <option v-for="logDef in availableNicheLogDefinitions" :key="logDef.id" :value="logDef.id">
+                    {{ logDef.name }} ({{ logDef.category }})
+                  </option>
+                </select>
+                <p class="text-[10px] text-slate-500">
+                  Determines which checklist form is rendered when scanning this asset's QR code.
+                </p>
+              </div>
+
                 <!-- Dynamic Niche Custom Fields -->
                 <div v-for="field in currentNicheFields.filter(f => !f.participantRoleId)" :key="field.id" class="col-span-2">
                   <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
@@ -509,11 +528,18 @@ const props = defineProps({
   caseFile: { type: Object, required: true }
 });
 
+const availableNicheLogDefinitions = ref([]);
 const availableUsers = ref([]);
 
 const route = useRoute();
 const authStore = useAuthStore();
 const { showAlert, showConfirm } = useAlerts();
+
+// Returns true if the active niche has at least one workflow definition
+const hasActiveWorkflow = computed(() => {
+  const wf = activeFileType.value?.workflow_definitions || activeFileType.value?.workflowDefinitions || [];
+  return Array.isArray(wf) && wf.length > 0;
+});
 
 // --- PILLAR 3: OPERATIONAL TELEMETRY STATE ---
 const workspaceView = ref('compliance'); // 'compliance' | 'telemetry'
@@ -722,6 +748,18 @@ const openSetupDrawer = async () => {
     }
   }
 
+  detailsForm.log_definition_id = props.caseFile.logDefinitionId || props.caseFile.log_definition_id || null;
+
+  // Load the log definitions attached to this Niche via the Foundry pivot
+  if (availableNicheLogDefinitions.value.length === 0 && activeFileType.value?.id) {
+    try {
+      const res = await apiClient.get(`file-types/${activeFileType.value.id}/log-definitions`);
+      availableNicheLogDefinitions.value = res.data?.data || [];
+    } catch (e) {
+      console.error('Failed to load niche log definitions', e);
+    }
+  }
+
   // 👉 Load Users here (inside the function):
   if (availableUsers.value.length === 0) {
     try {
@@ -758,9 +796,12 @@ const saveMetadata = async () => {
       current_team_id: detailsForm.current_team_id,
       file_class_id: detailsForm.file_class_id,
       subject_user_id: detailsForm.subject_user_id,
+      log_definition_id: detailsForm.log_definition_id,
       meta_data: rawMeta
     });
 
+    props.caseFile.log_definition_id = detailsForm.log_definition_id;
+    props.caseFile.logDefinitionId = detailsForm.log_definition_id;
     props.caseFile.fileName = detailsForm.file_name;
     props.caseFile.file_name = detailsForm.file_name;
     props.caseFile.fileReference = detailsForm.file_reference;

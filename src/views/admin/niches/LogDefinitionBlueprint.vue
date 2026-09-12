@@ -156,6 +156,26 @@
           </div>
 
           <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Blueprint Slug</label>
+            <div class="flex items-center gap-1">
+              <input
+                v-model="activeBlueprint.slug"
+                type="text"
+                placeholder="e.g. heavy-duty-pre-trip"
+                class="w-full text-xs rounded-lg border-slate-300 focus:ring-blue-500 focus:border-blue-500 font-mono"
+              />
+              <button
+                v-if="!activeBlueprint.id"
+                @click="activeBlueprint.slug = activeBlueprint.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')"
+                type="button"
+                class="px-2.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-lg transition"
+                title="Generate slug from blueprint name"
+              >⚙️</button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Used by public.log_definitions.slug to reference this blueprint across the platform. Leave blank to auto-generate from the name.</p>
+          </div>
+
+          <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
             <textarea
               v-model="activeBlueprint.description"
@@ -302,6 +322,7 @@ const showBuilderModal = ref(false)
 const activeBlueprint = ref({
   id: null,
   name: '',
+  slug: '',
   category: 'Pre-Trip Inspection',
   description: '',
   schema: [],
@@ -329,6 +350,7 @@ const openCreateModal = () => {
   activeBlueprint.value = {
     id: null,
     name: '',
+    slug: '',
     category: 'Pre-Trip Inspection',
     description: '',
     schema: [
@@ -350,6 +372,7 @@ const editBlueprint = (item) => {
   activeBlueprint.value = {
     id: item.id,
     name: item.name,
+    slug: item.slug || '',
     category: item.category,
     description: item.description || '',
     schema: Array.isArray(item.schema) ? item.schema : [],

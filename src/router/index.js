@@ -77,6 +77,16 @@ const routes = [
     title: 'Asset Field Logbook'
   }
 },
+{
+    path: '/operator-console',
+    name: 'OperatorConsole',
+    // Field Operators are redirected here automatically from AppLauncher (fetchMyProducts role check)
+    component: () => import('@/views/telemetry/OperatorConsole.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Field Operator Console'
+    }
+  },
   
 
   {

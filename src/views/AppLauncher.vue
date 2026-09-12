@@ -168,6 +168,12 @@ const isWlpAdmin = computed(() => {
 });
 
 const fetchMyProducts = async () => {
+  // 🚨 1. INTERCEPT FIELD OPERATORS INSTANTLY
+  if (authStore.hasRole('Field Operator')) {
+    router.replace({ name: 'OperatorConsole' });
+    return;
+  }
+
   try {
     const { data } = await apiClient.get('user/products');
     products.value = data.products || [];

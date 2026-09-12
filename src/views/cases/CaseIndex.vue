@@ -787,7 +787,7 @@ const initializePage = async () => {
         caseService.getFileTypes(productSlug.value),
         teamService.getTeams()
     ]);
-    fileTypes.value = ftRes.data;
+    fileTypes.value = Array.isArray(ftRes.data) ? ftRes.data : (ftRes.data.data || []);
     teams.value = Array.isArray(teamRes.data) ? teamRes.data : (teamRes.data.data || []);
     
     fetchCases();
