@@ -2,38 +2,58 @@
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
+      <!-- TOUR ANCHOR 1: Workspace Context -->
+      <div id="tour-workspace-context">
         <h1 class="text-2xl font-black text-gray-800 uppercase tracking-tight">
-          {{ productSlug }} Workspace
+          {{ productName }} Index
         </h1>
-        <p class="text-xs text-gray-500 mt-0.5">Manage case files, compliance milestones, and operational exceptions.</p>
+        <p class="text-xs text-gray-500 mt-0.5">Manage case files, compliance milestones and operational exceptions.</p>
       </div>
       
-      <!-- Controlled by the "create case files" permission -->
-      <button 
-        v-if="canCreateCase && activeTab === 'cases'" 
-        @click="showModal = true" 
-        class="bg-brand-primary text-white px-4 py-2.5 rounded-xl shadow-md font-bold text-xs hover:opacity-90 transition-all flex items-center gap-1.5 self-start sm:self-auto">
-        <span>+</span> Create New Case
-      </button>
+      <div class="flex items-center gap-2 self-start sm:self-auto">
+        <!-- Persistent Walkthrough Replay Button -->
+        <button
+          @click="startTour(true)"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-all shadow-xs cursor-pointer"
+          title="Click to replay the guided interactive walkthrough"
+        >
+          <span>💡</span>
+          <span>Tour</span>
+        </button>
+
+        <!-- TOUR ANCHOR 5: Create Case Button -->
+        <button 
+          id="tour-create-case-btn"
+          v-if="canCreateCase && activeTab === 'cases'" 
+          @click="showModal = true" 
+          class="bg-brand-primary text-white px-4 py-2.5 rounded-xl shadow-md font-bold text-xs hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer">
+          <span>+</span> Create New Case
+        </button>
+      </div>
     </div>
 
     <!-- Product Sub-View Mode Switcher (POPIA Scoped) -->
     <div class="flex items-center gap-2 border-b border-gray-200">
       <button 
         @click="activeTab = 'cases'"
-        class="py-3 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 flex items-center gap-2"
+        class="py-3 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 flex items-center gap-2 cursor-pointer"
         :class="activeTab === 'cases' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-400 hover:text-gray-700'"
       >
         <span>📋</span> Active Cases
         <span v-if="pagination.total > 0" class="bg-gray-100 text-gray-700 text-[10px] font-mono px-2 py-0.5 rounded-full">
           {{ pagination.total }}
         </span>
+        <SectionHelp topic="case_registry" />
       </button>
 
+      <!-- Operational Exceptions (Pulse) is only surfaced when at least one
+           Niche in this product has an entry in public.file_type_log_definition
+           (i.e. Operational Logbooks are actually configured). -->
       <button 
+        v-if="hasOperationalLogbooks"
         @click="switchTab('pulse')"
-        class="py-3 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 flex items-center gap-2"
+        class="py-3 px-4 text-xs font-black uppercase tracking-wider transition-all border-b-2 flex items-center gap-2 cursor-pointer"
         :class="activeTab === 'pulse' ? 'border-rose-600 text-rose-600' : 'border-transparent text-gray-400 hover:text-gray-700'"
       >
         <span>🚨</span> Operational Exceptions (Pulse)
@@ -43,6 +63,7 @@
         >
           {{ productPulseDefects.length }}
         </span>
+        <SectionHelp topic="pulse_exceptions" />
       </button>
     </div>
 
@@ -55,8 +76,6 @@
         
         <!-- Top Row: The 3 Search Blocks -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-gray-100 pb-5">
-          
-          <!-- Block 1: General -->
           <div>
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Search Case Name / File Reference</label>
             <input 
@@ -68,7 +87,6 @@
             >
           </div>
 
-          <!-- Block 2: Participant -->
           <div>
             <label class="block text-xs font-bold text-brand-primary uppercase mb-1">Search Participant</label>
             <input 
@@ -80,7 +98,6 @@
             >
           </div>
 
-          <!-- Block 3: External Reference -->
           <div>
             <label class="block text-xs font-bold text-brand-primary uppercase mb-1">External Reference (Notes)</label>
             <input 
@@ -98,7 +115,7 @@
           <div>
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
             <select v-model="filters.status" @change="applyFilters" class="w-full border-gray-300 rounded-lg text-sm">
-              <option value="">All Active (Open)</option>
+              <option value="">All Open</option>
               <option value="open">Open</option>
 
               <template v-if="canSeeInactive">
@@ -115,13 +132,16 @@
               <option v-for="type in fileTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
             </select>
           </div>
-          <div>
+
+          <!-- TOUR ANCHOR 4: POPIA Teams & Clearance Filter -->
+          <div id="tour-team-clearance">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Assigned Team</label>
             <select v-model="filters.current_team_id" @change="applyFilters" class="w-full border-gray-300 rounded-lg text-sm">
               <option value="">All Teams</option>
               <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
             </select>
           </div>
+
           <div class="flex gap-2 items-end">
             <button @click="clearFilters" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 px-4 rounded-lg transition-colors text-sm border border-gray-200 pointer-events-auto">
               Reset All
@@ -135,8 +155,8 @@
         </div>
       </div>
 
-      <!-- Case Table -->
-      <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden relative">
+      <!-- TOUR ANCHOR 2: Case Registry Table -->
+      <div id="tour-case-table" class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden relative">
         <div v-if="isLoading" class="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
         </div>
@@ -169,7 +189,10 @@
                 </div>
               </th>
               
-              <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Progress</th>
+              <!-- TOUR ANCHOR 3: SOP Milestones Progress Header -->
+              <th id="tour-milestone-matrix" class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                Progress
+              </th>
               <th class="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
             </tr>
           </thead>
@@ -323,172 +346,202 @@
     </div>
 
     <!-- ================================================================= -->
-    <!-- TAB 2: PRODUCT-SCOPED DAILY EXCEPTION PULSE (PILLAR 3)           -->
+    <!-- TAB 2: OPERATIONAL EXCEPTIONS (PULSE) — POPIA Product Scope        -->
+    <!-- Gated behind hasOperationalLogbooks (file_type_log_definition)      -->
     <!-- ================================================================= -->
-    <div v-else-if="activeTab === 'pulse'" class="space-y-4">
-      <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center">
-        <div>
-          <h3 class="text-sm font-black text-gray-900 uppercase">
-            {{ productSlug }} Operational Exceptions
-          </h3>
-          <p class="text-xs text-gray-500">Unresolved pre-trip defects and grounded assets requiring corrective action sign-off.</p>
+    <div v-if="activeTab === 'pulse' && hasOperationalLogbooks" class="space-y-6">
+      <!-- Pulse Console Header -->
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-xl shadow-inner">
+            🚨
+          </div>
+          <div>
+            <h2 class="text-sm font-black text-gray-800 uppercase tracking-tight">Unresolved Operational Defects</h2>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Real-time queue of safety grounding events, failed inspection routines and pending CAPA sign-offs for
+              <span class="font-bold text-gray-700">{{ productName }}</span>.
+            </p>
+          </div>
         </div>
-        <button 
-          @click="fetchProductPulse" 
+
+        <button
+          @click="fetchProductPulse"
           :disabled="isPulseLoading"
-          class="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+          type="button"
+          class="self-start sm:self-auto px-4 py-2.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
         >
-          {{ isPulseLoading ? 'Refreshing...' : '↻ Refresh Pulse' }}
+          <span :class="{ 'animate-spin inline-block': isPulseLoading }">↻</span>
+          Refresh Pulse
         </button>
       </div>
 
-      <!-- Pulse Loading -->
+      <!-- Loading State -->
       <div v-if="isPulseLoading" class="py-16 flex justify-center items-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600"></div>
       </div>
 
-      <!-- Pulse Empty State (Clean) -->
+      <!-- Empty State (All Clear) -->
       <div v-else-if="productPulseDefects.length === 0" class="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
-        <div class="mx-auto w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mb-3">
+        <div class="mx-auto w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-2xl text-emerald-600 mb-3 shadow-sm">
           ✓
         </div>
-        <h4 class="text-sm font-bold text-gray-800">Zero Unresolved Operational Defects</h4>
-        <p class="text-xs text-gray-500 max-w-sm mx-auto mt-1">
-          All equipment and personnel in this product workspace are operating cleanly.
+        <h3 class="text-sm font-bold text-gray-800">Zero Unresolved Operational Defects</h3>
+        <p class="text-xs text-gray-500 max-w-md mx-auto mt-1">
+          Every equipment asset and matter in this workspace is operational with no pending corrective action tasks.
         </p>
       </div>
 
-      <!-- Pulse Defect Cards -->
+      <!-- Exception Queue -->
       <div v-else class="space-y-3">
         <div
-          v-for="item in productPulseDefects"
-          :key="item.logId || item.log_id || item.id"
-          class="bg-white rounded-2xl border transition shadow-sm p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-          :class="item.defectSeverity === 'safety_critical_ground' || item.defect_severity === 'safety_critical_ground'
-            ? 'border-rose-300 bg-rose-50/10'
-            : 'border-amber-300 bg-amber-50/10'"
+          v-for="(item, idx) in productPulseDefects"
+          :key="pulseDefectId(item, idx)"
+          class="bg-white rounded-xl border shadow-sm overflow-hidden transition-colors"
+          :class="isSafetyCriticalDefect(item) ? 'border-rose-300 hover:border-rose-400' : 'border-amber-300 hover:border-amber-400'"
         >
-          <div class="space-y-1.5 flex-1">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span
-                class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full text-white"
-                :class="(item.defectSeverity || item.defect_severity) === 'safety_critical_ground' ? 'bg-rose-600 animate-pulse' : 'bg-amber-600'"
-              >
-                {{ (item.defectSeverity || item.defect_severity) === 'safety_critical_ground' ? '● GROUNDED' : '● ADVISORY' }}
-              </span>
-
-              <h4 class="text-base font-black text-gray-900">
-                {{ item.fileName || item.file_name }}
-              </h4>
-
-              <span class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                Ref: {{ item.fileReference || item.file_reference || 'N/A' }}
-              </span>
-            </div>
-
-            <div class="text-xs text-gray-600 flex items-center gap-3">
-              <span>📋 <strong>{{ item.logDefinitionName || item.log_definition_name }}</strong></span>
-              <span>👤 Operator: <strong>{{ item.loggedByName || item.logged_by_name }}</strong></span>
-              <span>⏱️ {{ formatDateTime(item.loggedAt || item.logged_at) }}</span>
-            </div>
-
-            <!-- Answers Preview -->
-            <div class="mt-2 bg-white p-2.5 rounded-lg border border-gray-200 text-xs font-mono flex flex-wrap gap-2">
-              <span 
-                v-for="(val, key) in parsePayload(item.payload)" 
-                :key="key" 
-                class="px-2 py-0.5 rounded bg-gray-50 border border-gray-200"
-              >
-                <strong class="text-gray-600">{{ key }}:</strong>
-                <span :class="val === false ? 'text-rose-600 font-black ml-1' : 'text-gray-700 ml-1'">
-                  {{ val === false ? 'FAIL' : (val === true ? 'PASS' : val) }}
+          <div class="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <!-- Left: Casefile & Defect Metadata -->
+            <div class="space-y-1.5 flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span
+                  class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full text-white"
+                  :class="isSafetyCriticalDefect(item) ? 'bg-rose-600 animate-pulse' : 'bg-amber-600'"
+                >
+                  {{ isSafetyCriticalDefect(item) ? 'GROUNDED / RED-TAG' : 'ADVISORY' }}
                 </span>
-              </span>
+
+                <h3 class="text-sm font-black text-gray-900">
+                  {{ item.fileName || item.file_name }}
+                </h3>
+
+                <span class="text-[11px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                  Ref: {{ item.fileReference || item.file_reference || 'N/A' }}
+                </span>
+
+                <template v-if="item.fileTypeName || item.file_type_name">
+                  <span class="text-xs text-gray-400">|</span>
+                  <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold uppercase">
+                    {{ item.fileTypeName || item.file_type_name }}
+                  </span>
+                </template>
+              </div>
+
+              <div class="text-xs text-gray-600 flex items-center gap-3 flex-wrap">
+                <span>📋 <strong>{{ item.logDefinitionName || item.log_definition_name }}</strong></span>
+                <span>👤 Logged by: <strong>{{ item.loggedByName || item.logged_by_name }}</strong> ({{ item.loggedByRole || item.logged_by_role || 'Field Operator' }})</span>
+                <span>⏱ {{ formatDateTime(item.loggedAt || item.logged_at) }}</span>
+              </div>
+
+              <!-- Telemetry Answers Preview -->
+              <div
+                v-if="Object.keys(parsePayload(item.payload)).length"
+                class="mt-2 bg-gray-50 p-2.5 rounded-lg border border-gray-200 text-[11px] font-mono flex flex-wrap gap-2"
+              >
+                <span
+                  v-for="(val, key) in parsePayload(item.payload)"
+                  :key="key"
+                  class="px-2 py-0.5 rounded bg-white border border-gray-200"
+                >
+                  <strong class="text-gray-600">{{ key }}:</strong>
+                  <span :class="val === false ? 'text-rose-600 font-black ml-1' : 'text-gray-700 ml-1'">
+                    {{ val === false ? 'FAIL' : (val === true ? 'PASS' : val) }}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Right: CAPA Actions -->
+            <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
+              <button
+                @click="openResolveModal(item)"
+                type="button"
+                class="px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow transition-colors cursor-pointer"
+              >
+                Sign-Off & Resolve (CAPA)
+              </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
-            <router-link
-              :to="`/${productSlug}/cases/${item.caseFileId || item.case_file_id}`"
-              class="px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 border border-gray-200 rounded-xl transition"
-            >
-              Open File →
-            </router-link>
+      <!-- CAPA Resolution Modal -->
+      <div
+        v-if="activeResolvingItem"
+        class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4"
+      >
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div>
+              <h3 class="text-sm font-bold text-gray-900">CAPA Sign-Off & Defect Resolution</h3>
+              <p class="text-[11px] text-gray-500 font-mono">
+                {{ activeResolvingItem.fileName || activeResolvingItem.file_name }}
+              </p>
+            </div>
+            <button @click="activeResolvingItem = null" type="button" class="text-gray-400 hover:text-gray-600 text-base cursor-pointer">✕</button>
+          </div>
+
+          <div class="p-6 space-y-4">
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+              <div class="font-bold">
+                Original Defect: {{ activeResolvingItem.logDefinitionName || activeResolvingItem.log_definition_name }}
+              </div>
+              <div>
+                Reported by {{ activeResolvingItem.loggedByName || activeResolvingItem.logged_by_name }}
+                at {{ formatDateTime(activeResolvingItem.loggedAt || activeResolvingItem.logged_at) }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Corrective Action Notes / Repair Sign-off *
+              </label>
+              <textarea
+                v-model="resolutionNotes"
+                rows="4"
+                placeholder="Detail parts replaced, mechanic work order #, or risk mitigation steps..."
+                class="w-full text-xs rounded-xl border-gray-300 focus:ring-rose-500 focus:border-rose-500"
+              ></textarea>
+            </div>
+
+            <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer">
+              <input
+                type="checkbox"
+                v-model="restoreOperationalStatus"
+                class="rounded text-rose-600 focus:ring-rose-500 border-gray-300"
+              />
+              <span class="text-xs text-gray-700 font-medium">
+                Restore Asset Operational Status to <strong class="text-emerald-600">Operational</strong>
+              </span>
+            </label>
+          </div>
+
+          <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
             <button
-              @click="openResolveModal(item)"
-              class="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow transition"
+              @click="activeResolvingItem = null"
+              type="button"
+              class="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
             >
-              Sign-Off (CAPA)
+              Cancel
+            </button>
+            <button
+              @click="submitResolution"
+              :disabled="isResolving || resolutionNotes.trim().length < 5"
+              type="button"
+              class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {{ isResolving ? 'Submitting...' : 'Sign Off & Close Defect' }}
             </button>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- CAPA Sign-Off Modal (Inside Product) -->
-    <div
-      v-if="activeResolvingItem"
-      class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4"
-    >
-      <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <div>
-            <h3 class="text-sm font-bold text-gray-900">CAPA Sign-Off & Defect Resolution</h3>
-            <p class="text-[11px] text-gray-500 font-mono">{{ activeResolvingItem.fileName || activeResolvingItem.file_name }}</p>
-          </div>
-          <button @click="activeResolvingItem = null" class="text-gray-400 hover:text-gray-600 text-base">✕</button>
-        </div>
-
-        <div class="p-6 space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
-              Corrective Action Notes / Repair Sign-off *
-            </label>
-            <textarea
-              v-model="resolutionNotes"
-              rows="4"
-              placeholder="Detail workshop work order # or risk mitigation steps taken..."
-              class="w-full text-xs rounded-xl border-gray-300 focus:ring-brand-primary focus:border-brand-primary"
-              required
-            ></textarea>
-          </div>
-
-          <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer">
-            <input
-              type="checkbox"
-              v-model="restoreOperationalStatus"
-              class="rounded text-brand-primary focus:ring-brand-primary border-gray-300"
-            />
-            <span class="text-xs text-gray-700 font-medium">
-              Restore Asset Operational Status to <strong class="text-emerald-600">Operational</strong>
-            </span>
-          </label>
-        </div>
-
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
-          <button
-            @click="activeResolvingItem = null"
-            class="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition"
-          >
-            Cancel
-          </button>
-          <button
-            @click="submitResolution"
-            :disabled="isResolving || resolutionNotes.trim().length < 5"
-            class="px-4 py-2 text-xs font-bold text-white bg-brand-primary hover:opacity-90 rounded-lg shadow disabled:opacity-50 transition"
-          >
-            {{ isResolving ? 'Submitting...' : 'Sign Off & Close Defect' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Create Case Modal -->
+        <!-- Create Case Modal (Unchanged structurally, just using the pre-loaded data) -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
         <div class="bg-brand-primary p-6 text-white">
           <h2 class="text-xl font-bold">Initialize New Case</h2>
-          <p class="text-xs opacity-80 uppercase tracking-widest mt-1">Product: {{ productSlug }}</p>
+          <p class="text-xs opacity-80 uppercase tracking-widest mt-1">Product: {{ productName }}</p>
         </div>
         
         <form @submit.prevent="createCase" class="p-6 space-y-4">
@@ -498,25 +551,6 @@
               <option value="">-- Select File Type --</option>
               <option v-for="type in fileTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
             </select>
-          </div>
-
-          <!-- 2. Dynamic Linked User (Appears ONLY if Niche is Human Individual) -->
-          <div v-if="isHumanSelectedNiche" class="p-3 bg-blue-50/60 border border-blue-200 rounded-xl space-y-1">
-            <label class="block text-xs font-black text-blue-700 uppercase">
-              👤 Bind to System User (Operator / Driver Login)
-            </label>
-            <select 
-              v-model="form.subjectUserId" 
-              class="w-full border-blue-300 rounded-lg text-sm bg-white font-bold text-gray-800 focus:ring-blue-500"
-            >
-              <option :value="null">-- No Direct User Account Linked --</option>
-              <option v-for="user in subscriberUsers" :key="user.id" :value="user.id">
-                {{ user.name }} ({{ user.email }})
-              </option>
-            </select>
-            <p class="text-[10px] text-blue-600/80">
-              Enables mobile PIN identity cross-checks when operating physical machinery.
-            </p>
           </div>
 
           <div>
@@ -556,10 +590,30 @@ import caseService from '@/services/caseService';
 import teamService from '@/services/teamService';
 import apiClient from '@/services/api';
 import { useAuthStore } from '@/store/auth'; 
+import { useGuidedTour } from '@/composables/useGuidedTour';
+import { useOperationalPulse } from '@/composables/useOperationalPulse';
+import SectionHelp from '@/components/common/SectionHelp.vue';
 
 const authStore = useAuthStore();
 const route = useRoute();
 const productSlug = computed(() => route.params.productSlug);
+
+// Workspace display context. Prefers the licensed Product's own name
+// (resolved from the tenant /products/{slug} endpoint - the same call
+// ProductLayout uses for branding) and gracefully degrades to a
+// Title-Cased slug (e.g. `justxhale-co-op` -> `Justxhale Co Op`).
+const product = ref(null);
+const productName = computed(() => {
+  if (product.value?.name) return product.value.name;
+  return productSlug.value
+    ? productSlug.value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    : 'Product';
+});
+//const guidedTour = useGuidedTour();
+const { startTour } = useGuidedTour(); 
+
+// Shared Operational Pulse accessors (logId / log_id, severity key-casing).
+const { isSafetyCriticalDefect, pulseDefectId } = useOperationalPulse();
 
 // --- TAB SWITCHER & PRODUCT PULSE STATE ---
 const activeTab = ref('cases'); // 'cases' | 'pulse'
@@ -571,6 +625,14 @@ const resolutionNotes = ref('');
 const restoreOperationalStatus = ref(true);
 
 const switchTab = (tab) => {
+  // Hard gate: the Pulse view only exists when this workspace actually has
+  // Operational Logbooks configured on at least one Niche
+  // (an entry in public.file_type_log_definition).
+  if (tab === 'pulse' && !hasOperationalLogbooks.value) {
+    activeTab.value = 'cases';
+    return;
+  }
+
   activeTab.value = tab;
   if (tab === 'pulse') {
     fetchProductPulse();
@@ -579,6 +641,14 @@ const switchTab = (tab) => {
 
 const fetchProductPulse = async () => {
   if (!productSlug.value) return;
+
+  // Never hit the telemetry endpoint when no Niche in this product has an
+  // entry in public.file_type_log_definition - nothing can raise a defect.
+  if (!hasOperationalLogbooks.value) {
+    productPulseDefects.value = [];
+    return;
+  }
+
   isPulseLoading.value = true;
   try {
     const res = await apiClient.get('/telemetry/pulse', {
@@ -659,6 +729,25 @@ const fileTypes = ref([]);
 const teams = ref([]);
 const showModal = ref(false);
 const isLoading = ref(false);
+
+/**
+ * Operational Pulse (logbook) gate.
+ *
+ * `{productSlug}/file-types` returns each assembled Niche together with an
+ * `active_log_definitions_count` aggregate sourced from the
+ * public.file_type_log_definition pivot. The Operational Exceptions tab is
+ * only offered when at least one Niche has a live logbook configured.
+ * (Defensive dual-casing: the API camelCases every response key.)
+ */
+const hasOperationalLogbooks = computed(() => {
+  return fileTypes.value.some((type) => Number(
+    type.activeLogDefinitionsCount
+      ?? type.active_log_definitions_count
+      ?? type.logDefinitionsCount
+      ?? type.log_definitions_count
+      ?? 0
+  ) > 0);
+});
 
 const filters = ref({ 
   search_general: '',
@@ -781,6 +870,23 @@ const isPrimarySearchActive = computed(() => {
 const form = ref({ fileTypeId: '', currentTeamId: '', fileName: '', fileReference: '' });
 let searchTimeout = null;
 
+/**
+ * Resolve the human-readable Product Name for the active workspace.
+ * Mirrors ProductLayout's branding call so subscribers (not just platform
+ * admins) receive the licensed label; silently degrades to the prettified
+ * slug (productName) when the call is unavailable.
+ */
+const fetchProduct = async () => {
+  if (!productSlug.value) return;
+  try {
+    const { data } = await apiClient.get(`products/${productSlug.value}`);
+    product.value = data;
+  } catch (error) {
+    console.error("Failed to load product context", error);
+    product.value = null;
+  }
+};
+
 const initializePage = async () => {
   try {
     const [ftRes, teamRes] = await Promise.all([
@@ -791,7 +897,11 @@ const initializePage = async () => {
     teams.value = Array.isArray(teamRes.data) ? teamRes.data : (teamRes.data.data || []);
     
     fetchCases();
-    fetchProductPulse(); // Pre-load pulse count for tab badge
+    fetchProduct();
+    // Pre-load the tab badge. fetchProductPulse() is self-gated by
+    // hasOperationalLogbooks, so workspaces without logbooks never fire
+    // an unnecessary telemetry request.
+    fetchProductPulse();
   } catch (error) {
     console.error("Failed to load initial data", error);
   }
@@ -866,5 +976,17 @@ watch(productSlug, () => {
   initializePage();
 });
 
-onMounted(initializePage);
+// If the workspace is switched to a product whose Niches have no logbooks
+// while the Pulse tab is open, gracefully fall back to the Case Registry.
+watch(hasOperationalLogbooks, (enabled) => {
+  if (!enabled && activeTab.value === 'pulse') {
+    activeTab.value = 'cases';
+  }
+});
+
+onMounted(async () => {
+  await initializePage();
+  const userId = authStore.user?.id || null;
+  startTour(false, userId); // Runs for this specific user; never skipped by previous testers
+});
 </script>

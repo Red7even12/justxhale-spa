@@ -68,11 +68,11 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200 text-sm">
-            <tr v-for="sub in product.subscribers" :key="sub.id" class="hover:bg-gray-50">
+            <tr v-for="sub in licensedSubscribers" :key="sub.id" class="hover:bg-gray-50">
               <td class="px-6 py-3 font-bold text-gray-900">{{ sub.name }}</td>
               <td class="px-6 py-3 text-xs">
-                <span v-if="sub.pivot && sub.pivot.displayName" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 font-medium">
-                  {{ sub.pivot.displayName }}
+                <span v-if="sub.pivot && (sub.pivot.displayName || sub.pivot.display_name)" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 font-medium">
+                  {{ sub.pivot.displayName || sub.pivot.display_name }}
                 </span>
                 <span v-else class="text-gray-400 italic">Standard</span>
               </td>
@@ -82,7 +82,7 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="!product.subscribers || product.subscribers.length === 0">
+            <tr v-if="licensedSubscribers.length === 0">
               <td colspan="3" class="px-6 py-8 text-center text-gray-400 italic">No subscriber firms currently licensed for this product.</td>
             </tr>
           </tbody>
@@ -93,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import apiClient from '@/services/api';
 import { useAlerts } from '@/composables/useAlerts';
 import { useAuthStore } from '@/store/auth';
@@ -107,19 +107,34 @@ const authStore = useAuthStore();
 const { showConfirm, showAlert } = useAlerts();
 const allSubscribers = ref([]);
 const allWlps = ref([]);
-const selectedWlpId = ref(props.product?.wlp_tenant_id || props.product?.wlpTenant?.id || '');
+// Global middleware camelCases payload keys, so the product's owning tenant id
+// arrives as wlpTenantId (the snake_case variant is kept for safety).
+const selectedWlpId = ref(
+  props.product?.wlpTenantId ?? props.product?.wlp_tenant_id ?? props.product?.wlpTenant?.id ?? ''
+);
+// Licensed firms come from the product payload (scoped server-side by tenant).
+const licensedSubscribers = computed(() => props.product?.subscribers || []);
 const linkForm = ref({ subscriberId: '', displayName: '' });
 
 const fetchInitialData = async () => {
+  const isCoreAdmin = authStore.hasRole('System Admin') || authStore.hasRole('Business Admin');
+  // WLP Admin cannot hit the global SaaS endpoints (role middleware:
+  // System Admin|Business Admin only) — use the WLP-scoped portal endpoint.
+  const subUrl = isCoreAdmin ? 'admin/subscribers?all=true' : 'admin/partner-admin/subscribers';
   try {
-    const [subRes, wlpRes] = await Promise.all([
-      apiClient.get('admin/subscribers?all=true'),
-      apiClient.get('admin/wlp-tenants'),
-    ]);
+    const subRes = await apiClient.get(subUrl);
     allSubscribers.value = subRes.data?.data || subRes.data || [];
+  } catch (e) {
+    console.error('Failed to load subscribers:', e);
+  }
+  // Level 2 WLP ownership picker is core-admin only; skip for WLP Admin
+  // (would 403 and — under Promise.all — wipe the subscriber list too).
+  if (!isCoreAdmin) return;
+  try {
+    const wlpRes = await apiClient.get('admin/wlp-tenants');
     allWlps.value = wlpRes.data?.data || wlpRes.data || [];
   } catch (e) {
-    console.error(e);
+    console.error('Failed to load WLP tenants:', e);
   }
 };
 

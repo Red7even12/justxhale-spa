@@ -28,20 +28,43 @@
       <div class="bg-white shadow overflow-hidden sm:rounded-md">
         <ul role="list" class="divide-y divide-gray-200">
           <li v-for="user in users" :key="user.id">
-            <a href="#" class="block hover:bg-gray-50">
+            <div class="block hover:bg-gray-50">
               <div class="px-4 py-4 sm:px-6">
                 <div class="flex items-center justify-between">
                   <p class="text-sm font-medium text-indigo-600 truncate">{{ user.name }}</p>
-                  <div class="ml-2 flex-shrink-0 flex">
-                    <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                       :class="user.invitation_token ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
-                       {{ user.invitation_token ? 'Pending Invitation' : 'Active' }}
-                    </p>
-                    <button @click="openEditModal(user)" class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                  <div class="ml-2 flex-shrink-0 flex items-center gap-2">
+                    
+                    <!-- Invitation Pill -->
+                    <span v-if="user.invitation_token" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      Pending Invitation
+                    </span>
+
+                    <!-- ⭐ INTERACTIVE ACTIVE TOGGLE PILL ⭐ -->
+                    <button
+                      type="button"
+                      @click="triggerStatusToggle(user)"
+                      :class="[
+                        user.is_active !== false && user.isActive !== false 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                          : 'bg-red-100 text-red-800 hover:bg-red-200',
+                        'px-2.5 py-0.5 inline-flex text-xs leading-5 font-bold rounded-full transition-all cursor-pointer'
+                      ]"
+                      :title="'Click to ' + (user.is_active !== false ? 'Deactivate' : 'Activate')"
+                    >
+                      {{ user.is_active !== false && user.isActive !== false ? 'Active' : 'Inactive' }}
+                    </button>
+
+                    <button @click="openEditModal(user)" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 ml-2">
                       Edit
                     </button>
-                    <button @click="handleForceReset(user)" class="text-sm font-medium text-red-600 hover:text-red-900">
+                    <button @click="triggerForceReset(user)" class="text-sm font-medium text-red-600 hover:text-red-900">
                       Force Reset
+                    </button>
+                    <button 
+                      @click="openAuditModal(user)" 
+                      class="text-xs font-medium text-gray-500 hover:text-gray-800 hover:underline mr-3"
+                    >
+                      Audit Trail
                     </button>
                   </div>
                 </div>
@@ -58,7 +81,7 @@
                   </div>
                 </div>
               </div>
-            </a>
+            </div>
           </li>
           <li v-if="users.length === 0" class="px-4 py-8 text-center text-gray-500 italic">
             No core users found matching your criteria.
@@ -94,7 +117,8 @@
       @close="isAddUserModalOpen = false"
       @user-added="handleUserAdded"
     />
-      <!-- Edit User Modal -->
+    
+    <!-- Edit User Modal -->
     <EditUserModal
       v-if="userToEdit"
       :user="userToEdit"
@@ -103,6 +127,24 @@
       @user-updated="handleUserUpdated"
     />
 
+    <!-- ⭐ COMPLIANCE SECURITY ACTION MODAL ⭐ -->
+    <SecurityActionModal
+      :show="securityModal.show"
+      :title="securityModal.title"
+      :actionType="securityModal.actionType"
+      :targetUser="securityModal.user"
+      :confirmButtonText="securityModal.confirmButtonText"
+      :isSubmitting="securityModal.isSubmitting"
+      @confirm="executeSecurityAction"
+      @cancel="securityModal.show = false"
+    />
+
+    <UserSecurityLogModal
+      :show="isAuditModalOpen"
+      :user="selectedUserForAudit"
+      :context="isProductContext ? 'subscriber' : 'core'"
+      @close="isAuditModalOpen = false"
+    />
   </div>
 </template>
 
@@ -111,6 +153,8 @@ import { ref, onMounted } from 'vue';
 import userService from '@/services/userService';
 import AddCoreUserModal from '@/components/admin/AddCoreUserModal.vue';
 import EditUserModal from '@/components/admin/EditUserModal.vue';
+import SecurityActionModal from '@/components/modals/SecurityActionModal.vue';
+import UserSecurityLogModal from '@/components/modals/UserSecurityLogModal.vue';
 
 const users = ref([]);
 const isLoading = ref(true);
@@ -118,7 +162,14 @@ const error = ref(null);
 const isAddUserModalOpen = ref(false);
 const userToEdit = ref(null);
 
-// Server-side pagination state (backend uses Laravel's paginate())
+const selectedUserForAudit = ref(null);
+const isAuditModalOpen = ref(false);
+
+const openAuditModal = (user) => {
+  selectedUserForAudit.value = user;
+  isAuditModalOpen.value = true;
+};
+
 const currentPage = ref(1);
 const searchTerm = ref('');
 let searchTimeout = null;
@@ -128,6 +179,15 @@ const pagination = ref({
   total: 0,
   from: 0,
   to: 0,
+});
+
+const securityModal = ref({
+  show: false,
+  title: '',
+  actionType: '',
+  user: null,
+  confirmButtonText: 'Confirm',
+  isSubmitting: false,
 });
 
 const fetchCoreUsers = async () => {
@@ -141,12 +201,6 @@ const fetchCoreUsers = async () => {
     const response = await userService.getCoreUsers(params);
     users.value = response.data.data;
 
-    // Store the pagination info from the Laravel paginator.
-    // NOTE 1: The backend's CamelCaseResponseMiddleware converts all response
-    // keys to camelCase, so accept both snake_case and camelCase keys.
-    // NOTE 2: The paginator may be serialized either wrapped ({ data, links, meta })
-    // or flat (currentPage/lastPage/total at the top level), so fall back to
-    // the whole response body when no meta wrapper is present.
     const meta = response.data.meta || response.data;
     pagination.value = {
       current_page: Number(meta.current_page ?? meta.currentPage) || currentPage.value,
@@ -163,11 +217,10 @@ const fetchCoreUsers = async () => {
   }
 };
 
-// Debounce search input to prevent spamming the database
 const handleSearchInput = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    currentPage.value = 1; // Reset to page 1 whenever the search changes
+    currentPage.value = 1;
     fetchCoreUsers();
   }, 400);
 };
@@ -180,44 +233,70 @@ const changePage = (pageNumber) => {
 };
 
 const handleUserAdded = () => {
-  // Reset to page 1 and re-fetch so the new user is visible and counts stay accurate
   currentPage.value = 1;
   searchTerm.value = '';
   fetchCoreUsers();
   isAddUserModalOpen.value = false;
 };
 
-// --- 3. User Edit METHODS ---
 const openEditModal = (user) => {
   userToEdit.value = user;
 };
 
 const handleUserUpdated = (updatedUser) => {
-  // Find the user in the list and replace them with the updated data
   const index = users.value.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
-    users.value[index] = updatedUser;
+    users.value[index] = { ...users.value[index], ...updatedUser };
   } else {
-    // The updated user may live on a different page — refresh to stay in sync
     fetchCoreUsers();
   }
   userToEdit.value = null;
 };
 
-// --- Forced Password Reset by admins ---
-const handleForceReset = async (user) => {
-  if (confirm(`Are you sure you want to force a password reset for ${user.name}? This will invalidate their current password immediately.`)) {
-    try {
-      const response = await userService.forceCoreUserPasswordReset(user.id);
-      // We can update the user's status in the list to "Pending"
-      const index = users.value.findIndex(u => u.id === response.data.user.id);
+// --- SECURITY ACTION HANDLERS ---
+const triggerStatusToggle = (user) => {
+  const isCurrentlyActive = user.is_active !== false && user.isActive !== false;
+  securityModal.value = {
+    show: true,
+    user,
+    actionType: isCurrentlyActive ? 'deactivate' : 'activate',
+    title: isCurrentlyActive ? 'Deactivate Core User' : 'Activate Core User',
+    confirmButtonText: isCurrentlyActive ? 'Deactivate Account' : 'Activate Account',
+    isSubmitting: false,
+  };
+};
+
+const triggerForceReset = (user) => {
+  securityModal.value = {
+    show: true,
+    user,
+    actionType: 'force-reset',
+    title: 'Force Password Reset',
+    confirmButtonText: 'Wipe Password & Issue Reset',
+    isSubmitting: false,
+  };
+};
+
+const executeSecurityAction = async ({ user, actionType, reason }) => {
+  securityModal.value.isSubmitting = true;
+  try {
+    if (actionType === 'activate' || actionType === 'deactivate') {
+      const response = await userService.toggleUserStatus(user.id, reason, 'core');
+      const updated = response.data.user;
+      const index = users.value.findIndex(u => u.id === user.id);
       if (index !== -1) {
-        users.value[index] = response.data.user;
+        users.value[index].is_active = updated.is_active;
+        users.value[index].isActive = updated.is_active;
       }
-      alert(response.data.message); // Simple notification for now
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to initiate password reset.');
+    } else if (actionType === 'force-reset') {
+      await userService.forcePasswordResetWithReason(user.id, reason, 'core');
+      alert(`Password reset link dispatched to ${user.email}. Previous password immediately revoked.`);
     }
+    securityModal.value.show = false;
+  } catch (err) {
+    alert(err.response?.data?.message || 'Action failed. Please verify permissions.');
+  } finally {
+    securityModal.value.isSubmitting = false;
   }
 };
 

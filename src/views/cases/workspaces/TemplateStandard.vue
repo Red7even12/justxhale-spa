@@ -32,7 +32,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 min-h-0 mt-6">
       
       <!-- Column 1: Documents -->
-      <div class="lg:col-span-6 relative group">
+      <div id="tour-checklist-vault" class="lg:col-span-6 relative group">
         <!-- The Glass Pane -->
         <div v-if="['cancelled', 'closed','pending'].includes(caseFile.status)" class="absolute inset-0 z-50 cursor-not-allowed bg-gray-50/10"></div>
         

@@ -76,7 +76,7 @@ onMounted(async () => {
   try {
     // We can reuse the existing /roles endpoint.
     // Our backend logic is smart enough to give a System Admin all the roles.
-    const response = await apiClient.get('/roles');
+    const response = await apiClient.get('/admin/core-roles');
     availableRoles.value = response.data;
   } catch (err) {
     console.error("Failed to load roles", err);

@@ -22,6 +22,7 @@
           <tr>
             <th class="p-3">Partner Entity</th>
             <th class="p-3">Contact Email</th>
+            <th class="p-3 text-center">Subscribers</th>
             <th class="p-3 text-center">Prepaid Credit</th>
             <th class="p-3 text-center">Status</th>
             <th class="p-3 text-right">Actions</th>
@@ -35,15 +36,18 @@
             <td class="p-3 text-xs text-gray-500">
               {{ item.contactEmail || item.contact_email || item.companyEmail || item.company_email }}
             </td>
+            <td class="p-3 text-center font-bold text-gray-700">
+              {{ item.subscribers_count ?? item.subscribersCount ?? 0 }}
+            </td>
             <td class="p-3 text-center font-bold text-blue-700">
               R {{ formatMoney(item.activationDeposit || item.activation_deposit || item.prepaid_activation_credit || item.prepaidActivationCredit) }}
             </td>
             <td class="p-3 text-center">
               <span
-                :class="(item.acceptedAt || item.accepted_at || item.isActive || item.is_active) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                :class="statusClass(item)"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
               >
-                {{ (item.acceptedAt || item.accepted_at) ? 'Active' : (item.token ? 'Pending Acceptance' : 'Active') }}
+                {{ statusLabel(item) }}
               </span>
             </td>
 <td class="p-3 text-right">
@@ -74,9 +78,9 @@
                   Edit WLP
                 </button>
 
-                <!-- Action 4: View Subscribers -->
+                <!-- Action 4: View this partner's subscribers -->
                 <router-link
-                  to="/partner-admin/subscribers"
+                  :to="{ path: '/partner-admin/subscribers', query: { wlp_tenant_id: item.id } }"
                   class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded hover:bg-blue-100 transition-all"
                 >
                   Subscribers
@@ -85,7 +89,7 @@
             </td>
           </tr>
           <tr v-if="partnersList.length === 0">
-            <td colspan="5" class="p-6 text-center text-gray-400 italic">No partners onboarded or invited yet. Click "+ Create WLP & Issue Invite" to start.</td>
+            <td colspan="6" class="p-6 text-center text-gray-400 italic">No partners onboarded or invited yet. Click "+ Create WLP & Issue Invite" to start.</td>
           </tr>
         </tbody>
       </table>
@@ -110,6 +114,16 @@
           <div>
             <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Contact Person</label>
             <input v-model="createForm.contact_person" type="text" class="form-input w-full" placeholder="John Doe" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Contact Number (Firm)</label>
+            <input v-model="createForm.contact_number" type="tel" class="form-input w-full" placeholder="+27 11 000 0000" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Admin Cell Number (WLP Admin User)</label>
+            <input v-model="createForm.admin_cell_number" type="tel" class="form-input w-full" placeholder="+27 82 123 4567" />
           </div>
 
           <div>
@@ -177,8 +191,8 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Contact Number</label>
-            <input v-model="editForm.contact_number" type="text" class="form-input w-full" />
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Contact Number (Firm)</label>
+            <input v-model="editForm.contact_number" type="tel" class="form-input w-full" placeholder="+27 11 000 0000" />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -227,6 +241,8 @@ const createForm = ref({
   wlp_name: '',
   contact_email: '',
   contact_person: '',
+  contact_number: '',
+  admin_cell_number: '',
   archetype: 'transactional_matter',
   base_price_per_file: 120,
   activation_deposit: 5000,
@@ -246,6 +262,31 @@ const editForm = ref({
 });
 
 const formatMoney = (val) => Number(val || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2 });
+
+// Status badge: is_active is authoritative. An accepted-but-deactivated tenant
+// must show Inactive (red), not Active. Pending invites (token, not accepted)
+// show Pending Acceptance (yellow).
+const tenantIsActive = (item) => {
+  const raw = item.is_active ?? item.isActive;
+  if (raw === undefined || raw === null) return true;
+  if (raw === false || raw === 0 || raw === '0' || raw === 'false' || raw === 'no') return false;
+  return !!raw;
+};
+
+const isAccepted = (item) => !!(item.acceptedAt || item.accepted_at);
+
+const statusLabel = (item) => {
+  if (!tenantIsActive(item)) return 'Inactive';
+  if (isAccepted(item)) return 'Active';
+  if (item.token) return 'Pending Acceptance';
+  return 'Active';
+};
+
+const statusClass = (item) => {
+  if (!tenantIsActive(item)) return 'bg-red-100 text-red-800';
+  if (isAccepted(item) || !item.token) return 'bg-green-100 text-green-800';
+  return 'bg-yellow-100 text-yellow-800';
+};
 
 const fetchRecords = async () => {
   try {
@@ -268,11 +309,13 @@ const submitInvite = async () => {
     showCreateModal.value = false;
     createForm.value = {
       wlp_name: '', contact_email: '', contact_person: '',
+      contact_number: '', admin_cell_number: '',
       archetype: 'transactional_matter', base_price_per_file: 120,
       activation_deposit: 5000, launch_grace_days: 60, minimum_subscriber_floor: 250,
     };
     await fetchRecords();
     await showAlert('Success', 'WLP Partner created!');
+    await showAlert('Next Step — Allocate Products', 'Please allocate this White Label Partner to a specific product or range of products using Product Factory | Select the product | Assemble Product | License Management.');
   } catch (err) {
     await showAlert('Error', err.response?.data?.message || 'Failed to create partner.');
   } finally {

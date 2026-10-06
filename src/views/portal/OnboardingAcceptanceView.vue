@@ -74,11 +74,11 @@
           </div>
         </div>
 
-        <!-- ENFORCED STRONG PASSWORD SETUP SECTION -->
+        <!-- Enforced Bank-Grade Password Setup -->
         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
           <div class="flex justify-between items-center border-b pb-2">
             <span class="text-xs font-black uppercase text-gray-700 tracking-wider">Set WLP Admin Password</span>
-            <button type="button" @click="generateAndSetPassword" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">
+            <button type="button" @click="generateAndSetPassword" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
               Generate Strong Password
             </button>
           </div>
@@ -93,8 +93,8 @@
                   :type="showPassword ? 'text' : 'password'"
                   autocomplete="new-password"
                   required
-                  class="form-input w-full pr-10"
-                  placeholder="••••••••••••"
+                  class="form-input w-full pr-10 font-mono"
+                  placeholder="••••••••••••••••"
                 />
                 <button
                   type="button"
@@ -116,8 +116,8 @@
                   :type="showPasswordConfirm ? 'text' : 'password'"
                   autocomplete="new-password"
                   required
-                  class="form-input w-full pr-10"
-                  placeholder="••••••••••••"
+                  class="form-input w-full pr-10 font-mono"
+                  placeholder="••••••••••••••••"
                 />
                 <button
                   type="button"
@@ -130,8 +130,8 @@
               </div>
             </div>
           </div>
-          <div class="text-[10px] text-gray-400 italic">
-            Password must be at least 8 characters and contain uppercase, lowercase, numbers, and symbols under POPIA compliance rules.
+          <div class="text-[10px] text-gray-500 italic">
+            🔒 {{ policyHint }}
           </div>
         </div>
 
@@ -146,18 +146,23 @@
               </a> 
               and the 
               <a :href="getLegalUrl('sla-popia-pack')" target="_blank" class="text-brand-primary font-bold underline hover:opacity-80">
-                GTW Platform SLA & POPIA Compliance Pack
+                GTW Platform SLA &amp; POPIA Compliance Pack
               </a>. I acknowledge that acceptance forms a legally binding contract with GTW Software Technologies (Pty) Ltd under ECTA (Act 25 of 2002) and is permanently recorded in the audit ledger.
             </span>
           </label>
+        </div>
+
+        <!-- Action Error Display -->
+        <div v-if="submitError" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-lg">
+          {{ submitError }}
         </div>
 
         <!-- Submit Button -->
         <div class="pt-2">
           <button
             @click="submitAcceptance"
-            :disabled="!acceptedTerms || !password || password.length < 8 || password !== passwordConfirmation || isSubmitting"
-            class="w-full py-3 bg-brand-primary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg hover:opacity-90 disabled:opacity-40 transition-all"
+            :disabled="!acceptedTerms || isSubmitting"
+            class="w-full py-3 bg-brand-primary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer"
           >
             {{ isSubmitting ? 'Provisioning Tenant & Account...' : 'Accept Terms & Launch Partner Account' }}
           </button>
@@ -172,21 +177,24 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
+import { usePasswordGenerator } from '@/composables/usePasswordGenerator';
+import { validatePassword } from '@/config/passwordPolicy';
 
 const route = useRoute();
 const router = useRouter();
 const token = route.params.token;
+const { generateStrongPassword, policyHint } = usePasswordGenerator();
 
 const schedule = ref(null);
 const isLoadingSchedule = ref(true);
 const error = ref(null);
+const submitError = ref(null);
 const acceptedTerms = ref(false);
 
 const password = ref('');
 const passwordConfirmation = ref('');
 const showPassword = ref(false);
 const showPasswordConfirm = ref(false);
-
 const isSubmitting = ref(false);
 
 const formatMoney = (val) => Number(val || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2 });
@@ -199,26 +207,9 @@ const getLegalUrl = (slug) => {
 };
 
 const generateAndSetPassword = () => {
-  const length = 16;
-  const charsets = {
-    lowercase: 'abcdefghijklmnopqrstuvwxyz',
-    uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    numbers: '0123456789',
-    symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?'
-  };
-  const allChars = Object.values(charsets).join('');
-  let generatedPassword = '';
-  for (const key in charsets) {
-    const charset = charsets[key];
-    generatedPassword += charset[Math.floor(Math.random() * charset.length)];
-  }
-  for (let i = generatedPassword.length; i < length; i++) {
-    generatedPassword += allChars[Math.floor(Math.random() * allChars.length)];
-  }
-  generatedPassword = generatedPassword.split('').sort(() => 0.5 - Math.random()).join('');
-  
-  password.value = generatedPassword;
-  passwordConfirmation.value = generatedPassword;
+  const generated = generateStrongPassword();
+  password.value = generated;
+  passwordConfirmation.value = generated;
   showPassword.value = true;
   showPasswordConfirm.value = true;
 };
@@ -235,19 +226,38 @@ const fetchSchedule = async () => {
 };
 
 const submitAcceptance = async () => {
-  if (!acceptedTerms.value || password.value !== passwordConfirmation.value) return;
+  submitError.value = null;
+
+  if (!acceptedTerms.value) {
+    submitError.value = "You must accept the terms to proceed.";
+    return;
+  }
+
+  if (password.value !== passwordConfirmation.value) {
+    submitError.value = "Passwords do not match.";
+    return;
+  }
+
+  const { isValid, errors } = validatePassword(password.value);
+  if (!isValid) {
+    submitError.value = errors.join(' ');
+    return;
+  }
 
   isSubmitting.value = true;
   try {
-    const res = await apiClient.post(`/onboard/wlp/${token}/accept`, {
+    await apiClient.post(`/onboard/wlp/${token}/accept`, {
       password: password.value,
       password_confirmation: passwordConfirmation.value,
     });
 
-    alert(`Onboarding complete! WLP Admin Account created for ${res.data.user?.email}. Redirecting to login...`);
     router.push('/login');
   } catch (err) {
-    alert(err.response?.data?.message || 'Failed to accept onboarding terms.');
+    if (err.response?.data?.errors) {
+      submitError.value = Object.values(err.response.data.errors).flat().join(' ');
+    } else {
+      submitError.value = err.response?.data?.message || 'Failed to accept onboarding terms.';
+    }
   } finally {
     isSubmitting.value = false;
   }

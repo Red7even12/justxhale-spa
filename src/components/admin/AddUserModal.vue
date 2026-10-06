@@ -36,7 +36,9 @@
             </div>
             
             <fieldset class="border-t border-b border-gray-200 pt-4">
-              <legend class="text-sm font-medium text-gray-900">Roles</legend>
+              <legend class="text-sm font-medium text-gray-900">System Roles
+                <SectionHelp topic="system_roles_optional" />
+              </legend>
               <div class="mt-2 divide-y divide-gray-200">
                 <div v-if="loadingRoles" class="text-gray-500">Loading roles...</div>
                 <div v-else-if="rolesError" class="text-red-500">{{ rolesError }}</div>
@@ -71,6 +73,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import apiClient from '../../services/api';
+import SectionHelp from '@/components/common/SectionHelp.vue';
 
 const emit = defineEmits(['close', 'user-added']);
 

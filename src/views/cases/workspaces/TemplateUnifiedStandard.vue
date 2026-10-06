@@ -61,6 +61,7 @@
       </div>
       <button 
         @click="workspaceView = 'telemetry'" 
+        v-if="hasOperationalLogbooks"
         class="px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg bg-white border shadow-sm hover:bg-slate-50 transition"
         :class="(caseFile.operational_status === 'grounded' || caseFile.operationalStatus === 'grounded') 
           ? 'border-rose-300 text-rose-700' 
@@ -87,7 +88,7 @@
     </div>
 
     <!-- 2.8. WORKSPACE VIEW MODE SWITCHER (Compliance Matrix vs Telemetry) -->
-    <div v-if="availableFileTypes.length > 0" class="flex items-center justify-between my-2 border-b border-gray-200 pb-2">
+    <div v-if="availableFileTypes.length > 0" id="tour-pillar-switch" class="flex items-center justify-between my-2 border-b border-gray-200 pb-2">
       <div class="flex items-center gap-2">
         <button
           @click="workspaceView = 'compliance'"
@@ -96,10 +97,11 @@
             ? 'bg-slate-900 text-white shadow-sm' 
             : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
         >
-          <span>>></span> Compliance Vault & Workflows
+          <span>>></span> Compliance & Workflows
         </button>
 
         <button
+          v-if="hasOperationalLogbooks"
           @click="workspaceView = 'telemetry'"
           class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5"
           :class="workspaceView === 'telemetry' 
@@ -131,7 +133,7 @@
     <!-- VIEW A: COMPLIANCE & WORKFLOWS -->
     <div v-if="availableFileTypes.length > 0 && workspaceView === 'compliance'" class="grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 min-h-0 mt-2">
       <!-- Column 1: Active Tab's Document Pack -->
-      <div :class="hasActiveWorkflow ? 'lg:col-span-6' : 'lg:col-span-10'" class="relative group transition-all duration-300">
+      <div id="tour-checklist-vault" :class="hasActiveWorkflow ? 'lg:col-span-6' : 'lg:col-span-10'" class="relative group transition-all duration-300">
         <div class="lg:col-span-6 relative group">
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] overflow-hidden flex flex-col">
             <div class="p-6 h-full overflow-hidden">
@@ -164,7 +166,7 @@
     </div> 
 
     <!-- VIEW B: OPERATIONAL LOGBOOK & TELEMETRY STREAM (PILLAR 3) -->
-    <div v-else-if="availableFileTypes.length > 0 && workspaceView === 'telemetry'" class="flex-1 min-h-0 mt-2 overflow-y-auto space-y-4">
+    <div v-else-if="availableFileTypes.length > 0 && hasOperationalLogbooks && workspaceView === 'telemetry'" class="flex-1 min-h-0 mt-2 overflow-y-auto space-y-4">
       <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h3 class="text-sm font-bold text-gray-900">Historical Operational Stream</h3>
@@ -316,7 +318,9 @@
 
                 <!-- Priority Classification -->
                 <div class="col-span-2">
-                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Classification (Priority)</label>
+                  <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Classification (Priority)
+                    <SectionHelp topic="case_file_priority" />
+                  </label>
                   <select v-model="detailsForm.file_class_id" class="w-full border-gray-200 rounded-xl text-sm font-bold text-gray-700">
                     <option :value="null">-- Standard (No Class) --</option>
                     <option v-for="cls in fileClasses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
@@ -329,7 +333,8 @@
                   class="col-span-2 p-3 bg-blue-50/60 border border-blue-200 rounded-xl space-y-1"
                 >
                   <label class="block text-[10px] font-black text-blue-700 uppercase tracking-widest">
-                    👤 Linked System User (Driver / Operator Identity)
+                    👤 Linked System User (Log books)
+                    <SectionHelp topic="linked_system_user" />
                   </label>
                   <select v-model="detailsForm.subject_user_id" class="w-full border-blue-300 rounded-xl text-sm font-bold text-gray-800 bg-white shadow-sm">
                     <option :value="null">-- No Direct User Account Linked --</option>
@@ -468,7 +473,9 @@
       <div class="p-6 space-y-4">
         <!-- Step 1: Select Contact (Entity) -->
         <div>
-          <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Select Contact / Entity</label>
+          <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Select Contact / Entity
+          <SectionHelp topic="assign_role_players" />
+          </label>
           <select v-model="assignForm.entity_id" class="w-full border-gray-200 rounded-xl font-bold text-sm text-gray-700">
             <option :value="null" disabled>-- Choose Contact --</option>
             <option v-for="ent in availableEntities" :key="ent.id" :value="ent.id">
@@ -516,6 +523,7 @@ import { ref, computed, watch, onMounted, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import teamService from '@/services/teamService';
+import caseService from '@/services/caseService';
 import { useAuthStore } from '@/store/auth';
 import { useAlerts } from '@/composables/useAlerts';
 
@@ -523,6 +531,7 @@ import CaseWorkspaceHeader from '@/components/cases/CaseWorkspaceHeader.vue';
 import CaseDocumentsTable from '@/components/cases/CaseDocumentsTable.vue';
 import CaseWorkflowPanel from '@/components/cases/CaseWorkflowPanel.vue';
 import Modal from '@/components/common/Modal.vue';
+import SectionHelp from '@/components/common/SectionHelp.vue';
 
 const props = defineProps({
   caseFile: { type: Object, required: true }
@@ -546,8 +555,47 @@ const workspaceView = ref('compliance'); // 'compliance' | 'telemetry'
 const caseLogs = ref([]);
 const isLoadingLogs = ref(false);
 
+/**
+ * Operational Logbook gate (Pillar 3).
+ *
+ * A logbook only exists when a Niche assembled onto this product
+ * (public.product_file_type) has an active Log Definition linked through
+ * public.file_type_log_definition. `{productSlug}/file-types` returns every
+ * assembled tab with an `active_log_definitions_count` aggregate sourced from
+ * that pivot, so the Telemetry view is offered only when the count is > 0.
+ * (Defensive dual-casing: the API camelCases every response key.)
+ */
+const hasOperationalLogbooks = ref(false);
+let logbookGateSlug = null;
+
+const fetchOperationalLogbookGate = async () => {
+  const slug = route.params.productSlug || route.params.slug;
+  if (!slug || logbookGateSlug === slug) return;
+  logbookGateSlug = slug;
+
+  try {
+    const res = await caseService.getFileTypes(slug);
+    const types = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    hasOperationalLogbooks.value = types.some((type) => Number(
+      type.activeLogDefinitionsCount
+        ?? type.active_log_definitions_count
+        ?? type.logDefinitionsCount
+        ?? type.log_definitions_count
+        ?? 0
+    ) > 0);
+  } catch (err) {
+    console.error('Failed to resolve operational logbook availability', err);
+    hasOperationalLogbooks.value = false;
+  }
+
+  // Never leave the workspace parked on a view that no longer exists.
+  if (!hasOperationalLogbooks.value && workspaceView.value === 'telemetry') {
+    workspaceView.value = 'compliance';
+  }
+};
+
 const fetchCaseLogs = async () => {
-  if (!props.caseFile?.id) return;
+  if (!props.caseFile?.id || !hasOperationalLogbooks.value) return;
   isLoadingLogs.value = true;
   try {
     const res = await apiClient.get(`/case-files/${props.caseFile.id}/logs`);
@@ -566,7 +614,7 @@ const formatLogDate = (dateStr) => {
 };
 
 watch(() => workspaceView.value, (newVal) => {
-  if (newVal === 'telemetry' && caseLogs.value.length === 0) {
+  if (newVal === 'telemetry' && hasOperationalLogbooks.value && caseLogs.value.length === 0) {
     fetchCaseLogs();
   }
 });
@@ -679,7 +727,10 @@ const initActiveTab = async () => {
     activeFileType.value = matched || availableFileTypes.value[0];
     await fetchOptionListOptions();
   }
-  if (props.caseFile?.id) {
+  // Resolve the Pillar 3 gate before touching the telemetry endpoint - a
+  // product without any active logbook must never fire a log request.
+  await fetchOperationalLogbookGate();
+  if (props.caseFile?.id && hasOperationalLogbooks.value) {
     fetchCaseLogs();
   }
 };
@@ -853,9 +904,15 @@ const openAssignParticipantModal = async () => {
   showAssignModal.value = true;
 
   try {
+    // Roles are Niche-scoped blueprints: request the active tab's roles so the
+    // dropdown matches the context the operator is currently working in.
+    const activeFileTypeId = activeFileType.value?.id;
+
     const [entRes, roleRes] = await Promise.all([
       apiClient.get('/entities', { params: { per_page: 100 } }),
-      apiClient.get(`/${route.params.productSlug}/participant-roles`)
+      apiClient.get(`/${route.params.productSlug}/participant-roles`, {
+        params: activeFileTypeId ? { file_type_id: activeFileTypeId } : {}
+      })
     ]);
     availableRoles.value = roleRes.data.data || roleRes.data || [];
 

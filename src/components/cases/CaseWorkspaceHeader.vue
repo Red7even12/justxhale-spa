@@ -6,33 +6,50 @@
     <div class="flex justify-between items-center mb-4">
       
       <!-- Identity -->
-      <div>
-        <div class="flex items-center gap-3">
-          <h1 
-            :style="caseFile.fileClass ? { 
-              backgroundColor: caseFile.fileClass.bg_color || caseFile.fileClass.bgColor, 
-              color: caseFile.fileClass.text_color || caseFile.fileClass.textColor 
-            } : {}"
-            :class="[
-              'text-3xl font-bold uppercase tracking-tight transition-all',
-              caseFile.fileClass ? 'px-4 py-1 rounded-lg shadow-sm' : 'text-gray-900'
-            ]"
-          >
-            {{ caseFile.fileName }}
-          </h1>
-          <span :class="statusBadgeClass" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-            {{ caseFile.status }}
-          </span>
+       <div id="tour-case-meta-header">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 
+              :style="caseFile.fileClass ? { 
+                backgroundColor: caseFile.fileClass.bg_color || caseFile.fileClass.bgColor, 
+                color: caseFile.fileClass.text_color || caseFile.fileClass.textColor 
+              } : {}"
+              :class="[
+                'text-3xl font-bold uppercase tracking-tight transition-all',
+                caseFile.fileClass ? 'px-4 py-1 rounded-lg shadow-sm' : 'text-gray-900'
+              ]"
+            >
+              {{ caseFile.fileName }}
+            </h1>
+            <span :class="statusBadgeClass" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+              {{ caseFile.status }}
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1 font-bold uppercase tracking-widest flex items-center gap-2">
+            <span>{{ currentActiveTab?.name || caseFile.fileType?.name }}</span>
+            <span class="text-gray-300">|</span>
+            <span class="font-mono text-gray-500">{{ caseFile.fileReference || 'No Ref' }}</span>
+          </p>
         </div>
-        <p class="text-xs text-gray-400 mt-1 font-bold uppercase tracking-widest flex items-center gap-2">
-          <span>{{ currentActiveTab?.name || caseFile.fileType?.name }}</span>
-          <span class="text-gray-300">|</span>
-          <span class="font-mono text-gray-500">{{ caseFile.fileReference || 'No Ref' }}</span>
-        </p>
       </div>
       
       <!-- Actions Toolbar -->
-      <div class="flex items-center gap-3">
+     <div class="flex items-center gap-2.5">
+
+      <!-- Persistent Walkthrough Replay Button -->
+        <button
+          @click="startCaseDetailTour(true)"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-all shadow-xs cursor-pointer"
+          title="Click to replay the guided interactive page tour."
+        >
+          <span>💡</span>
+          <span>Tour</span>
+        </button>
+
+        <!-- THE MENTAL-SHIFT HELP ICON -->
+        <SectionHelp topic="matter_header" />
+
         <!-- Notes -->
         <button v-if="canSeeNotes"
                 @click="openCaseNotes" 
@@ -65,20 +82,25 @@
     </div>
 
     <!-- 1.5. NEW: TOP DYNAMIC NICHE TABS (Moved directly above Quickview!) -->
-    <div v-if="resolvedAvailableFileTypes.length > 1" class="mb-4 bg-white rounded-xl shadow-xs border border-gray-200/80 px-2 py-1.5 flex items-center gap-2 overflow-x-auto">
-      <button 
-        v-for="ft in resolvedAvailableFileTypes" 
-        :key="ft.id"
-        @click="selectTab(ft)"
-        type="button"
-        class="px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all whitespace-nowrap"
-        :class="currentActiveTab?.id === ft.id 
-          ? 'bg-brand-primary text-white shadow-sm' 
-          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'"
-      >
-        <!-- span class="material-icons text-sm">{{ ft.icon || 'folder' }}</span -->
-        <span>>> {{ ft.name }}</span>
-      </button>
+    <div class="flex flex-col">
+      <!-- The anchor sits on the tab bar itself: when a product has a single
+           Niche the bar is not rendered and the step is dropped by the
+           step guard in useGuidedTour.js rather than spotlighting nothing. -->
+      <div v-if="resolvedAvailableFileTypes.length > 1" id="tour-niche-tabs" class="mb-4 bg-white rounded-xl shadow-xs border border-gray-200/80 px-2 py-1.5 flex items-center gap-2 overflow-x-auto">
+        <button 
+          v-for="ft in resolvedAvailableFileTypes" 
+          :key="ft.id"
+          @click="selectTab(ft)"
+          type="button"
+          class="px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all whitespace-nowrap"
+          :class="currentActiveTab?.id === ft.id 
+            ? 'bg-brand-primary text-white shadow-sm' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'"
+        >
+          <!-- span class="material-icons text-sm">{{ ft.icon || 'folder' }}</span -->
+          <span>>> {{ ft.name }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- 2. QUICK VIEW (Scoped to the active tab) -->
@@ -86,7 +108,12 @@
 
     <!-- 3. TIMELINE -->
     <div v-if="showTimeline" class="mt-6">
-       <CaseTimeline :case-id="caseFile.id" :case-file="caseFile" @close="showTimeline = false" />
+       <CaseTimeline
+          :case-id="caseFile.id"
+          :case-file="caseFile"
+          :file-type-id="currentActiveTab?.id"
+          @close="showTimeline = false"
+       />
     </div>
 
     <!-- 4. SHARED MODALS (Notes) -->
@@ -122,6 +149,8 @@ import NotesPanel from '@/components/estates/NotesPanel.vue';
 import noteService from '@/services/noteService';
 import { useAuthStore } from '@/store/auth'; 
 import apiClient from '@/services/api';
+import { useGuidedTour } from '@/composables/useGuidedTour';
+import SectionHelp from '@/components/common/SectionHelp.vue';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -135,6 +164,9 @@ const props = defineProps({
     default: () => [] 
   }
 });
+
+// Case-detail walkthrough (caseDetailTourSteps lives in useGuidedTour.js).
+const { startCaseDetailTour } = useGuidedTour();
 
 const emit = defineEmits(['tab-changed', 'update:activeFileType', 'open-setup']);
 
@@ -179,6 +211,10 @@ onMounted(() => {
     const matched = resolvedAvailableFileTypes.value.find(t => t.id === props.caseFile?.file_type_id) || resolvedAvailableFileTypes.value[0];
     if (matched) selectTab(matched);
   }
+  // Per-user key: this fires on the user's first case visit only and is never
+  // pre-suppressed by another tester on the same machine.
+  const userId = authStore.user?.id || null;
+  startCaseDetailTour(false, userId);
 });
 
 // --- UI & PERMISSION HELPERS ---

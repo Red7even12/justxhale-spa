@@ -1,7 +1,7 @@
 {
   "name": "frontend-spa",
   "private": true,
-  "version": "JX-4.1.10",
+  "version": "JX-5.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.10",
+    "driver.js": "^1.8.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "pinia": "^2.1.7",

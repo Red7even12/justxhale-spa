@@ -2,98 +2,122 @@
   <!-- frontend-spa\src\views\RemindersDashboard.vue -->
   <div class="p-4 sm:p-6 lg:p-8">
 
-    <!-- Filter Controls Panel -->
-    <div class="bg-white shadow-md rounded-lg p-4 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div class="filter-group">
-          <label for="case_search" class="block text-sm font-medium text-gray-700">Search Case File</label>
-          <input id="case_search" type="text" v-model="filters.case_search" placeholder="e.g., Williams H" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
-        </div>
-        <div class="filter-group">
-          <label for="task_search" class="block text-sm font-medium text-gray-700">Task Keyword</label>
-          <input id="task_search" type="text" v-model="filters.task_search" placeholder="e.g., Coded" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
-        </div>
-        <div class="filter-group">
-          <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-          <select id="status" v-model="filters.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm bg-white">
-            <option value="">All Open</option>
-            <option value="overdue">Overdue</option>
-            <option value="1">Pending</option>
-            <option value="2">Completed</option>
-            <option value="3">Cancelled</option>
-            <option value="4">Escalated</option>
-            <option value="all" :disabled="!canShowAll">
-                {{ canShowAll ? 'Show All (Disregard Dates)' : 'Show All (Search Case First)' }}
-            </option>
-          </select>
-        </div>
-
-        <!-- From Date Filter -->
-        <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
-          <label for="from_date" class="block text-sm font-medium text-gray-700">From</label>
-          
-          <div class="relative mt-1 group">
-            <!-- Display Layer (Finesse Style) -->
-            <div class="flex items-center justify-between w-full px-3 h-[38px] bg-white border border-gray-300 rounded-md shadow-sm group-hover:border-brand-blue-500 transition-colors">
-              <span class="text-sm font-bold uppercase tracking-tight" :class="filters.from_date ? 'text-brand-blue-700' : 'text-gray-400'">
-                {{ filters.from_date ? $formatDate(filters.from_date) : 'Pick Date' }}
-              </span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+      <!-- Filter Controls Panel -->
+      <div class="bg-white shadow-md rounded-lg p-4 mb-6">
+      
+      <div id="tour-filter-controls">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="filter-group">
+            <label for="case_search" class="block text-sm font-medium text-gray-700">Search Case File</label>
+            <input id="case_search" type="text" v-model="filters.case_search" placeholder="e.g., Williams H" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          </div>
+          <div class="filter-group">
+            <label for="task_search" class="block text-sm font-medium text-gray-700">Task Keyword</label>
+            <input id="task_search" type="text" v-model="filters.task_search" placeholder="e.g., Coded" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm" />
+          </div>
+          <div class="filter-group">
+            <div id="tour-context-help">
+              <label for="status" class="block text-sm font-medium text-gray-700">Status
+                  <SectionHelp topic="show_all_reminders_for_casefile" />
+              </label>
             </div>
-            
-            <!-- Hidden Native Picker -->
-            <input 
-              id="from_date" 
-              type="date" 
-              v-model="filters.from_date" 
-              :disabled="filters.status === 'all'" 
-              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
-            />
+            <select id="status" v-model="filters.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-blue-500 focus:ring-brand-blue-500 sm:text-sm bg-white">
+              <option value="">All Open</option>
+              <option value="overdue">Overdue</option>
+              <option value="1">Pending</option>
+              <option value="2">Completed</option>
+              <option value="3">Cancelled</option>
+              <option value="4">Escalated</option>
+              <option value="all" :disabled="!canShowAll">
+                  {{ canShowAll ? 'Show All (Disregard Dates)' : 'Show All (Search Case First)' }}
+              </option>
+            </select>
           </div>
-        </div>
 
-        <!-- To Date Filter -->
-        <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
-          <label for="to_date" class="block text-sm font-medium text-gray-700">To</label>
-          
-          <div class="relative mt-1 group">
-            <!-- Display Layer (Finesse Style) -->
-            <div class="flex items-center justify-between w-full px-3 h-[38px] bg-white border border-gray-300 rounded-md shadow-sm group-hover:border-brand-blue-500 transition-colors">
-              <span class="text-sm font-bold uppercase tracking-tight" :class="filters.to_date ? 'text-brand-blue-700' : 'text-gray-400'">
-                {{ filters.to_date ? $formatDate(filters.to_date) : 'Pick Date' }}
-              </span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+          <!-- From Date Filter -->
+          <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
+            <label for="from_date" class="block text-sm font-medium text-gray-700">From</label>
+            
+            <div class="relative mt-1 group">
+              <!-- Display Layer (Finesse Style) -->
+              <div class="flex items-center justify-between w-full px-3 h-[38px] bg-white border border-gray-300 rounded-md shadow-sm group-hover:border-brand-blue-500 transition-colors">
+                <span class="text-sm font-bold uppercase tracking-tight" :class="filters.from_date ? 'text-brand-blue-700' : 'text-gray-400'">
+                  {{ filters.from_date ? $formatDate(filters.from_date) : 'Pick Date' }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              
+              <!-- Hidden Native Picker -->
+              <input 
+                id="from_date" 
+                type="date" 
+                v-model="filters.from_date" 
+                :disabled="filters.status === 'all'" 
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+              />
             </div>
-            
-            <!-- Hidden Native Picker -->
-            <input 
-              id="to_date" 
-              type="date" 
-              v-model="filters.to_date" 
-              :disabled="filters.status === 'all'" 
-              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
-            />
           </div>
-        </div>
 
-        <!-- Checkbox Group -->
-        <div class="filter-group flex items-end">
-          <div class="flex items-center h-10">
-            <input 
-              id="my_tagged_only" 
-              type="checkbox" 
-              v-model="filters.my_tagged_only" 
-              class="h-4 w-4 text-brand-blue-600 focus:ring-brand-blue-500 border-gray-300 rounded" 
-            />
-            <label for="my_tagged_only" class="ml-2 block text-sm text-gray-900 font-medium">My Tagged Only</label>
+          <!-- To Date Filter -->
+          <div class="filter-group" :class="{'opacity-50 pointer-events-none': filters.status === 'all'}">
+            <label for="to_date" class="block text-sm font-medium text-gray-700">To</label>
+            
+            <div class="relative mt-1 group">
+              <!-- Display Layer (Finesse Style) -->
+              <div class="flex items-center justify-between w-full px-3 h-[38px] bg-white border border-gray-300 rounded-md shadow-sm group-hover:border-brand-blue-500 transition-colors">
+                <span class="text-sm font-bold uppercase tracking-tight" :class="filters.to_date ? 'text-brand-blue-700' : 'text-gray-400'">
+                  {{ filters.to_date ? $formatDate(filters.to_date) : 'Pick Date' }}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-brand-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              
+              <!-- Hidden Native Picker -->
+              <input 
+                id="to_date" 
+                type="date" 
+                v-model="filters.to_date" 
+                :disabled="filters.status === 'all'" 
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+              />
+            </div>
           </div>
+
+          <!-- Checkbox Group -->
+          <div class="filter-group flex items-end">
+            <div class="flex items-center h-10">
+              <input 
+                id="my_tagged_only" 
+                type="checkbox" 
+                v-model="filters.my_tagged_only" 
+                class="h-4 w-4 text-brand-blue-600 focus:ring-brand-blue-500 border-gray-300 rounded" 
+              />
+              <label for="my_tagged_only" class="ml-2 block text-sm text-gray-900 font-medium">My Tagged Only
+                <SectionHelp topic="my_tagged_only" />
+              </label>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <!-- Persistent Walkthrough Replay Button -->
+            <button
+              @click="startRemindersIndexTour(true)"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-all shadow-xs cursor-pointer"
+              title="Click to replay the guided interactive walkthrough"
+              >
+                <span>💡</span>
+                <span>Page Tour</span>
+              </button>
+
+            </div>                      
         </div>
       </div>
     </div>
+    
 
     <!-- Data Table Container -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -104,12 +128,24 @@
         <table v-if="!loading && reminders.data && reminders.data.length" class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" @click="handleSort('due_date')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-20">Due Date ⇅</th>
-              <th scope="col" @click="handleSort('case_name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">Case File ⇅</th>
+              <th scope="col" @click="handleSort('due_date')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-20">
+                Due Date ⇅
+                <SectionHelp topic="due_date_colours" />
+              </th>
+              <th scope="col" @click="handleSort('case_name')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                Case File ⇅
+                <SectionHelp topic="case_file_priority" />
+              </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Tagged For</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                Tagged For
+                <SectionHelp topic="tagged_for_field" />
+              </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Status</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Actions</th>
+              <th id="tour-action-buttons" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                Actions
+                <SectionHelp topic="action_buttons" />
+              </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -127,7 +163,7 @@
                   {{ reminder.caseName || reminder.case_name }}
                 </div>
                 
-                <div class="text-[10px] text-gray-400 font-mono mt-0.5">
+                <div v-if="reminder.caseReference || reminder.case_reference" class="text-[10px] text-gray-400 font-mono mt-0.5">
                   Ref: {{ reminder.caseReference || reminder.case_reference }}
                 </div>
               </td>
@@ -193,7 +229,7 @@
 
     <!-- Pagination & Display Controls -->
     <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200" 
-         v-if="reminders.meta || reminders.total">
+        v-if="reminders.meta || reminders.total">
         
         <!-- Left: Rows Per Page -->
         <div class="flex items-center text-sm text-gray-700">
@@ -234,6 +270,10 @@
             Returned: {{ reminders.meta?.total || reminders.total }} Results
         </div>
     </div>
+    
+
+  
+
   </div>
 
   <!-- Notes Modal -->
@@ -276,9 +316,13 @@ import noteService from '@/services/noteService';
 import { formatDate } from '@/utils/formatters';
 import { useRoute } from 'vue-router'; // Add useRoute
 import apiClient from '@/services/api'; // Use generic client instead of reminderService
+import SectionHelp from '@/components/common/SectionHelp.vue';
+import { useGuidedTour } from '@/composables/useGuidedTour';
 
 const route = useRoute(); // Initialize useRoute to access route params
 const router = useRouter();
+
+const { startRemindersIndexTour } = useGuidedTour(); 
 
 const reminders = ref({});
 const loading = ref(true);
@@ -286,6 +330,7 @@ const error = ref(null);
 
 const isManageModalOpen = ref(false);
 const selectedReminderId = ref(null);
+
 
 const filters = reactive({
   case_search: '',
@@ -535,7 +580,12 @@ const addNote = async (reminder) => {
   notesContext.noteableType = noteableType;
   notesContext.noteableId = noteableId;
   notesContext.contextUrl = `${route.params.productSlug}/cases/${caseId}`;
-  notesContext.currentTeamId = reminder.case_current_team_id || reminder.caseCurrentTeamId || reminder.teams_id || reminder.teamsId;
+  notesContext.currentTeamId = reminder.team?.id
+      || reminder.case_current_team_id
+      || reminder.caseCurrentTeamId
+      || reminder.teams_id
+      || reminder.teamsId
+      || null;
   notesContext.fileTypeId = reminder.fileTypeId || reminder.file_type_id || null; // <--- Passes tab context
   
   // 6. Open Modal

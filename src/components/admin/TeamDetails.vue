@@ -90,9 +90,11 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import teamService from '@/services/teamService';
 import userService from '@/services/userService';
 
+const route = useRoute();
 const props = defineProps({
   team: { type: Object, required: true }
 });
@@ -106,12 +108,18 @@ const isEditingName = ref(false);
 const editableTeamName = ref(props.team.name);
 const editableTeamType = ref(props.team.team_type || props.team.teamType || 'ownership');
 
+// ⭐ Product-aware user fetch for team allocation ⭐
 const fetchAllUsers = async () => {
     try {
-        const response = await userService.getUsers({ per_page: -1 });
-        allUsers.value = response.data.data;
+        const params = { per_page: -1 };
+        const productSlug = route.params.productSlug;
+        if (productSlug) {
+            params.product_slug = productSlug;
+        }
+        const response = await userService.getUsers(params);
+        allUsers.value = response.data.data || response.data;
     } catch (error) {
-        console.error("Failed to fetch users:", error);
+        console.error("Failed to fetch users for team:", error);
         allUsers.value = [];
     }
 };

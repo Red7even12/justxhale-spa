@@ -104,12 +104,21 @@
           <span class="text-base mr-1">📑</span> Option Lists
         </router-link>
 
+        <!-- 8. Default Teams -->
+        <router-link 
+          :to="{ name: 'admin.niche-factory.default-teams', params: { fileTypeId } }" 
+          class="nav-link" 
+          active-class="nav-active"
+        >
+          <span class="text-base mr-1">🛡️</span> Default Teams
+        </router-link>
+
         <!-- Distribution Section -->
         <div class="pt-6 pb-2 text-[10px] font-black text-white/30 uppercase tracking-widest px-3">
           Commercial Usage
         </div>
 
-        <!-- 8. Product Deployment Matrix -->
+        <!-- 9. Product Deployment Matrix -->
         <router-link 
           :to="{ name: 'admin.niche-factory.deployment', params: { fileTypeId } }" 
           class="nav-link" 

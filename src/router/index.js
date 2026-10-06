@@ -40,6 +40,12 @@ const routes = [
     meta: { requiresAuth: false, title: 'WLP Partner Onboarding' }
   },
   {
+  path: '/onboarding',
+  name: 'onboarding.wizard',
+  component: () => import('@/views/onboarding/OnboardingWizard.vue'),
+  meta: { guest: true } // Public entry point
+  },
+  {
     path: '/portal/upload/:token',
     name: 'ClientUploadPortal',
     // We lazy-load it to keep the main admin bundle small
@@ -323,6 +329,13 @@ const routes = [
                   component: () => import('@/views/admin/OptionListsManager.vue'),
                   props: true,
                   meta: { displayName: 'Option Lists' }
+              },
+              {
+                  path: 'default-teams',
+                  name: 'admin.niche-factory.default-teams',
+                  component: () => import('@/views/admin/niches/FileTypeDefaultTeams.vue'),
+                  props: true,
+                  meta: { displayName: 'Default Teams' }
               },
               {
                   path: 'deployment',

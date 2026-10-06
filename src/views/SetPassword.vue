@@ -43,7 +43,7 @@
                 :type="uiState.visibility.password ? 'text' : 'password'"
                 autocomplete="new-password"
                 required
-                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono"
               />
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center space-x-2">
                 <button type="button" @click="toggleVisibility('password')" class="text-gray-400 hover:text-indigo-600 focus:outline-none" :title="uiState.visibility.password ? 'Hide password' : 'Show password'">
@@ -54,9 +54,9 @@
             </div>
             <div class="mt-2 text-xs flex justify-between items-center">
                 <span class="text-gray-500">
-                    Must meet complexity rules.
+                    {{ policyHint }}
                 </span>
-                <button type="button" @click="generateAndSetPassword" class="font-medium text-indigo-600 hover:text-indigo-500">
+                <button type="button" @click="generateAndSetPassword" class="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer">
                     Generate Strong Password
                 </button>
             </div>
@@ -75,7 +75,7 @@
                 :type="uiState.visibility.password_confirmation ? 'text' : 'password'"
                 autocomplete="new-password"
                 required
-                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono"
               />
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                 <button type="button" @click="toggleVisibility('password_confirmation')" class="text-gray-400 hover:text-indigo-600 focus:outline-none" :title="uiState.visibility.password_confirmation ? 'Hide password' : 'Show password'">
@@ -111,83 +111,52 @@ import { reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import authService from '@/services/authService';
 import userService from '@/services/userService';
-import { useAuthStore } from '@/store/auth';
+import { usePasswordGenerator } from '@/composables/usePasswordGenerator';
+import { validatePassword } from '@/config/passwordPolicy';
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
+const { generateStrongPassword, policyHint } = usePasswordGenerator();
 
 const formData = reactive({
   password: '',
   password_confirmation: '',
   token: route.params.token || '',
-  email: '', // Will be populated from the API
+  email: '',
 });
 
 const uiState = reactive({
-    isLoading: false,
-    errorMessage: '',
-    visibility: {
-        password: false,
-        password_confirmation: false,
-    }
+  isLoading: false,
+  errorMessage: '',
+  visibility: {
+    password: false,
+    password_confirmation: false,
+  }
 });
 
-/**
- * On component mount, fetch the email associated with the token.
- */
 onMounted(async () => {
-    if (!formData.token) {
-        uiState.errorMessage = "No invitation token found in the link.";
-        return;
-    }
-    try {
-        const response = await userService.getEmailFromToken(formData.token);
-        formData.email = response.data.email;
-    } catch (error) {
-        uiState.errorMessage = error.response?.data?.message || "This invitation link is invalid or has expired. Please contact your administrator.";
-    }
+  if (!formData.token) {
+    uiState.errorMessage = "No invitation token found in the link.";
+    return;
+  }
+  try {
+    const response = await userService.getEmailFromToken(formData.token);
+    formData.email = response.data.email;
+  } catch (error) {
+    uiState.errorMessage = error.response?.data?.message || "This invitation link is invalid or has expired. Please contact your administrator.";
+  }
 });
 
-/**
- * Toggles the visibility of a password field.
- */
 const toggleVisibility = (field) => {
-    if (field in uiState.visibility) {
-        uiState.visibility[field] = !uiState.visibility[field];
-    }
+  if (field in uiState.visibility) {
+    uiState.visibility[field] = !uiState.visibility[field];
+  }
 };
 
-/**
- * Generates a cryptographically secure, 16-character password that meets all requirements.
- */
 const generateAndSetPassword = () => {
-  const length = 16;
-  const charsets = {
-    lowercase: 'abcdefghijklmnopqrstuvwxyz',
-    uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    numbers: '0123456789',
-    symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?'
-  };
-
-  let generatedPassword =
-    charsets.lowercase[Math.floor(Math.random() * charsets.lowercase.length)] +
-    charsets.uppercase[Math.floor(Math.random() * charsets.uppercase.length)] +
-    charsets.numbers[Math.floor(Math.random() * charsets.numbers.length)] +
-    charsets.symbols[Math.floor(Math.random() * charsets.symbols.length)];
-  
-  const allChars = Object.values(charsets).join('');
-  
-  for (let i = generatedPassword.length; i < length; i++) {
-    generatedPassword += allChars[Math.floor(Math.random() * allChars.length)];
-  }
-
-  generatedPassword = generatedPassword.split('').sort(() => 0.5 - Math.random()).join('');
-
-  formData.password = generatedPassword;
-  formData.password_confirmation = generatedPassword;
-  
-  // Auto-show password when generated so user can see/copy it
+  const generated = generateStrongPassword();
+  formData.password = generated;
+  formData.password_confirmation = generated;
   uiState.visibility.password = true;
   uiState.visibility.password_confirmation = true;
 };
@@ -197,20 +166,27 @@ const handleSetPassword = async () => {
   uiState.errorMessage = '';
 
   if (formData.password !== formData.password_confirmation) {
-      uiState.errorMessage = "Passwords do not match.";
-      uiState.isLoading = false;
-      return;
+    uiState.errorMessage = "Passwords do not match.";
+    uiState.isLoading = false;
+    return;
+  }
+
+  const { isValid, errors } = validatePassword(formData.password);
+  if (!isValid) {
+    uiState.errorMessage = errors.join(' ');
+    uiState.isLoading = false;
+    return;
   }
   
   try {
     const response = await authService.setPassword(formData);
-    // authService.setPassword already calls handleLoginSuccess
-    router.push('/');
+    // Automatically hydrates /user and redirects to AppLauncher
+    await authStore.handleLoginSuccess(response.data);
   } catch (error) {
-    if (error.response && error.response.data && error.response.data.errors) {
-        uiState.errorMessage = Object.values(error.response.data.errors).flat().join(' ');
+    if (error.response?.data?.errors) {
+      uiState.errorMessage = Object.values(error.response.data.errors).flat().join(' ');
     } else {
-        uiState.errorMessage = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
+      uiState.errorMessage = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
     }
   } finally {
     uiState.isLoading = false;

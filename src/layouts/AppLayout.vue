@@ -33,12 +33,6 @@
             <router-link @click="closeMobileMenu" to="/admin/billing" class="mobile-nav-link ml-2" :class="{ 'active': $route.path.startsWith('/admin/billing') }">Billing Management</router-link>
           </template>
 
-          <!-- 2. SUBSCRIBER ADMIN MENU -->
-          <template v-if="authStore.hasRole('Subscriber Admin')">
-            <router-link @click="closeMobileMenu" to="/admin/users" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">Users</router-link>
-            <router-link @click="closeMobileMenu" to="/admin/teams" class="mobile-nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Teams</router-link>
-          </template>
-
           <!-- 3. SYSTEM ADMIN MENU -->
           <template v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')">
             <!-- Product Factory -->
@@ -103,11 +97,6 @@
             
             <div v-if="authStore.hasRole('Subscriber Admin') || authStore.hasRole('System Admin') || authStore.hasRole('Business Admin') || authStore.hasRole('WLP Admin')" class="border-l border-gray-500 h-6 mx-3"></div>
             
-            <!-- 2. SUBSCRIBER ADMIN MENU -->
-            <template v-if="authStore.hasRole('Subscriber Admin')">
-              <router-link to="/admin/users" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/users') }">Users</router-link>
-              <router-link to="/admin/teams" class="nav-link" :class="{ 'active': $route.path.startsWith('/admin/teams') }">Teams</router-link>
-            </template>
 
             <!-- 3. SYSTEM ADMIN MENU (Merged V1 & V2) -->
             <template v-if="authStore.hasRole('System Admin') || authStore.hasRole('Business Admin')">

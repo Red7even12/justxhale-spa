@@ -386,23 +386,12 @@ const availableNiches = computed(() => {
                        caseFile.value.product?.file_types || 
                        [];
   
-  let types = [...productTypes];
-
-  // 1. POPIA RBAC Scoping Check:
-  // Subscriber Admins & Case File Admins see all niches.
-  // Standard operators only see niches authorized for their assigned team(s).
-  const isCaseAdmin = authStore.hasRole('Subscriber Admin') || authStore.hasRole('Case File Admin');
-
-  if (!isCaseAdmin && authStore.user) {
-    const userTeamIds = (authStore.user.teams || []).map(t => t.id ?? t);
-    
-    types = types.filter(ft => {
-      const allowedTeamIds = ft.team_ids || ft.teamIds || ft.allowed_team_ids || [];
-      // If niche has no specific team restrictions, or user belongs to an allowed team
-      if (!allowedTeamIds || allowedTeamIds.length === 0) return true;
-      return allowedTeamIds.some(id => userTeamIds.includes(id));
-    });
-  }
+  // POPIA tab clearance is resolved server-side: CaseFileController::show()
+  // decorates every assembled tab with this subscriber's own team grants and
+  // removes the tabs the user's functional/audit teams are not cleared for.
+  // No client-side team filter is applied, so the workspace and the API can
+  // never disagree about which tabs exist.
+  const types = [...productTypes];
 
   if (types.length > 0) {
     return types.sort((a, b) => (a.sort_order || a.sortOrder || 1) - (b.sort_order || b.sortOrder || 1));

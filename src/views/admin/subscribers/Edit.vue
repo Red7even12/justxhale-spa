@@ -107,7 +107,7 @@ const handleUpdate = async (formData) => {
     };
 
     await apiClient.put(`admin/subscribers/${subscriberId.value}`, payload);
-    router.push({ name: 'admin-subscribers' }); 
+    router.push({ name: 'admin.subscribers.index' }); 
 
   } catch (err) {
     console.error('Failed to update subscriber:', err);
@@ -124,7 +124,7 @@ const handleUserUpdated = () => {
 };
 
 const handleCancel = () => {
-  router.push({ name: 'admin-subscribers' });
+  router.push({ name: 'admin.subscribers.index' });
 };
 
 onMounted(() => {

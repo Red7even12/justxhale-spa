@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold text-gray-800 uppercase tracking-tight">
-        Users
+        {{ isProductContext ? 'Product Users' : 'Global Users Directory' }}
       </h1>
       <button @click="openAddUserModal" class="bg-[var(--brand-primary)] text-white px-4 py-2 rounded-lg shadow-md font-bold hover:opacity-90 transition-all">
         + Add User
@@ -23,32 +23,67 @@
     <div class="mt-8 flow-root">
       <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <div v-if="loading" class="text-center">Loading users...</div>
-          <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
+          <div v-if="loading" class="text-center py-8 text-gray-500 font-medium">Loading users...</div>
+          <div v-else-if="error" class="text-center text-red-500 py-8">{{ error }}</div>
           <table v-else class="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                <th v-if="!isProductContext" scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Subscriber / Org</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Roles</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0"><span class="sr-only">Edit</span></th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status (Click to toggle)</th>
+                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0"><span class="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
               <tr v-for="user in users" :key="user.id">
-                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ user.name }}</td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ user.email }}</td>
+                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                  {{ user.name }}
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                  {{ user.email }}
+                </td>
+                
+                <td v-if="!isProductContext" class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                  <span v-if="user.subscriber" class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    {{ user.subscriber.name }}
+                  </span>
+                  <span v-else-if="user.subscribers && user.subscribers.length > 0" class="flex flex-wrap gap-1">
+                    <span v-for="sub in user.subscribers" :key="sub.id" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      {{ sub.name }}
+                    </span>
+                  </span>
+                  <span v-else class="text-xs italic text-gray-400">Platform Core</span>
+                </td>
+
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                   <span v-for="role in user.roles" :key="role.id" class="mr-2 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">{{ role.name }}</span>
                 </td>
-                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  <span :class="[user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800', 'inline-flex rounded-full px-2 text-xs font-semibold leading-5']">{{ user.isActive ? 'Active' : 'Inactive' }}</span>
+                
+                <!-- ⭐ INTERACTIVE STATUS TOGGLE PILL ⭐ -->
+                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                  <button
+                    type="button"
+                    @click="triggerStatusToggle(user)"
+                    :class="[
+                      user.isActive !== false && user.is_active !== false 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                        : 'bg-red-100 text-red-800 hover:bg-red-200',
+                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer'
+                    ]"
+                    :title="'Click to ' + (user.isActive !== false && user.is_active !== false ? 'Deactivate' : 'Activate')"
+                  >
+                    <span class="h-2 w-2 rounded-full" :class="user.isActive !== false && user.is_active !== false ? 'bg-green-600' : 'bg-red-600'"></span>
+                    {{ user.isActive !== false && user.is_active !== false ? 'Active' : 'Inactive' }}
+                  </button>
                 </td>
+
                 <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                  <button @click="openEditUserModal(user)" class="text-[var(--c-primary-action)] hover:text-[var(--c-primary-action-hover)] mr-4">Edit Details</button>
-                  <button @click="openEditRolesModal(user)" class="text-[var(--c-primary-action)] hover:text-[var(--c-primary-action-hover)]">Edit Roles</button>
-                  <button @click="handleForceReset(user)" class="text-sm font-medium text-red-600 hover:text-red-900 ml-4">Force Reset</button>
+                  <button @click="openEditUserModal(user)" class="text-[var(--c-primary-action,#2563eb)] hover:underline mr-3">Edit Details</button>
+                  <button @click="openEditRolesModal(user)" class="text-[var(--c-primary-action,#2563eb)] hover:underline mr-3">Edit Roles</button>
+                  <button @click="triggerForceReset(user)" class="text-sm font-medium text-red-600 hover:underline">Force Reset</button>
+                  <button @click="openAuditModal(user)" class="text-xs font-medium text-gray-500 hover:text-gray-800 hover:underline mr-3">Audit Trail</button>
                 </td>
               </tr>
             </tbody>
@@ -102,32 +137,44 @@
     @user-updated="handleUserDetailsUpdate"
   />
 
-  <!-- Confirmation Mal -->
-  <ConfirmationModal
-    :show="modalState.show"
-    :title="modalState.title"
-    :message="modalState.message"
-    :confirmButtonText="modalState.confirmButtonText"
-    :mode="modalState.mode"
-    @confirm="modalState.onConfirm"
-    @cancel="modalState.show = false"
+  <!-- ⭐ COMPLIANCE SECURITY ACTION MODAL ⭐ -->
+  <SecurityActionModal
+    :show="securityModal.show"
+    :title="securityModal.title"
+    :actionType="securityModal.actionType"
+    :targetUser="securityModal.user"
+    :confirmButtonText="securityModal.confirmButtonText"
+    :isSubmitting="securityModal.isSubmitting"
+    @confirm="executeSecurityAction"
+    @cancel="securityModal.show = false"
   />
+  <UserSecurityLogModal
+  :show="isAuditModalOpen"
+  :user="selectedUserForAudit"
+  :context="isProductContext ? 'subscriber' : 'core'"
+  @close="isAuditModalOpen = false"
+/>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import apiClient from '../../services/api';
 import userService from '../../services/userService';
 import UserRolesModal from '../../components/admin/UserRolesModal.vue';
 import AddUserModal from '../../components/admin/AddUserModal.vue';
 import EditUserModal from '../../components/admin/EditUserModal.vue';
-import ConfirmationModal from '../../components/modals/ConfirmationModal.vue';
+import SecurityActionModal from '../../components/modals/SecurityActionModal.vue';
+import UserSecurityLogModal from '@/components/modals/UserSecurityLogModal.vue';
 
+const route = useRoute();
 const users = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-// Server-side pagination state (backend uses Laravel's paginate())
+const isProductContext = computed(() => !!route.params.productSlug);
+const productSlug = computed(() => route.params.productSlug);
+
 const currentPage = ref(1);
 const searchTerm = ref('');
 let searchTimeout = null;
@@ -139,25 +186,28 @@ const pagination = ref({
   to: 0,
 });
 
-// State for Edit Roles Modal
 const isEditRolesModalOpen = ref(false);
 const selectedUserForRoles = ref(null);
-
-
-// State for Add User Modal
 const isAddUserModalOpen = ref(false);
-
-// State for Edit User Modal
 const isEditUserModalOpen = ref(false);
 const selectedUserForEdit = ref(null);
 
-const modalState = ref({
+const selectedUserForAudit = ref(null);
+const isAuditModalOpen = ref(false);
+
+const openAuditModal = (user) => {
+  selectedUserForAudit.value = user;
+  isAuditModalOpen.value = true;
+};
+
+// Security Action Modal State
+const securityModal = ref({
   show: false,
   title: '',
-  message: '',
-  confirmButtonText: 'OK',
-  mode: 'notify', // 'notify' or 'confirm'
-  onConfirm: () => {},
+  actionType: '',
+  user: null,
+  confirmButtonText: 'Confirm',
+  isSubmitting: false,
 });
 
 const fetchUsers = async () => {
@@ -168,15 +218,13 @@ const fetchUsers = async () => {
     if (searchTerm.value.trim()) {
       params.search = searchTerm.value.trim();
     }
+    if (isProductContext.value && productSlug.value) {
+      params.product_slug = productSlug.value;
+    }
+
     const response = await apiClient.get('users', { params });
     users.value = response.data.data;
 
-    // Store the pagination info from the Laravel paginator.
-    // NOTE 1: The backend's CamelCaseResponseMiddleware converts all response
-    // keys to camelCase, so accept both snake_case and camelCase keys.
-    // NOTE 2: The paginator may be serialized either wrapped ({ data, links, meta })
-    // or flat (currentPage/lastPage/total at the top level), so fall back to
-    // the whole response body when no meta wrapper is present.
     const meta = response.data.meta || response.data;
     pagination.value = {
       current_page: Number(meta.current_page ?? meta.currentPage) || currentPage.value,
@@ -193,13 +241,10 @@ const fetchUsers = async () => {
   }
 };
 
-// Debounce search input to prevent spamming the database.
-// The backend V1 UserController@index already supports a `search`
-// parameter that filters by name or email (ILIKE).
 const handleSearchInput = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    currentPage.value = 1; // Reset to page 1 whenever the search changes
+    currentPage.value = 1;
     fetchUsers();
   }, 400);
 };
@@ -211,9 +256,7 @@ const changePage = (pageNumber) => {
   }
 };
 
-// --- Edit Roles Modal Functions ---
 const openEditRolesModal = (user) => {
-  // Pass a deep copy to the modal to avoid potential reactivity issues.
   selectedUserForRoles.value = JSON.parse(JSON.stringify(user));
   isEditRolesModalOpen.value = true;
 };
@@ -228,13 +271,11 @@ const handleUserUpdate = (updatedUser) => {
   if (index !== -1) {
     users.value[index] = updatedUser;
   } else {
-    // The updated user may live on a different page — refresh to stay in sync
     fetchUsers();
   }
   closeEditRolesModal();
 };
 
-// --- Add User Modal Functions ---
 const openAddUserModal = () => {
   isAddUserModalOpen.value = true;
 };
@@ -244,14 +285,12 @@ const closeAddUserModal = () => {
 };
 
 const handleUserAdded = () => {
-  // Reset to page 1 and re-fetch so the new user is visible and counts stay accurate
   currentPage.value = 1;
   searchTerm.value = '';
   fetchUsers();
   closeAddUserModal();
 };
 
-// --- Edit User Modal Functions ---
 const openEditUserModal = (user) => {
   selectedUserForEdit.value = JSON.parse(JSON.stringify(user));
   isEditUserModalOpen.value = true;
@@ -265,63 +304,65 @@ const closeEditUserModal = () => {
 const handleUserDetailsUpdate = (updatedUser) => {
   const index = users.value.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
-    // Just update the relevant fields, keeping roles intact
-    users.value[index].name = updatedUser.name;
-    users.value[index].firstName = updatedUser.firstName;
-    users.value[index].lastName = updatedUser.lastName;
-    users.value[index].email = updatedUser.email;
-    users.value[index].cellNumber = updatedUser.cellNumber;
+    users.value[index] = { ...users.value[index], ...updatedUser };
   } else {
-    // The updated user may live on a different page — refresh to stay in sync
     fetchUsers();
   }
   closeEditUserModal();
 };
 
-const handleForceReset = async (user) => {
-  // --- Use the modal for the initial confirmation ---
-  modalState.value = {
+// --- SECURITY ACTION HANDLERS ---
+const triggerStatusToggle = (user) => {
+  const isCurrentlyActive = user.isActive !== false && user.is_active !== false;
+  securityModal.value = {
     show: true,
-    title: 'Confirm Password Reset',
-    message: `Are you sure you want to force a password reset for ${user.name}? This will invalidate their current password immediately.`,
-    confirmButtonText: 'Confirm',
-    mode: 'confirm',
-    onConfirm: async () => {
-      // This logic runs only when the user clicks "Confirm"
-      modalState.value.show = false; // Close the confirmation
-      try {
-        const response = await userService.forceSubscriberPasswordReset(user.id);
-        const index = users.value.findIndex(u => u.id === response.data.user.id);
-        if (index !== -1) {
-          users.value[index] = response.data.user;
-        }
-        
-        // --- Show a SUCCESS notification using the same modal ---
-        modalState.value = {
-          show: true,
-          title: 'Success',
-          message: response.data.message,
-          confirmButtonText: 'OK',
-          mode: 'notify',
-          onConfirm: () => modalState.value.show = false,
-        };
-
-      } catch (err) {
-        // --- Show an ERROR notification using the same modal ---
-        modalState.value = {
-          show: true,
-          title: 'Error',
-          message: err.response?.data?.message || 'Failed to initiate password reset.',
-          confirmButtonText: 'OK',
-          mode: 'notify',
-          onConfirm: () => modalState.value.show = false,
-        };
-      }
-    }
+    user,
+    actionType: isCurrentlyActive ? 'deactivate' : 'activate',
+    title: isCurrentlyActive ? 'Deactivate User Account' : 'Activate User Account',
+    confirmButtonText: isCurrentlyActive ? 'Deactivate Account' : 'Activate Account',
+    isSubmitting: false,
   };
 };
 
-// --- Lifecycle Hooks ---
+const triggerForceReset = (user) => {
+  securityModal.value = {
+    show: true,
+    user,
+    actionType: 'force-reset',
+    title: 'Force Password Reset',
+    confirmButtonText: 'Wipe Password & Issue Reset',
+    isSubmitting: false,
+  };
+};
+
+const executeSecurityAction = async ({ user, actionType, reason }) => {
+  securityModal.value.isSubmitting = true;
+  try {
+    if (actionType === 'activate' || actionType === 'deactivate') {
+      const response = await userService.toggleUserStatus(user.id, reason, 'subscriber');
+      const updated = response.data.user;
+      const index = users.value.findIndex(u => u.id === user.id);
+      if (index !== -1) {
+        users.value[index].isActive = updated.is_active;
+        users.value[index].is_active = updated.is_active;
+      }
+    } else if (actionType === 'force-reset') {
+      await userService.forcePasswordResetWithReason(user.id, reason, 'subscriber');
+      alert(`Password reset link dispatched to ${user.email}. Previous password immediately revoked.`);
+    }
+    securityModal.value.show = false;
+  } catch (err) {
+    alert(err.response?.data?.message || 'Action failed. Please verify permissions.');
+  } finally {
+    securityModal.value.isSubmitting = false;
+  }
+};
+
+watch(() => route.params.productSlug, () => {
+  currentPage.value = 1;
+  fetchUsers();
+});
+
 onMounted(() => {
   fetchUsers();
 });

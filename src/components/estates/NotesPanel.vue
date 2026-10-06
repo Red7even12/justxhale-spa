@@ -112,7 +112,10 @@
 
     <!-- List of existing notes -->
     <div class="space-y-4">
-      <p v-if="notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
+      <!-- Load failures (e.g. tab clearance) must be visible in read-only mode too -->
+      <p v-if="loadError" class="text-sm text-red-600">{{ loadError }}</p>
+
+      <p v-if="!loadError && notes.length === 0" class="text-gray-500">No notes have been added yet.</p>
       
       <!-- Loop through unified notes & emails -->
       <!-- Change background color if it's an email for visual distinction -->
@@ -231,6 +234,7 @@ const taggedUserId = ref(null);
 const teamMembers = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
+const loadError = ref(null);
 
 const authStore = useAuthStore();
 
@@ -366,27 +370,10 @@ const fetchNotes = async (page = 1) => {
             }
         });
 
-        // 1. DIAGNOSTIC: Print the raw response to the browser console!
-        console.log("Raw API Response:", response);
-
-        // 2. AGGRESSIVE EXTRACTION
-        let payloadData = [];
-        let payloadMeta = {};
-
-        if (response.data && response.data.data) {
-            payloadData = response.data.data;
-            payloadMeta = response.data.meta || {};
-        } else if (response.data && Array.isArray(response.data)) {
-            payloadData = response.data;
-            payloadMeta = response.meta || {};
-        } else if (response.data) {
-            payloadData = response.data;
-            payloadMeta = response.meta || {};
-        } else {
-            payloadData = response;
-        }
-
-        console.log("Extracted Meta:", payloadMeta);
+        // Tolerate every payload shape the endpoint has used over time:
+        // { data: [...], meta: {...} } | [...]
+        const payloadData = response.data?.data ?? (Array.isArray(response.data) ? response.data : []);
+        const payloadMeta = response.data?.meta ?? response.meta ?? {};
 
         if (page === 1) {
             notes.value = payloadData;
@@ -394,13 +381,15 @@ const fetchNotes = async (page = 1) => {
             notes.value = [...notes.value, ...payloadData];
         }
 
-        // 3. Assign hasMore using exact boolean matching
         hasMore.value = payloadMeta.has_more === true || payloadMeta.hasMore === true;
         currentPage.value = page;
+        loadError.value = null;
 
     } catch (err) {
         console.error("Failed to load notes:", err);
-        error.value = "Failed to load history.";
+        // Keep whatever is already on screen (parent-seeded notes included) so a
+        // failed refresh never blanks the history.
+        loadError.value = err.response?.data?.message || "Failed to load history.";
     } finally {
         isLoading.value = false;
         isLoadingMore.value = false;
@@ -415,12 +404,23 @@ const loadMore = () => {
 watch(
     () => props.noteableId, 
     (newId, oldId) => {
-        if (newId && newId !== oldId) {
-            // Context changed! Reset pagination and fetch fresh data
-            notes.value = [];
-            hasMore.value = false;
+        if (!newId) return;
+
+        // First run (component mount): `initialNotes` already seeded the list,
+        // so refresh in place instead of clearing it first.
+        if (oldId === undefined) {
             fetchNotes(1);
+            return;
         }
+
+        if (newId === oldId) return;
+
+        // Context changed! Reset pagination and fetch fresh data
+        notes.value = [];
+        hasMore.value = false;
+        currentPage.value = 1;
+        loadError.value = null;
+        fetchNotes(1);
     }, 
     { immediate: true } // immediate: true replaces the need for onMounted!
 );

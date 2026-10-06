@@ -109,15 +109,15 @@
               <button @click="openConfigModal(niche)" class="text-gray-500 hover:text-gray-700">
                 Configure Tab
               </button>
-              <button @click="detachNiche(niche)" class="text-red-400 hover:text-red-600">
-                Detach
+              <button @click="disableTab(niche)" class="text-amber-500 hover:text-amber-700">
+                Disable
               </button>
             </td>
           </tr>
 
           <tr v-if="assembledNiches.length === 0">
             <td colspan="7" class="p-10 text-center text-gray-400 italic text-sm">
-              No Niches assembled yet for {{ product?.name }}. Click "+ Attach Niche from Catalog" to assemble your first module.
+              No Workspace modules assembled yet for {{ product?.name }}. Click "+ Attach Workspace Module from Catalog" to assemble your first tab.
             </td>
           </tr>
         </tbody>
@@ -180,10 +180,18 @@
         </div>
 
         <!-- 3. Authorized Teams (POPIA / Tab Clearance) -->
+        <!-- Clearance is granted on THIS assembled tab, for this subscriber's
+             teams. It is evaluated by team type: functional and audit teams
+             gate access, while ownership teams are recorded but never restrict
+             a tab. -->
         <div class="border rounded-xl p-3 bg-gray-50/50 space-y-1">
           <label class="text-xs font-black text-emerald-800 uppercase block">
             👥 Functional Team Clearance (POPIA Scoping)
           </label>
+          <p class="text-[10px] text-gray-500 italic">
+            Scoped to this product's tab only — other products that assemble
+            "{{ selectedNicheName || 'this module' }}" keep their own team range.
+          </p>
           <div v-if="subscriberTeams.length === 0" class="text-xs text-gray-400 italic">
             No teams configured. All authorized users will have access by default.
           </div>
@@ -194,7 +202,8 @@
             </label>
           </div>
           <p class="text-[10px] text-gray-400 mt-1 italic">
-            * Leaving all unchecked makes this tab visible to all team members.
+            * Leaving all unchecked makes this tab visible to every team member.
+            Only functional and audit teams restrict access.
           </p>
         </div>
 
@@ -321,19 +330,21 @@ const saveAssembly = async () => {
   }
 };
 
-const detachNiche = async (niche) => {
+// Soft-detach: the assembled tab is deactivated, never deleted, so historical
+// cases keep their link to the module and its team clearance is preserved.
+const disableTab = async (niche) => {
   const confirmed = await showConfirm(
-    'Detach Niche',
-    `Detach "${niche.name}" from ${props.product?.name}? The blueprint will remain safe in the Niche Foundry.`
+    'Disable Tab',
+    `Disable "${niche.name}" on ${props.product?.name}? Historical cases keep their link to this module and its team clearance is preserved — re-enable it any time via "Configure Tab".`
   );
 
   if (confirmed) {
     try {
       await apiClient.delete(`admin/products/${props.slug}/file-types/${niche.id}`);
-      showAlert('Success', `"${niche.name}" detached from product.`);
+      showAlert('Success', `"${niche.name}" disabled on this product.`);
       loadAssembledNiches();
     } catch (error) {
-      showAlert('Error', error.response?.data?.message || 'Detach failed.');
+      showAlert('Error', error.response?.data?.message || 'Action failed.');
     }
   }
 };

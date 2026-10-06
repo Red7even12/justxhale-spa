@@ -40,42 +40,27 @@ export const useAuthStore = defineStore('auth', {
     },
   },
   actions: {
+    
     /**
-     * Handles the successful response from any login-like process.
-     * This is the missing function that will fix the error.
+     * Handles the successful response from any login-like process (Reset, Set Password, Onboarding).
      * @param {object} loginData - The successful payload from the API.
      */
-    handleLoginSuccess(loginData) {
-      // Extract the token and user from the payload.
-      // The `||` makes it robust; it works if the key is `accessToken` or `access_token`.
-      const token = loginData.accessToken || loginData.access_token;
-      const user = loginData.user;
-      const appVersion = loginData.appVersion || loginData.app_version || '0.0.0';
-      
-      // 2. Extract roles and permissions. They come as objects, so we extract the names.
-      const roles = user.roles ? user.roles.map(r => (typeof r === 'string' ? r : r.name).trim()) : [];
-      const permissions = user.permissions ? user.permissions.map(p => (typeof p === 'string' ? p : p.name).trim()) : [];
+    async handleLoginSuccess(loginData) {
+      const token = loginData.accessToken || loginData.access_token || loginData.token;
+      if (!token) return;
 
-      // 3. Update the global API client to use the new token for all future requests.
+      // 1. Set global Axios Authorization header
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // 4. Update the store's state.
-      this.token = token;
-      this.user = user;
-      this.roles = roles;
-      this.permissions = permissions;
-      this.appVersion = appVersion;
+      // 2. Hydrate full user session (teams, roles, permissions) from /api/v1/user
+      await this.fetchAndSetUser(token);
 
-      // 5. Save everything to localStorage for persistence.
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('roles', JSON.stringify(roles));
-      localStorage.setItem('permissions', JSON.stringify(permissions));
-      localStorage.setItem('appVersion', appVersion);
+      // 3. UNIFIED REDIRECT: Route directly through AppLauncher to load the product workspace
+      router.push({ name: 'AppLauncher' });
     },
     // --- END OF NEW ACTION ---
 
-async login(credentials) {
+    async login(credentials) {
       try {
         const loginData = {
           ...credentials,

@@ -1,8 +1,8 @@
 <template>
   <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-500 bg-opacity-75 transition-opacity">
     <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-      <div class="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">Edit User Details</h3>
+      <div class="relative inline-block align-bottom bg-white rounded-2xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 border border-gray-100">
+        <h3 class="text-lg font-bold leading-6 text-gray-900">Edit User Details</h3>
         <form v-if="editableUser" @submit.prevent="saveUser" class="mt-4 space-y-4">
           <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
             <div>
@@ -21,6 +21,17 @@
           <div>
             <label for="edit-cell" class="block text-sm font-medium text-gray-700">Cell Number</label>
             <input type="text" id="edit-cell" v-model="editableUser.cellNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 sm:text-sm">
+          </div>
+
+          <!-- Active Status Indicator -->
+          <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex justify-between items-center">
+            <div>
+              <span class="text-xs font-bold text-gray-900 block">Account Access Status</span>
+              <span class="text-[11px] text-gray-500">
+                Current status: <strong :class="editableUser.is_active ? 'text-green-700' : 'text-red-700'">{{ editableUser.is_active ? 'Active' : 'Inactive' }}</strong>
+              </span>
+            </div>
+            <span class="text-xs italic text-gray-400">Use status toggle on directory row for compliance logging</span>
           </div>
           
           <p v-if="saveError" class="text-sm text-red-600">{{ saveError }}</p>
@@ -48,7 +59,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  // This 'context' prop tells the modal which API to use
   context: {
     type: String,
     required: true,
@@ -62,11 +72,10 @@ const editableUser = ref(null);
 const saveError = ref(null);
 const isSaving = ref(false);
 
-// Create a local, editable copy of the user prop when the component mounts
 onMounted(() => {
   editableUser.value = JSON.parse(JSON.stringify(props.user));
-  
-  // Rule: If firstName or lastName are missing, split from name
+  editableUser.value.is_active = editableUser.value.isActive !== false && editableUser.value.is_active !== false;
+
   if (editableUser.value && !editableUser.value.firstName && editableUser.value.name) {
     const parts = editableUser.value.name.trim().split(/\s+/);
     if (parts.length > 1) {
@@ -82,10 +91,8 @@ const saveUser = async () => {
   saveError.value = null;
   isSaving.value = true;
 
-  // Concatenate first and last names into the name field
   editableUser.value.name = `${editableUser.value.firstName || ''} ${editableUser.value.lastName || ''}`.trim();
 
-  // CONVERT TO SNAKE_CASE FOR THE API
   const payload = {
     name: editableUser.value.name,
     first_name: editableUser.value.firstName,
@@ -96,7 +103,6 @@ const saveUser = async () => {
 
   try {
     let response;
-    // Use the 'context' prop to decide which service method to call
     if (props.context === 'core') {
       response = await userService.updateCoreUser(props.user.id, payload);
     } else {

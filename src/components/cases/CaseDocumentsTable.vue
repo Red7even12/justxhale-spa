@@ -6,8 +6,9 @@
     <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2 shrink-0">
       <h3 class="text-lg font-bold text-gray-800 uppercase tracking-tight">Checklist</h3>
       <div class="flex items-center gap-2">
+        <!-- THE MENTAL-SHIFT HELP ICON -->
         <button 
-          @click="openRequestModal" 
+          @click="openRequestModal()" 
           class="bg-brand-primary text-white text-xs px-4 py-2 rounded-lg font-bold shadow hover:opacity-90 transition-all">
           Request Documents
         </button>
@@ -383,7 +384,7 @@
     
     <div class="p-6">
         <p class="text-sm text-gray-600 mb-6">
-            Select the required documents and choose who should receive the secure upload link. They will receive a passwordless Magic Link to upload these files directly from their phone or computer.
+            Select the required documents and choose who should receive the secure upload link. They will receive a passwordless Magic Link to upload these files directly from their phone or computer. The recipients must be created under the Contacts Menu option.
         </p>
 
         <!-- Step 1: Select Recipient -->
@@ -570,7 +571,9 @@ const pendingDocuments = computed(() => {
 });
 
 const selectAllDocs = () => {
-    requestPayload.documentIds = pendingDocuments.value.map(doc => doc.id);
+    requestPayload.documentIds = pendingDocuments.value
+        .map(doc => doc.id)
+        .filter(id => id !== null && id !== undefined);
 };
 
 // Helper for date placeholder hints
@@ -618,23 +621,22 @@ const fetchParticipants = async () => {
 const openRequestModal = async (req = null) => {
     isRequestModalOpen.value = true;
 
-    if (req) {
-        // Urgent renewal shortcut: pre-target this specific document and its participant.
-        requestPayload.documentIds = [req.id];
-        const reqParticipant = req.caseParticipantId ?? req.case_participant_id;
+    // Guard: a bare `@click="openRequestModal"` hands us the native MouseEvent.
+    // Only a real requirement row (with a numeric id) counts as a target document.
+    const target = (req && typeof req === 'object' && Number.isFinite(Number(req.id))) ? req : null;
+
+    // Always reset the selection; pre-seed only when opened from a specific row.
+    requestPayload.documentIds = target ? [Number(target.id)] : [];
+
+    if (target) {
+        // Urgent renewal shortcut: pre-target this document's participant when known.
+        const reqParticipant = target.caseParticipantId ?? target.case_participant_id;
         if (reqParticipant) {
             requestPayload.participantId = reqParticipant;
-        } else if (typeof selectedParticipantId.value === 'number') {
-            requestPayload.participantId = selectedParticipantId.value;
-        } else {
-            const primary = availableParticipants.value.find(p => p.isPrimaryContact || p.is_primary_contact);
-            requestPayload.participantId = primary ? primary.id : null;
+            return;
         }
-        return;
     }
 
-    requestPayload.documentIds = [];
-    
     if (typeof selectedParticipantId.value === 'number') {
         requestPayload.participantId = selectedParticipantId.value;
     } else {
@@ -667,14 +669,22 @@ const closeRequestModal = () => {
 const sendDocumentRequest = async () => {
     isSendingRequest.value = true;
     try {
+        // Never post null/undefined ids — one stray entry fails `document_ids.*` validation.
+        const documentIds = requestPayload.documentIds.filter(id => id !== null && id !== undefined);
+
+        if (documentIds.length === 0) {
+            showAlert('Error', 'Please select at least one document to request.');
+            return;
+        }
+
         await apiClient.post(`/${productSlug.value}/cases/${props.caseId}/portal-requests`, {
             participant_id: requestPayload.participantId,
-            document_ids: requestPayload.documentIds
+            document_ids: documentIds
         });
 
         showAlert('Success', 'Secure link generated and dispatched!');
         
-        requestPayload.documentIds.forEach(id => {
+        documentIds.forEach(id => {
             const doc = requirements.value.find(d => d.id === id);
             if (doc) {
                 doc.currentStatus = 'requested';

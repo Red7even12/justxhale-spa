@@ -53,10 +53,10 @@
     <!-- Exception List -->
     <div v-else class="space-y-3">
       <div
-        v-for="item in defects"
-        :key="item.logId || item.log_id || item.id"
+        v-for="(item, idx) in defects"
+        :key="pulseDefectId(item, idx)"
         class="bg-white rounded-2xl border transition shadow-sm overflow-hidden"
-        :class="item.defect_severity === 'safety_critical_ground'
+        :class="isSafetyCriticalDefect(item)
           ? 'border-rose-300 bg-rose-50/10 hover:border-rose-400'
           : 'border-amber-300 bg-amber-50/10 hover:border-amber-400'"
       >
@@ -66,27 +66,27 @@
             <div class="flex items-center gap-2 flex-wrap">
               <span
                 class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full text-white"
-                :class="item.defect_severity === 'safety_critical_ground' ? 'bg-rose-600 animate-pulse' : 'bg-amber-600'"
+                :class="isSafetyCriticalDefect(item) ? 'bg-rose-600 animate-pulse' : 'bg-amber-600'"
               >
-                {{ item.defect_severity === 'safety_critical_ground' ? '● GROUNDED / RED-TAG' : '● ADVISORY' }}
+                {{ isSafetyCriticalDefect(item) ? '● GROUNDED / RED-TAG' : '● ADVISORY' }}
               </span>
 
               <h3 class="text-base font-black text-slate-900">
-                {{ item.file_name }}
+                {{ item.fileName || item.file_name }}
               </h3>
 
               <span class="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                Ref: {{ item.file_reference || 'N/A' }}
+                Ref: {{ item.fileReference || item.file_reference || 'N/A' }}
               </span>
 
               <span class="text-xs text-slate-400">|</span>
-              <span class="text-xs font-bold text-slate-600">{{ item.product_name }}</span>
+              <span class="text-xs font-bold text-slate-600">{{ item.productName || item.product_name }}</span>
             </div>
 
             <div class="text-xs text-slate-600 flex items-center gap-3">
-              <span>📋 <strong>{{ item.log_definition_name }}</strong></span>
-              <span>👤 Logged by: <strong>{{ item.logged_by_name }}</strong> ({{ item.logged_by_role || 'Field Operator' }})</span>
-              <span>⏱️ {{ formatDateTime(item.logged_at) }}</span>
+              <span>📋 <strong>{{ item.logDefinitionName || item.log_definition_name }}</strong></span>
+              <span>👤 Logged by: <strong>{{ item.loggedByName || item.logged_by_name }}</strong> ({{ item.loggedByRole || item.logged_by_role || 'Field Operator' }})</span>
+              <span>⏱️ {{ formatDateTime(item.loggedAt || item.logged_at) }}</span>
             </div>
 
             <!-- Telemetry Answers Preview -->
@@ -126,15 +126,15 @@
         <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
           <div>
             <h3 class="text-sm font-bold text-slate-900">CAPA Sign-Off & Defect Resolution</h3>
-            <p class="text-[11px] text-slate-500 font-mono">{{ activeResolvingItem.file_name }}</p>
+            <p class="text-[11px] text-slate-500 font-mono">{{ activeResolvingItem.fileName || activeResolvingItem.file_name }}</p>
           </div>
           <button @click="activeResolvingItem = null" class="text-slate-400 hover:text-slate-600 text-base">✕</button>
         </div>
 
         <div class="p-6 space-y-4">
           <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
-            <div class="font-bold">Original Defect: {{ activeResolvingItem.log_definition_name }}</div>
-            <div>Reported by {{ activeResolvingItem.logged_by_name }} at {{ formatDateTime(activeResolvingItem.logged_at) }}</div>
+            <div class="font-bold">Original Defect: {{ activeResolvingItem.logDefinitionName || activeResolvingItem.log_definition_name }}</div>
+            <div>Reported by {{ activeResolvingItem.loggedByName || activeResolvingItem.logged_by_name }} at {{ formatDateTime(activeResolvingItem.loggedAt || activeResolvingItem.logged_at) }}</div>
           </div>
 
           <div>
@@ -185,6 +185,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '@/services/api'
+import { useOperationalPulse } from '@/composables/useOperationalPulse'
 
 const isLoading = ref(true)
 const isResolving = ref(false)
@@ -195,12 +196,18 @@ const activeResolvingItem = ref(null)
 const resolutionNotes = ref('')
 const restoreOperationalStatus = ref(true)
 
+// Shared key-case tolerant accessors (see @/composables/useOperationalPulse).
+const { isSafetyCriticalDefect, pulseDefectId } = useOperationalPulse()
+
 const fetchPulse = async () => {
   isLoading.value = true
   try {
     const res = await apiClient.get('/telemetry/pulse')
-    defects.value = res.data.data.data || []
-    totalDefects.value = res.data.data.total || 0
+    // res.data = { success, data: paginator }; the paginator collection key
+    // ('data') and 'total' are case-neutral, but we read defensively anyway.
+    const paginated = res.data?.data ?? {}
+    defects.value = paginated.data ?? paginated.items ?? []
+    totalDefects.value = paginated.total ?? defects.value.length
   } catch (err) {
     console.error('Failed to load Daily Pulse exceptions', err)
   } finally {
@@ -217,10 +224,8 @@ const openResolveModal = (item) => {
 const submitResolution = async () => {
   if (!activeResolvingItem.value || resolutionNotes.value.trim().length < 5) return
   
-  // Extract ID safely supporting camelCase (logId), snake_case (log_id), or id
-  const targetLogId = activeResolvingItem.value.logId 
-    ?? activeResolvingItem.value.log_id 
-    ?? activeResolvingItem.value.id
+  // Key-case tolerant ID resolution: logId (camelCase), log_id (snake_case), or id
+  const targetLogId = pulseDefectId(activeResolvingItem.value)
 
   if (!targetLogId) {
     alert('Error: Could not determine defect Log ID.')

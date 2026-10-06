@@ -14,7 +14,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       devOptions: {
-        enabled: true // 👈 Required for virtual:pwa-register during `npm run dev`
+        enabled: false // dev SW off - production build unaffected (devOptions only applies to `vite dev`)
       },
       manifest: {
         name: 'JustXhale Operational Field Logbook',

@@ -10,6 +10,7 @@
     </div>
     <CaseTimeline 
         :case-id="caseId" 
+        :file-type-id="activeTabId"
         @close="close"
     />
   </div>
@@ -24,6 +25,10 @@ const router = useRouter();
 
 const caseId = route.params.id;
 const productSlug = route.params.productSlug;
+
+// The tab the user came from ("Print" on the workspace panel), so the printed report
+// is scoped to that tab instead of every tab the user can see.
+const activeTabId = route.query.file_type_id ?? null;
 
 const close = () => {
     router.push({ 

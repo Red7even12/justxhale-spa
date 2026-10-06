@@ -210,11 +210,11 @@ const load = async () => {
       apiClient.get('admin/document-option-lists').catch(() => ({ data: [] })) // NEW
     ];
 
-    if (props.slug) {
-      promises.push(
-        apiClient.get(`admin/products/${props.slug}/participant-roles`).catch(() => ({ data: [] }))
-      );
-    }
+    // Participant roles are Niche-scoped blueprints, so query them against the
+    // FileType itself (works in both the Product and Foundry blueprint contexts).
+    promises.push(
+      apiClient.get(`admin/file-types/${props.fileTypeId}/participant-roles`).catch(() => ({ data: [] }))
+    );
 
     const [fieldsRes, typeRes, entityRes, optionsRes, rolesRes] = await Promise.all(promises);
 

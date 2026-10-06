@@ -1,5 +1,4 @@
 <template>
-  <!-- frontend-spa\src\views\ResetPassword.vue -->
   <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -39,7 +38,7 @@
                 :type="uiState.visibility.password ? 'text' : 'password'"
                 autocomplete="new-password"
                 required
-                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono"
               />
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center space-x-2">
                 <button type="button" @click="toggleVisibility('password')" class="text-gray-400 hover:text-indigo-600 focus:outline-none" :title="uiState.visibility.password ? 'Hide password' : 'Show password'">
@@ -50,9 +49,9 @@
             </div>
             <div class="mt-2 text-xs flex justify-between items-center">
                 <span class="text-gray-500">
-                    Must meet complexity rules.
+                    {{ policyHint }}
                 </span>
-                <button type="button" @click="generateAndSetPassword" class="font-medium text-indigo-600 hover:text-indigo-500">
+                <button type="button" @click="generateAndSetPassword" class="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer">
                     Generate Strong Password
                 </button>
             </div>
@@ -70,7 +69,7 @@
                 :type="uiState.visibility.password_confirmation ? 'text' : 'password'"
                 autocomplete="new-password"
                 required
-                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono"
               />
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                 <button type="button" @click="toggleVisibility('password_confirmation')" class="text-gray-400 hover:text-indigo-600 focus:outline-none" :title="uiState.visibility.password_confirmation ? 'Hide password' : 'Show password'">
@@ -106,20 +105,21 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import passwordService from '@/services/passwordService';
 import userService from '@/services/userService';
+import { usePasswordGenerator } from '@/composables/usePasswordGenerator';
+import { validatePassword } from '@/config/passwordPolicy';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const { generateStrongPassword, policyHint } = usePasswordGenerator();
 
-// This single reactive object will hold all our form data.
 const formData = reactive({
     password: '',
     password_confirmation: '',
     token: route.params.token || '',
-    email: '', // Will be populated from the API
+    email: '',
 });
 
-// A separate reactive object for UI state like visibility and loading.
 const uiState = reactive({
     isLoading: false,
     errorMessage: '',
@@ -129,9 +129,6 @@ const uiState = reactive({
     }
 });
 
-/**
- * On component mount, fetch the email associated with the token.
- */
 onMounted(async () => {
     if (!formData.token) {
         uiState.errorMessage = "No reset token found in the link.";
@@ -145,39 +142,20 @@ onMounted(async () => {
     }
 });
 
-/**
- * Toggles the visibility of a password field.
- * @param {'password' | 'password_confirmation'} field - The field to toggle.
- */
 const toggleVisibility = (field) => {
     if (field in uiState.visibility) {
         uiState.visibility[field] = !uiState.visibility[field];
     }
 };
 
-/**
- * Generates a strong password.
- */
 const generateAndSetPassword = () => {
-    const length = 16;
-    const charsets = { lowercase: 'abcdefghijklmnopqrstuvwxyz', uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', numbers: '0123456789', symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?' };
-    const allChars = Object.values(charsets).join('');
-    let generatedPassword = '';
-    for (const key in charsets) {
-        const charset = charsets[key];
-        generatedPassword += charset[Math.floor(Math.random() * charset.length)];
-    }
-    for (let i = generatedPassword.length; i < length; i++) {
-        generatedPassword += allChars[Math.floor(Math.random() * allChars.length)];
-    }
-    generatedPassword = generatedPassword.split('').sort(() => 0.5 - Math.random()).join('');
-    formData.password = generatedPassword;
-    formData.password_confirmation = generatedPassword;
+    const generated = generateStrongPassword();
+    formData.password = generated;
+    formData.password_confirmation = generated;
+    uiState.visibility.password = true;
+    uiState.visibility.password_confirmation = true;
 };
 
-/**
- * Handles the form submission.
- */
 const handleResetPassword = async () => {
     uiState.isLoading = true;
     uiState.errorMessage = '';
@@ -187,21 +165,26 @@ const handleResetPassword = async () => {
         uiState.isLoading = false;
         return;
     }
+
+    const { isValid, errors } = validatePassword(formData.password);
+    if (!isValid) {
+        uiState.errorMessage = errors.join(' ');
+        uiState.isLoading = false;
+        return;
+    }
     
     try {
-        const response = await passwordService.resetPassword(formData);
-        
-        authStore.handleLoginSuccess(response.data);
-        router.push('/');
-
-    } catch (error) {
-        if (error.response?.data?.errors) {
-            uiState.errorMessage = Object.values(error.response.data.errors).flat().join(' ');
-        } else {
-            uiState.errorMessage = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
-        }
-    } finally {
-        uiState.isLoading = false;
+    const response = await passwordService.resetPassword(formData);
+    // Automatically hydrates /user and redirects to AppLauncher
+    await authStore.handleLoginSuccess(response.data);
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      uiState.errorMessage = Object.values(error.response.data.errors).flat().join(' ');
+    } else {
+      uiState.errorMessage = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
     }
+  } finally {
+    uiState.isLoading = false;
+  }
 };
 </script>

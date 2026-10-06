@@ -105,7 +105,11 @@ import { formatDateTime } from '@/utils/formatters';
 
 const props = defineProps({
   caseId: { type: [String, Number], required: true },
-  caseFile: { type: Object, default: null }
+  caseFile: { type: Object, default: null },
+  // Active workspace tab (file_types.id). Case history is tab-isolated server-side,
+  // so the panel must ask for the tab the user is looking at — exactly like the
+  // Notes modal does.
+  fileTypeId: { type: [Number, String], default: null }
 });
 
 defineEmits(['close']);
@@ -150,6 +154,12 @@ const fetchTimeline = async (truncateLimit = 150) => {
         truncate_limit: truncateLimit
     };
 
+    // Scope the history to the active tab. The server attributes un-tagged rows to the
+    // case's own niche, so omitting this would widen the result, never narrow it.
+    if (props.fileTypeId) {
+        params.file_type_id = Number(props.fileTypeId);
+    }
+
     const { data } = await apiClient.get(`/${productSlug.value}/cases/${effectiveCaseId.value}/timeline`, { params });
     timelineEvents.value = data; 
       } catch (err) {
@@ -190,6 +200,12 @@ const exportToExcel = async () => {
         origin_label: originFilter.value,
         description: descriptionFilter.value,
     };
+
+    // Lock the export to the active tab as well — the server enforces this, so the
+    // exported file can never carry another tab's note content.
+    if (props.fileTypeId) {
+        params.file_type_id = Number(props.fileTypeId);
+    }
 
     // 2. Trigger the Generic Export Engine
     // We use the slug 'case-timeline' we created in Phase 1
@@ -243,6 +259,12 @@ const printPage = () => {
     description_filter: descriptionFilter.value,
     case_number_filter: caseNumberFilter.value
   };
+
+  // Keep the tab context on the printed report instead of widening it.
+  if (props.fileTypeId) {
+    query.file_type_id = props.fileTypeId;
+  }
+
   router.push({ 
     name: 'CaseTimelineReport', 
     params: { productSlug: productSlug.value, id: effectiveCaseId.value },
@@ -256,6 +278,12 @@ watch([originFilter, descriptionFilter, caseNumberFilter], () => {
   debounceTimer = setTimeout(() => {
     fetchTimeline();
   }, 500);
+});
+
+// Switching workspace tab re-scopes the history (the panel is usually remounted by the
+// parent, but the report route keeps the component alive while the tab changes).
+watch(() => props.fileTypeId, () => {
+  fetchTimeline();
 });
 
 onMounted(() => {

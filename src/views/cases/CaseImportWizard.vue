@@ -15,6 +15,9 @@
       <!-- STEP 1: CONTEXT -->
       <div class="bg-white shadow rounded-lg p-6">
         <h2 class="text-lg font-medium text-gray-900 mb-4">Step 1: Select Case File Type</h2>
+        <p class="text-sm text-gray-500 mb-4">
+          It is strongly advised to discuss your business case with the developers before importing data. The import process requires a very specific mapping of data from legacy systems.
+        </p>
         <div class="w-full sm:w-1/2">
           <label class="block text-sm font-medium text-gray-700">Case File Type</label>
           <select 
